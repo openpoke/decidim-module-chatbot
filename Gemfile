@@ -12,9 +12,9 @@ require_relative "#{base_path}lib/decidim/chatbot/version"
 
 DECIDIM_VERSION = Decidim::Chatbot::DECIDIM_VERSION
 
+gem "bootsnap", "~> 1.7"
 gem "decidim", DECIDIM_VERSION
 gem "decidim-chatbot", path: "."
-gem "bootsnap", "~> 1.7"
 gem "puma", ">= 6.3.1"
 
 group :development, :test do
