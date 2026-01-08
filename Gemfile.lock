@@ -2,7 +2,7 @@ PATH
   remote: .
   specs:
     decidim-chatbot (0.1.0)
-      decidim-core (>= 0.31.0, < 0.32)
+      decidim-core (>= 0.31.0, < 0.32.0)
 
 GEM
   remote: https://rubygems.org/
@@ -306,6 +306,11 @@ GEM
       decidim-core (= 0.31.0)
     decidim-generators (0.31.0)
       decidim-core (= 0.31.0)
+    decidim-initiatives (0.31.0)
+      decidim-admin (= 0.31.0)
+      decidim-comments (= 0.31.0)
+      decidim-core (= 0.31.0)
+      decidim-verifications (= 0.31.0)
     decidim-meetings (0.31.0)
       decidim-core (= 0.31.0)
       decidim-forms (= 0.31.0)
@@ -966,6 +971,7 @@ DEPENDENCIES
   decidim (= 0.31.0)
   decidim-chatbot!
   decidim-dev (= 0.31.0)
+  decidim-initiatives (= 0.31.0)
   letter_opener_web
   puma (>= 6.3.1)
   web-console
@@ -1033,6 +1039,7 @@ CHECKSUMS
   decidim-dev (0.31.0) sha256=0616ca00acf25e9187791fa903e61d99bd504e12b4e268458179fbb88dfe5689
   decidim-forms (0.31.0) sha256=6da6057a00b77ccda258d49e3310607e0432c434d0a4c1c47126dc1424845990
   decidim-generators (0.31.0) sha256=18fead607a822077d30d06851fcd62b1f746b3c411d0851395930cc1024de67e
+  decidim-initiatives (0.31.0) sha256=c9a521549d90be5582f9858826a01bc48efbdac0bde5700c469bbca5d9db04ca
   decidim-meetings (0.31.0) sha256=1d8fa70d75e14c3f77d3a0ff2e5d7342254894a0e5eaf753bf9396b6c6707e1c
   decidim-pages (0.31.0) sha256=641c15b982256d199c4b4ca6614a12426611a23d2ec3f2620cca39ee692c7a31
   decidim-participatory_processes (0.31.0) sha256=7e8164a442c1622b51e308ad93415aef0a9b3911629f1b34d93bb0d9ff8a0c9d
