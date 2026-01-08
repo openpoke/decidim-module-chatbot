@@ -30,5 +30,5 @@ Gem::Specification.new do |s|
     end
   end
 
-  s.add_dependency "decidim-core", Decidim::Chatbot.version
+  s.add_dependency "decidim-core", Decidim::Chatbot::COMPAT_DECIDIM_VERSION
 end
