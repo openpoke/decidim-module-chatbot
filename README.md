@@ -29,11 +29,42 @@ bin/rails decidim:upgrade
 
 > **EXPERTS ONLY**
 >
-> Under the hood, when running `bundle exec rails decidim:upgrade` the `decidim-chatbot` gem will run the following two tasks (that can also be run manually if you consider):
+> When you run `bin/rails decidim:upgrade`, Decidim's upgrade process is extended by this gem so that `decidim_chatbot` is included in the set of plugins handled by `decidim:choose_target_plugins`. Once selected there, the standard Decidim upgrade pipeline will apply this plugin's migrations.
+>
+> Running `bin/rails decidim:upgrade` is usually all you need. However, you can also run the migrations for this gem explicitly with:
 >
 > ```bash
 > bin/rails decidim_chatbot:install:migrations
 > ```
+
+### Webhook endpoint
+
+- Path (mounted): POST /chatbot/webhooks/:provider, GET /chatbot/webhooks/:provider
+- Currently supported provider: `whatsapp`.
+- WhatsApp verification (GET): set `WHATSAPP_VERIFY_TOKEN` in environment. Meta will call the endpoint with `hub.mode`, `hub.verify_token`, and `hub.challenge`. When the token matches, the endpoint echoes the `hub.challenge` with 200.
+- Delivery (POST): the endpoint acknowledges with 200 for supported providers. Signature verification and payload processing can be added later per provider.
+
+Example verify request:
+
+```bash
+curl -G \
+	--data-urlencode "hub.mode=subscribe" \
+	--data-urlencode "hub.verify_token=$WHATSAPP_VERIFY_TOKEN" \
+	--data-urlencode "hub.challenge=abc123" \
+	http://localhost:3000/chatbot/webhooks/whatsapp
+```
+
+Example delivery request:
+
+```bash
+curl -X POST http://localhost:3000/chatbot/webhooks/whatsapp \
+	-H 'Content-Type: application/json' \
+	-d '{"entry":[]}'
+```
+
+> In order to develop locally, it is convenient to use a service such as [ngrok ](ngrok.com)
+> to expose your local server to the internet. This allows Meta's webhook to reach your development environment.
+
 
 ## Contributing
 

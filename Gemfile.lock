@@ -3,6 +3,7 @@ PATH
   specs:
     decidim-chatbot (0.1.0)
       decidim-core (>= 0.31.0, < 0.32.0)
+      faraday (> 2.0)
 
 GEM
   remote: https://rubygems.org/
