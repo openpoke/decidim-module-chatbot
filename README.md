@@ -66,6 +66,15 @@ curl -X POST http://localhost:3000/chatbot/webhooks/whatsapp \
 > to expose your local server to the internet. This allows Meta's webhook to reach your development environment.
 
 
+## Providers
+
+Note: Currently only WhatsApp is supported (PRs welcomed!)
+
+### WhatsApp
+
+- Communication must always be started by the user towards the business WhatsApp number
+- Once communication has been started, there is a 24h window when the server can send information to the user
+
 ## Contributing
 
 Contributions are welcome !

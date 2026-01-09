@@ -22,6 +22,12 @@ module Decidim
         end
       end
 
+      initializer "decidim-chatbot.default_providers" do
+        Decidim::Chatbot.providers_registry.register(:whatsapp) do |manifest|
+          manifest.processor_class = "Decidim::Chatbot::Whatsapp::Processor"
+        end
+      end
+
       initializer "decidim-chatbot.shakapacker.assets_path" do
         Decidim.register_assets_path File.expand_path("app/packs", root)
       end

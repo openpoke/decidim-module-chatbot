@@ -2,10 +2,10 @@
 
 require "rails_helper"
 
-RSpec.describe "Chatbot Webhooks", type: :request do
+RSpec.describe "Chatbot Webhooks" do
   describe "GET /chatbot/webhooks/whatsapp" do
     around do |example|
-      original = ENV["WHATSAPP_VERIFY_TOKEN"]
+      original = ENV.fetch("WHATSAPP_VERIFY_TOKEN", nil)
       ENV["WHATSAPP_VERIFY_TOKEN"] = "test-token"
       example.run
       ENV["WHATSAPP_VERIFY_TOKEN"] = original
