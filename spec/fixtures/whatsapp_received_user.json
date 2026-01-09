@@ -14,18 +14,18 @@
                         "contacts": [
                             {
                                 "profile": {
-                                    "name": "John Doe"
+                                    "name": "Ivan"
                                 },
-                                "wa_id": "34123412345"
+                                "wa_id": "34685173326"
                             }
                         ],
                         "messages": [
                             {
-                                "from": "34123412345",
-                                "id": "wamid.HBgLMzQ2ODUxNzMzMjYVAgASGCBBQ0YzODlDMURCMjA5QjgwRkExNURCM0M4MENGMDQ2OQA=",
-                                "timestamp": "1767870785",
+                                "from": "34685173326",
+                                "id": "wamid.HBgLMzQ2ODUxNzMzMjYVAgASGBYzRUIwMThFMjdEQzMwMkQ0REZCQ0M1AA==",
+                                "timestamp": "1767976705",
                                 "text": {
-                                    "body": "Hi from WhatsApp!"
+                                    "body": "this is a message"
                                 },
                                 "type": "text"
                             }

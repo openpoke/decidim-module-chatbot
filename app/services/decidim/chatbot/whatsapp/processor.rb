@@ -4,61 +4,49 @@ module Decidim
   module Chatbot
     module Whatsapp
       class Processor < Decidim::Chatbot::BaseProcessor
-        attr_reader :json
+        attr_reader :json, :message
 
+        # TODO: verify certificate https://developers.facebook.com/docs/graph-api/webhooks/getting-started/#mtls-for-webhooks
         def verify
           mode = params["hub.mode"]
           token = params["hub.verify_token"]
           challenge = params["hub.challenge"]
+          Rails.logger.info("Verifying Whatsapp webhook with mode: #{params.inspect}")
 
-          expected_token = Decidim::Chatbot.config.whatsapp_verify_token
-
-          if mode == "subscribe" && token == expected_token
-            {
-              status: :ok,
-              response: challenge
-            }
+          if mode == "subscribe" && token == Decidim::Chatbot.whatsapp_config[:verify_token]
+            { status: :ok, response: challenge }
           else
-            {
-              status: :forbidden
-            }
+            { status: :forbidden }
           end
         end
 
         def receive(raw_post)
           @json = JSON.parse(raw_post)
+          @message = Message.new(json)
+
           Rails.logger.info("Webhook received from Whatsapp: #{json.inspect}")
-          send_whatsapp_message(json)
+
+          send_whatsapp_message if message.from_user?
           { status: :ok }
         end
 
         private
 
-        def send_whatsapp_message(payload)
-          # Extract the sender's phone number from the incoming message
-          message_data = payload.dig("entry", 0, "changes", 0, "value")
-          return unless message_data
-
-          sender_phone = message_data.dig("messages", 0, "from")
-          return unless sender_phone
-
+        def send_whatsapp_message
           # Send acknowledgment message back to the user
-          access_token = ENV["WHATSAPP_ACCESS_TOKEN"].to_s
-          phone_number_id = message_data.dig("metadata", "phone_number_id")
-          return unless access_token.present? && phone_number_id.present?
 
-          url = "#{Decidim::Chatbot.whatsapp_config[:graph_api_url]}#{phone_number_id}/messages"
           body = {
             messaging_product: "whatsapp",
             recipient_type: "individual",
-            to: sender_phone,
+            to: message.from,
             type: "text",
             text: {
-              body: "received: #{message_data.dig("messages", 0, "text", "body")}"
+              body: "Received: #{message.body}"
             }
           }
 
-          Faraday.post("#{url}?access_token=#{access_token}") do |req|
+          url = "#{Decidim::Chatbot.whatsapp_config[:graph_api_url]}#{message.phone_number_id}/messages"
+          Faraday.post("#{url}?access_token=#{Decidim::Chatbot.whatsapp_config[:access_token]}") do |req|
             req.headers["Content-Type"] = "application/json"
             req.body = body.to_json
           end

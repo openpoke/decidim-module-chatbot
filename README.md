@@ -74,6 +74,7 @@ Note: Currently only WhatsApp is supported (PRs welcomed!)
 
 - Communication must always be started by the user towards the business WhatsApp number
 - Once communication has been started, there is a 24h window when the server can send information to the user
+- The receive webhook also receives the status updates for any message. So, when you send a message to the user, expect several replies from facebook informing about the status of the delivery
 
 ## Contributing
 

@@ -26,10 +26,6 @@ module Decidim
       # POST /chatbot/webhooks/:provider
       def receive
         result = processor.receive(request.raw_post)
-        # NOTE: Add signature verification per provider in the future.
-        # For now, accept payload and respond 200 to acknowledge receipt.
-
-        Rails.logger.info("Webhook received from #{provider}: #{processor.json.inspect}")
 
         head result[:status]
       end
