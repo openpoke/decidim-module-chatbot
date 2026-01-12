@@ -22,9 +22,19 @@ module Decidim
         end
       end
 
+      initializer "decidim-chatbot.default_workflows" do
+        # Register workflows available for starting chatbot conversations
+        Decidim::Chatbot.start_workflows_registry.register(:simple_greetings) do |manifest|
+          manifest.workflow_class = "Decidim::Chatbot::Workflows::SimpleGreetingsWorkflow"
+        end
+        Decidim::Chatbot.start_workflows_registry.register(:focus_space) do |manifest|
+          manifest.workflow_class = "Decidim::Chatbot::Workflows::FocusSpaceWorkflow"
+        end
+      end
+
       initializer "decidim-chatbot.default_providers" do
         Decidim::Chatbot.providers_registry.register(:whatsapp) do |manifest|
-          manifest.processor_class = "Decidim::Chatbot::Whatsapp::Processor"
+          manifest.adapter_class = "Decidim::Chatbot::Providers::Whatsapp::Adapter"
         end
       end
 

@@ -6,13 +6,13 @@ module Decidim
       skip_before_action :verify_authenticity_token
 
       before_action do
-        render json: { error: "Provider [#{provider}] not supported" }, status: :bad_request unless processor
+        render json: { error: "Provider [#{provider}] not supported" }, status: :bad_request unless workflow&.adapter
       end
 
       # GET /chatbot/webhooks/:provider
       # Used by some providers (e.g., WhatsApp) to verify the endpoint
       def verify
-        result = processor.verify
+        result = workflow.adapter.verify!
 
         if result[:status] == :ok
           render plain: result[:response], status: :ok
@@ -25,9 +25,9 @@ module Decidim
 
       # POST /chatbot/webhooks/:provider
       def receive
-        result = processor.receive(request.raw_post)
+        Rails.logger.info("Webhook received from: #{provider}")
 
-        head result[:status]
+        head workflow.process![:status]
       end
 
       private
@@ -36,11 +36,11 @@ module Decidim
         params[:provider].to_s
       end
 
-      def processor
-        manifest = Decidim::Chatbot.providers_registry.find(provider.to_sym)
-        return nil unless manifest
-
-        manifest.processor.new(params:)
+      def workflow
+        @workflow ||= begin
+          manifest = Decidim::Chatbot.start_workflows_registry.find(:simple_greetings)
+          manifest && manifest.workflow.new(params)
+        end
       end
     end
   end

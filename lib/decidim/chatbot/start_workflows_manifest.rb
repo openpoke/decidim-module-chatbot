@@ -2,15 +2,15 @@
 
 module Decidim
   module Chatbot
-    class ProvidersManifest
+    class StartWorkflowsManifest
       include ActiveModel::Model
       include Decidim::AttributeObject::Model
 
       attribute :name, Symbol
-      attribute :adapter_class, String
+      attribute :workflow_class, String
 
-      def adapter
-        adapter_class.safe_constantize
+      def workflow
+        workflow_class.safe_constantize
       end
     end
   end
