@@ -4,8 +4,9 @@ module Decidim
   module Chatbot
     module Workflows
       class CommentProposalsWorkflow < BaseWorkflow
-        def show_menu
+        def process_user_input
           send!
+          parent_workflow.clear_delegated_workflow if parent_workflow
         end
 
         private

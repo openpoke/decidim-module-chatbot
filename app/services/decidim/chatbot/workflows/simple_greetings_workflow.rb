@@ -9,7 +9,7 @@ module Decidim
         end
 
         def process_action_input
-          CommentProposalsWorkflow.new(params).show_menu if received_message.button_id == "start"
+          delegate_workflow(CommentProposalsWorkflow) if received_message.button_id == "start"
         end
 
         private
