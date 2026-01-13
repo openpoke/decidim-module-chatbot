@@ -24,11 +24,11 @@ module Decidim
 
       initializer "decidim-chatbot.default_workflows" do
         # Register workflows available for starting chatbot conversations
-        Decidim::Chatbot.start_workflows_registry.register(:simple_greetings) do |manifest|
-          manifest.workflow_class = "Decidim::Chatbot::Workflows::SimpleGreetingsWorkflow"
+        Decidim::Chatbot.start_workflows_registry.register(:organization_welcome) do |manifest|
+          manifest.workflow_class = "Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow"
         end
-        Decidim::Chatbot.start_workflows_registry.register(:focus_space) do |manifest|
-          manifest.workflow_class = "Decidim::Chatbot::Workflows::FocusSpaceWorkflow"
+        Decidim::Chatbot.start_workflows_registry.register(:participatory_space) do |manifest|
+          manifest.workflow_class = "Decidim::Chatbot::Workflows::ParticipatorySpaceWorkflow"
         end
       end
 

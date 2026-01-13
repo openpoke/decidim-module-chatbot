@@ -38,7 +38,7 @@ module Decidim
 
       def workflow
         @workflow ||= begin
-          manifest = Decidim::Chatbot.start_workflows_registry.find(:simple_greetings)
+          manifest = Decidim::Chatbot.start_workflows_registry.find(:organization_welcome)
           manifest && manifest.workflow.new(params.merge(organization: current_organization))
         end
       end
