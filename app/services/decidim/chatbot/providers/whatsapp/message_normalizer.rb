@@ -11,18 +11,39 @@ module Decidim
             @message_data = json.dig("entry", 0, "changes", 0, "value")
             @phone_number_id = @message_data.dig("metadata", "phone_number_id")
             @id = json.dig("entry", 0, "id")
-            if @message_data
-              @from = @message_data.dig("messages", 0, "from")
-              @body = @message_data.dig("messages", 0, "text", "body")
-              @message_id = @message_data.dig("messages", 0, "id")
+            return unless @message_data
+
+            # Extract message details
+            @from = @message_data.dig("messages", 0, "from")
+            @body = @message_data.dig("messages", 0, "text", "body")
+            @message_id = @message_data.dig("messages", 0, "id")
+            @type = @message_data.dig("messages", 0, "type")
+            return unless @type == "interactive"
+
+            # Extract interactive message details
+            interactive = @message_data.dig("messages", 0, "interactive")
+            if interactive["type"] == "button_reply"
+              @body = interactive.dig("button_reply", "title")
+              @button_id = interactive.dig("button_reply", "id")
+            elsif interactive["type"] == "list_reply"
+              @body = interactive.dig("list_reply", "title")
+              @button_id = interactive.dig("list_reply", "id")
             end
           end
 
-          def from_user?
-            from.present?
+          def acknowledgeable?
+            from.present? && message_id.present?
           end
 
-          attr_reader :json, :message_data, :from, :message_id, :id, :body, :phone_number_id
+          def user_text?
+            from.present? && type == "text"
+          end
+
+          def actionable?
+            from.present? && type == "interactive" && button_id.present?
+          end
+
+          attr_reader :json, :message_data, :from, :message_id, :id, :body, :phone_number_id, :type, :button_id
         end
       end
     end

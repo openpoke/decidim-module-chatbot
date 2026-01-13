@@ -4,27 +4,26 @@ module Decidim
   module Chatbot
     module Workflows
       class SimpleGreetingsWorkflow < BaseWorkflow
-        def process!
-          if received_message.from_user?
-            mark_as_read!
-            send!
-          end
-          { status: :ok }
+        def process_user_input
+          send_greetings
+        end
+
+        def process_action_input
+          CommentProposalsWorkflow.new(params).show_menu if received_message.button_id == "start"
         end
 
         private
 
-        # Send acknowledgment message back to the user
-        def mark_as_read!
-          adapter.mark_as_read!(received_message)
-        end
-
-        def send!
+        def send_greetings
           message = build_message(
             to: received_message.from,
-            type: :text,
+            type: :interactive_buttons,
             data: {
-              body: "📬 Received:\n#{received_message.body}"
+              header_text: translated_attribute(organization.name),
+              body_text: strip_tags(translated_attribute(organization.description)).truncate(200),
+              buttons: [
+                { id: "start", title: I18n.t("decidim.chatbot.workflows.simple_greetings_workflow.buttons.participate") }
+              ]
             }
           )
 

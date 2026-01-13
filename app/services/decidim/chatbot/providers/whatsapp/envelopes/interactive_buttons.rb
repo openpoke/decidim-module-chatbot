@@ -24,7 +24,7 @@ module Decidim
           #     }
           #   }
           # }
-          class Interactive < Base
+          class InteractiveButtons < Base
             def body
               super.merge(
                 type: "interactive",
@@ -40,7 +40,10 @@ module Decidim
                       { type: "reply", reply: { id: button[:id], title: button[:title] } }
                     end
                   }
-                }
+                }.tap do |interactive|
+                  interactive.delete(:header) if data[:header_text].blank?
+                  interactive.delete(:footer) if data[:footer_text].blank?
+                end
               )
             end
           end

@@ -5,10 +5,14 @@ module Decidim
     module Providers
       class BaseAdapter
         def initialize(params:)
-          @params = params
+          @params = params.dup
         end
 
         attr_reader :params
+
+        def consume_message
+          raise NotImplementedError
+        end
 
         # Extract the received message from the provider's payload
         def received_message

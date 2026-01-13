@@ -27,7 +27,7 @@ module Decidim
       def receive
         Rails.logger.info("Webhook received from: #{provider}")
 
-        head workflow.process![:status]
+        head workflow.start[:status]
       end
 
       private
@@ -39,7 +39,7 @@ module Decidim
       def workflow
         @workflow ||= begin
           manifest = Decidim::Chatbot.start_workflows_registry.find(:simple_greetings)
-          manifest && manifest.workflow.new(params)
+          manifest && manifest.workflow.new(params.merge(organization: current_organization))
         end
       end
     end

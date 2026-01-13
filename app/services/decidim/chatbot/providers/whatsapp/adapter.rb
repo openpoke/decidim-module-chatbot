@@ -29,6 +29,11 @@ module Decidim
             @received_message ||= MessageNormalizer.new(params)
           end
 
+          def consume_message
+            params.delete("entry")
+            params.delete("object")
+          end
+
           def mark_as_read!(message)
             read_receipt = build_message(
               type: :read_receipt,
@@ -40,6 +45,7 @@ module Decidim
           end
 
           def send!(message)
+            Rails.logger.info("Sending Whatsapp message: #{message.body.inspect}")
             url = "#{Decidim::Chatbot.whatsapp_config[:graph_api_url]}#{received_message.phone_number_id}/messages"
             Faraday.post("#{url}?access_token=#{Decidim::Chatbot.whatsapp_config[:access_token]}") do |req|
               req.headers["Content-Type"] = "application/json"

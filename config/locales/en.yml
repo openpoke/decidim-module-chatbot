@@ -1,6 +1,9 @@
 ---
 en:
   decidim:
-    components:
-      Chatbot:
-        name: Chatbot
+    chatbot:
+      workflows:
+        simple_greetings_workflow:
+          buttons:
+            participate: "Participate"
+  
