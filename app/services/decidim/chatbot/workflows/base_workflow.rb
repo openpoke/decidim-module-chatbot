@@ -21,6 +21,7 @@ module Decidim
         delegate :build_message, :received_message, :consume_message, to: :adapter
 
         def start(force_welcome = false) # rubocop:disable Style/OptionalBooleanParameter
+          byebug
           return delegated_workflow.start(force_welcome) if delegated_workflow
 
           mark_as_read if received_message.acknowledgeable?
@@ -49,6 +50,13 @@ module Decidim
         def delegate_workflow(workflow_class)
           @delegated_workflow = workflow_class.new(params.merge(parent_workflow: self))
           @delegated_workflow.start(true)
+        end
+
+        def exit_delegation
+          return unless parent_workflow
+
+          parent_workflow.clear_delegated_workflow
+          parent_workflow.start(true)
         end
 
         # Clear any delegated workflow

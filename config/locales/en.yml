@@ -5,9 +5,10 @@ en:
       workflows:
         organization_welcome_workflow:
           buttons:
-            participate: "Participate"
-            meetings: "Meetings"
+            participate: Participate
             end: Exit & restart
-        meetings_workflow:
-          latest_meetings: "Here are the latest meetings:"
+        participatory_space_workflow:
+          buttons:
+            participate: Participate
+            end: Exit & restart
   

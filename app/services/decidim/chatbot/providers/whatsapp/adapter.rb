@@ -45,12 +45,23 @@ module Decidim
           end
 
           def send!(message)
-            Rails.logger.info("Sending Whatsapp message: #{message.body.inspect}")
+            Rails.logger.debug { "Sending Whatsapp message: #{message.body.inspect}" }
             url = "#{Decidim::Chatbot.whatsapp_config[:graph_api_url]}#{received_message.phone_number_id}/messages"
-            Faraday.post("#{url}?access_token=#{Decidim::Chatbot.whatsapp_config[:access_token]}") do |req|
-              req.headers["Content-Type"] = "application/json"
-              req.body = message.body.to_json
-            end
+            Faraday
+              .post("#{url}?access_token=#{Decidim::Chatbot.whatsapp_config[:access_token]}") do |req|
+                req.headers["Content-Type"] = "application/json"
+                req.body = message.body.to_json
+              end
+              .tap do |response|
+                next if response.success?
+
+                Rails.logger.error(
+                  "Error sending Whatsapp message (status #{response.status}): #{response.body}"
+                )
+              end
+          rescue Faraday::Error => e
+            Rails.logger.error("Faraday error sending Whatsapp message: #{e.class} #{e.message}")
+            raise
           end
         end
       end

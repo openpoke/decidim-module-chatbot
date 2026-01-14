@@ -6,17 +6,14 @@ module Decidim
       class OrganizationWelcomeWorkflow < BaseWorkflow
         def process_user_input
           send_welcome
-          parent_workflow&.clear_delegated_workflow
         end
 
         def process_action_input
           case received_message.button_id
           when "start"
             delegate_workflow(ParticipatorySpaceWorkflow)
-          when "meetings"
-            delegate_workflow(MeetingsWorkflow)
           when "end"
-            clear_delegated_workflow
+            exit_delegation
           end
         end
 
@@ -30,8 +27,7 @@ module Decidim
               header_text: translated_attribute(organization.name),
               body_text: strip_tags(translated_attribute(organization.description)).truncate(200),
               buttons: [
-                { id: "start", title: I18n.t("decidim.chatbot.workflows.organization_welcome_workflow.buttons.participate") },
-                { id: "meetings", title: I18n.t("decidim.chatbot.workflows.organization_welcome_workflow.buttons.meetings") }
+                { id: "start", title: I18n.t("decidim.chatbot.workflows.organization_welcome_workflow.buttons.participate") }
               ].tap do |buttons|
                 buttons << { id: "end", title: I18n.t("decidim.chatbot.workflows.organization_welcome_workflow.buttons.end") } unless parent_workflow.nil?
               end
