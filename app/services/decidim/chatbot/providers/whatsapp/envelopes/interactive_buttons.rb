@@ -11,7 +11,15 @@ module Decidim
                 type: "interactive",
                 interactive: {
                   type: "button",
-                  header: { type: "text", text: data[:header_text] },
+                  header: {}.tap do |header|
+                    if data[:header_text].present?
+                      header[:type] = "text"
+                      header[:text] = data[:header_text]
+                    elsif data[:header_image].present?
+                      header[:type] = "image"
+                      header[:image] = { link: data[:header_image] }
+                    end
+                  end,
                   body: {
                     text: data[:body_text]
                   },
@@ -22,7 +30,7 @@ module Decidim
                     end
                   }
                 }.tap do |interactive|
-                  interactive.delete(:header) if data[:header_text].blank?
+                  interactive.delete(:header) if data[:header_text].blank? && data[:header_image].blank?
                   interactive.delete(:footer) if data[:footer_text].blank?
                 end
               )

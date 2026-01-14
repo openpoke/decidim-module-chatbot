@@ -7,7 +7,7 @@ class CreateDecidimChatbotSenders < ActiveRecord::Migration[7.2]
       t.references :decidim_user, null: true, foreign_key: { to_table: :decidim_users }, index: true
       t.string :from, null: false
       t.string :name, null: true
-      t.jsonb :metadata, null: true
+      t.jsonb :metadata, null: false, default: {}
       t.string :current_workflow_class, null: true
       t.string :parent_workflow_class, null: true
       t.timestamps

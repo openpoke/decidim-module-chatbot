@@ -4,7 +4,7 @@ module Decidim
   module Chatbot
     module Providers
       module Whatsapp
-        class MessageNormalizer
+        class MessageNormalizer < BaseNormalizer
           def initialize(json)
             @json = json
             # Extract the sender's phone number from the incoming message
@@ -34,19 +34,11 @@ module Decidim
             end
           end
 
-          def acknowledgeable?
-            from.present? && message_id.present?
-          end
-
           def user_text?
             from.present? && type == "text"
           end
 
-          def actionable?
-            from.present? && type == "interactive" && button_id.present?
-          end
-
-          attr_reader :json, :message_data, :from, :from_name, :from_metadata, :message_id, :chat_id, :body, :phone_number_id, :to, :type, :button_id
+          attr_reader :json, :phone_number_id
         end
       end
     end

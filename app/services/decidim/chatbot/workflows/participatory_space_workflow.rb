@@ -11,7 +11,7 @@ module Decidim
         def process_action_input
           case received_message.button_id
           when "start"
-            # delegate_workflow(ParticipatorySpaceWorkflow)
+            adapter.send_message!("Hang on! The participation process is not implemented yet.")
           when "end"
             reset_workflows
           end
@@ -24,20 +24,22 @@ module Decidim
             to: received_message.from,
             type: :interactive_buttons,
             data: {
-              header_text: translated_attribute(participatory_space.title),
+              footer_text: translated_attribute(participatory_space.title),
               body_text: strip_tags(translated_attribute(participatory_space.short_description)).truncate(200),
               buttons: [
                 { id: "start", title: I18n.t("decidim.chatbot.workflows.participatory_space_workflow.buttons.participate") }
               ].tap do |buttons|
                 buttons << { id: "end", title: I18n.t("decidim.chatbot.workflows.participatory_space_workflow.buttons.end") } unless parent_workflow.nil?
               end
-            }
+            }.tap do |data|
+              data[:header_image] = participatory_space.attached_uploader(:hero_image).url if participatory_space.hero_image.attached?
+            end
           )
 
           adapter.send!(message)
         end
 
-        # TODO: obtain a participatory space based database configuration
+        # TODO: obtain a participatory space based database configuration or passed parameters
         def participatory_space
           @participatory_space ||= organization.participatory_spaces.first
         end
