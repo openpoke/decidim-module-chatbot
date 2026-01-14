@@ -4,7 +4,7 @@ module Decidim
   module Chatbot
     class Setting < ApplicationRecord
       belongs_to :organization, class_name: "Decidim::Organization", foreign_key: :decidim_organization_id
-      has_many :users, class_name: "Decidim::Chatbot::User", dependent: :destroy
+      has_many :senders, class_name: "Decidim::Chatbot::Sender", dependent: :destroy
       has_many :messages, class_name: "Decidim::Chatbot::Message", dependent: :destroy
 
       def adapter_manifest

@@ -32,8 +32,23 @@ module Decidim
         end
 
         # Send read acknowledgment back to the user (if supported by the provider)
-        def mark_as_read!(_message)
+        def mark_as_read!
           nil
+        end
+
+        # Send "typing..." indicator to the user (if supported by the provider)
+        def mark_as_writing!
+          nil
+        end
+
+        # Send a simple text message to the user
+        def send_message!(text)
+          message = build_message(
+            to: received_message.from,
+            data: { body: text },
+            type: :text
+          )
+          send!(message)
         end
 
         # Send a message to the user

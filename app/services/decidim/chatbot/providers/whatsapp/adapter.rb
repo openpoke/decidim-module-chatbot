@@ -12,11 +12,7 @@ module Decidim
             challenge = params["hub.challenge"]
             Rails.logger.info("Verifying Whatsapp webhook with mode: #{params.inspect}")
 
-            if mode == "subscribe" && token == Decidim::Chatbot.whatsapp_config[:verify_token]
-              { status: :ok, response: challenge }
-            else
-              { status: :forbidden }
-            end
+            challenge if mode == "subscribe" && token == Decidim::Chatbot.whatsapp_config[:verify_token]
           end
 
           def build_message(data:, to: nil, type: :text)
@@ -34,11 +30,11 @@ module Decidim
             params.delete("object")
           end
 
-          def mark_as_read!(message)
+          def mark_as_read!
             read_receipt = build_message(
               type: :read_receipt,
               data: {
-                message_id: message.message_id
+                message_id: received_message.message_id
               }
             )
             send!(read_receipt)

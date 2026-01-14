@@ -2,6 +2,8 @@
 en:
   decidim:
     chatbot:
+      messages:
+        reset_workflows: "Thanks for participating! You can start again by sending any message."
       workflows:
         organization_welcome_workflow:
           buttons:

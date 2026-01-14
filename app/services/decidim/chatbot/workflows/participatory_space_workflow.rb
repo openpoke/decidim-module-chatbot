@@ -13,7 +13,7 @@ module Decidim
           when "start"
             # delegate_workflow(ParticipatorySpaceWorkflow)
           when "end"
-            exit_delegation
+            reset_workflows
           end
         end
 
