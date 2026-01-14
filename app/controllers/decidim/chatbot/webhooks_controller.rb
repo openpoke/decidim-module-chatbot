@@ -15,7 +15,11 @@ module Decidim
         result = workflow.adapter.verify!
 
         if result.present?
-          render plain: result, status: :ok
+          if result.is_a?(Hash)
+            render json: result, status: :ok
+          else
+            render plain: result, status: :ok
+          end
         else
           head :forbidden
         end
@@ -25,10 +29,10 @@ module Decidim
       def receive
         begin
           if sender.nil?
-            # These message include control messages like read receipts, etc.
+            # These messages include control messages like read receipts, etc.
             # We log them but don't process further. This might be changed in the future.
             Rails.logger.warn("Received message from unknown sender: #{received_message.from}")
-          elsif message.nil?
+          elsif message.message_id.nil?
             Rails.logger.warn("Received message with no ID: #{message.inspect}")
           else
             Rails.logger.info("Processing webhook for provider #{provider}, organization #{setting.organization.id}, sender #{sender.id} with workflow #{sender.current_workflow}")
