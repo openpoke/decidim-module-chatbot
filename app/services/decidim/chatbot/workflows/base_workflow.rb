@@ -7,28 +7,26 @@ module Decidim
         include Decidim::TranslatableAttributes
         include ActionView::Helpers::SanitizeHelper
 
-        def initialize(adapter:, message:)
+        def initialize(adapter:, message:, **options)
           @adapter = adapter
           @message = message
+          @options = options
         end
 
-        attr_reader :adapter, :message
+        attr_reader :adapter, :message, :options
 
-        delegate :build_message, :received_message, :consume_message, to: :adapter
+        delegate :build_message, :received_message, to: :adapter
         delegate :setting, :sender, to: :message
         delegate :organization, to: :setting
         delegate :current_workflow, :parent_workflow, to: :sender
 
         def start(force_welcome = false) # rubocop:disable Style/OptionalBooleanParameter
-          # return delegated_workflow.start(force_welcome) if delegated_workflow
-
-          adapter.mark_as_read! if received_message.acknowledgeable?
+          mark_as_read
           if received_message.user_text? || force_welcome
             process_user_input
           elsif received_message.actionable?
             process_action_input
           end
-          # consume_message
         end
 
         protected
@@ -41,6 +39,11 @@ module Decidim
         # Actions started by the user are processed here (button clicks, etc.)
         def process_action_input
           raise NotImplementedError
+        end
+
+        def mark_as_read
+          adapter.mark_as_read! if received_message.acknowledgeable?
+          message.mark_as_read! if message
         end
 
         # Delegate the workflow to another workflow class so subsequent messages are handled there

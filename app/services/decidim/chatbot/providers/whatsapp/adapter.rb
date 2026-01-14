@@ -25,11 +25,6 @@ module Decidim
             @received_message ||= MessageNormalizer.new(params)
           end
 
-          def consume_message
-            params.delete("entry")
-            params.delete("object")
-          end
-
           def mark_as_read!
             read_receipt = build_message(
               type: :read_receipt,
@@ -47,7 +42,7 @@ module Decidim
               .post("#{url}?access_token=#{Decidim::Chatbot.whatsapp_config[:access_token]}") do |req|
                 req.headers["Content-Type"] = "application/json"
                 req.body = message.body.to_json
-              end
+              end # rubocop:disable Style/MultilineBlockChain
               .tap do |response|
                 next if response.success?
 

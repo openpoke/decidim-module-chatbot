@@ -36,14 +36,15 @@ module Decidim
             Rails.logger.warn("Received message with no ID: #{message.inspect}")
           else
             Rails.logger.info("Processing webhook for provider #{provider}, organization #{setting.organization.id}, sender #{sender.id} with workflow #{sender.current_workflow}")
-            I18n.with_locale(sender.metadata["locale"].presence || current_locale) do
+            I18n.with_locale(sender.locale.presence || current_locale) do
               sender.current_workflow.new(adapter:, message:).start
             end
           end
         rescue StandardError => e
           Rails.logger.error("Error processing webhook for provider #{provider}: #{e.message}\n#{e.backtrace.join("\n")}")
         end
-        # always respond with 200 OK to avoid repeated webhook calls (this might be changed in the future depending on provider requirements)
+        # always respond with 200 OK to avoid repeated webhook calls
+        # (this might be changed in the future depending on provider requirements)
         head :ok
       end
 

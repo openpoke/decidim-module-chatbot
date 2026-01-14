@@ -13,6 +13,10 @@ module Decidim
       def parent_workflow
         parent_workflow_class&.safe_constantize
       end
+
+      def locale
+        metadata["locale"].presence || decidim_user&.locale.presence || setting.organization.default_locale
+      end
     end
   end
 end

@@ -10,10 +10,6 @@ module Decidim
 
         attr_reader :params
 
-        def consume_message
-          raise NotImplementedError
-        end
-
         # Extract the received message from the provider's payload
         def received_message
           raise NotImplementedError
@@ -33,11 +29,6 @@ module Decidim
 
         # Send read acknowledgment back to the user (if supported by the provider)
         def mark_as_read!
-          nil
-        end
-
-        # Send "typing..." indicator to the user (if supported by the provider)
-        def mark_as_writing!
           nil
         end
 

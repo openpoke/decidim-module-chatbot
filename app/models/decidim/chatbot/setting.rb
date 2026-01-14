@@ -7,6 +7,8 @@ module Decidim
       has_many :senders, class_name: "Decidim::Chatbot::Sender", dependent: :destroy
       has_many :messages, class_name: "Decidim::Chatbot::Message", dependent: :destroy
 
+      validates :provider, presence: true
+
       def adapter_manifest
         @adapter_manifest ||= Decidim::Chatbot.providers_registry.find(provider.to_sym)
       end
