@@ -62,7 +62,7 @@ curl -X POST http://localhost:3000/chatbot/webhooks/whatsapp \
 	-d '{"entry":[]}'
 ```
 
-> In order to develop locally, it is convenient to use a service such as [ngrok ](ngrok.com)
+> In order to develop locally, it is convenient to use a service such as [ngrok](https://ngrok.com)
 > to expose your local server to the internet. This allows Meta's webhook to reach your development environment.
 
 

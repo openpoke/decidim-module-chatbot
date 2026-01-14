@@ -12,7 +12,7 @@ module Decidim
       # GET /chatbot/webhooks/:provider
       # Used by some providers (e.g., WhatsApp) to verify the endpoint
       def verify
-        result = workflow.adapter.verify!
+        result = adapter.verify!
 
         if result.present?
           if result.is_a?(Hash)
