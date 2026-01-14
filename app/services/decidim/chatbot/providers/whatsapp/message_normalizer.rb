@@ -10,7 +10,7 @@ module Decidim
             # Extract the sender's phone number from the incoming message
             @message_data = json.dig("entry", 0, "changes", 0, "value")
             @phone_number_id = @message_data.dig("metadata", "phone_number_id")
-            @id = json.dig("entry", 0, "id")
+            @chat_id = json.dig("entry", 0, "id")
             return unless @message_data
 
             # Extract message details
@@ -43,7 +43,7 @@ module Decidim
             from.present? && type == "interactive" && button_id.present?
           end
 
-          attr_reader :json, :message_data, :from, :message_id, :id, :body, :phone_number_id, :type, :button_id
+          attr_reader :json, :message_data, :from, :message_id, :chat_id, :body, :phone_number_id, :type, :button_id
         end
       end
     end

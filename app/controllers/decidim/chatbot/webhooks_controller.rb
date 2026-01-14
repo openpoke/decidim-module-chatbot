@@ -6,7 +6,7 @@ module Decidim
       skip_before_action :verify_authenticity_token
 
       before_action do
-        render json: { error: "Provider [#{provider}] not supported" }, status: :bad_request unless workflow&.adapter
+        render json: { error: "Provider [#{provider}] not supported" }, status: :bad_request unless setting&.adapter_manifest
       end
 
       # GET /chatbot/webhooks/:provider
@@ -36,11 +36,12 @@ module Decidim
         params[:provider].to_s
       end
 
+      def setting
+        @setting ||= Decidim::Chatbot::Setting.find_by(organization: current_organization, provider:)
+      end
+
       def workflow
-        @workflow ||= begin
-          manifest = Decidim::Chatbot.start_workflows_registry.find(:organization_welcome)
-          manifest && manifest.workflow.new(params.merge(organization: current_organization))
-        end
+        @workflow ||= setting.workflow.new(params.merge(organization: current_organization))
       end
     end
   end

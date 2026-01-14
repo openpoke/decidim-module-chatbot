@@ -8,20 +8,23 @@ module Decidim
         include ActionView::Helpers::SanitizeHelper
 
         def initialize(params)
-          @params = params
           @provider = params[:provider]
           @parent_workflow = params[:parent_workflow]
-          @adapter_manifest = Decidim::Chatbot.providers_registry.find(provider.to_sym)
-          @adapter = adapter_manifest.adapter.new(params:)
           @organization = params[:organization]
+          @params = params
         end
 
-        attr_reader :params, :adapter, :provider, :adapter_manifest, :organization, :parent_workflow, :delegated_workflow
+        attr_reader :params, :provider, :organization, :parent_workflow, :delegated_workflow
 
-        delegate :build_message, :received_message, :consume_message, to: :adapter
+        delegate :build_message, :consume_message, to: :adapter
 
         def start(force_welcome = false) # rubocop:disable Style/OptionalBooleanParameter
           byebug
+          return { status: :ok }
+          unless setting
+            Rails.logger.error("Setting not found for organization #{organization.id} and provider #{provider}")
+            return { status: :ok }
+          end
           return delegated_workflow.start(force_welcome) if delegated_workflow
 
           mark_as_read if received_message.acknowledgeable?
@@ -67,6 +70,30 @@ module Decidim
         # Send acknowledgment message back to the user
         def mark_as_read
           adapter.mark_as_read!(received_message)
+        end
+
+        def setting
+          @setting ||= Decidim::Chatbot::Setting.find_by(organization:, provider:)
+        end
+
+        def adapter
+          @adapter ||= setting.adapter_manifest.adapter.new(params:)
+        end
+
+        def received_message
+          @received_message ||= setting.messages.find_or_initialize_by(external_id: adapter.received_message.message_id) do |message|
+            message.from = adapter.received_message.from
+            message.to = adapter.received_message.to
+            message.chat_id = adapter.received_message.chat_id
+            message.user = setting.users.find_or_initialize_by(from: message.from)
+            message.content = adapter.received_message.content
+            message.save
+            message
+          end
+        end
+
+        def user
+          @user ||= received_message&.user
         end
       end
     end
