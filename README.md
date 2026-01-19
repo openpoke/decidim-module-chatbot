@@ -10,7 +10,13 @@ Chatbot for integrating Decidim participation in popular chat applications (ie: 
 
 ## Usage
 
-todo..
+
+## Quick Start
+
+- **Communication is user-initiated**: Users must start conversations with your business WhatsApp number
+- **24-hour messaging window**: After a user initiates contact, you have 24 hours to send messages before needing user re-engagement
+- **Delivery status tracking**: Webhook notifications include message delivery status updates from Meta
+- **Configurable conversation timeout**: Automatically reset conversations after a specified idle period
 
 ## Installation
 
@@ -29,11 +35,121 @@ bin/rails decidim:upgrade
 
 > **EXPERTS ONLY**
 >
-> Under the hood, when running `bundle exec rails decidim:upgrade` the `decidim-chatbot` gem will run the following two tasks (that can also be run manually if you consider):
+> When you run `bin/rails decidim:upgrade`, Decidim's upgrade process is extended by this gem so that `decidim_chatbot` is included in the set of plugins handled by `decidim:choose_target_plugins`. Once selected there, the standard Decidim upgrade pipeline will apply this plugin's migrations.
+>
+> Running `bin/rails decidim:upgrade` is usually all you need. However, you can also run the migrations for this gem explicitly with:
 >
 > ```bash
 > bin/rails decidim_chatbot:install:migrations
 > ```
+
+### Architecture & workflows
+
+#### Implementation Diagram
+![Architecture diagram](docs/architecture.svg)
+
+#### Final User Interaction Flow (End-to-End)
+![Sequence diagram](docs/sequence.svg)
+
+#### Workflows
+
+Workflows provide a way to define what logic will users encounter when interacting with the chatbot.
+Some workflows can be registered as "start workflows" using the standard Manifest mechanism in Decidim.
+
+The admin must enable one of these "starting workflow" in order to allow communication between users and the chatbot.
+Workflows can also be configured with certain settings (if applicable).
+
+Other workflows can be started from the initial one, these workflows do not need to be registered in any manifest.
+
+
+See the [Engine](lib/decidim/chatbot/engine.rb) for the initialization of the built-in start workflows:
+
+```ruby
+	Decidim::Chatbot.start_workflows_registry.register(:organization_welcome) do |manifest|
+		manifest.workflow_class = "Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow"
+	end
+```
+
+### Webhook endpoint
+
+- Path (mounted): POST /chatbot/webhooks/:provider, GET /chatbot/webhooks/:provider
+- Currently supported provider: `whatsapp`.
+- WhatsApp verification (GET): set `WHATSAPP_VERIFY_TOKEN` in environment. Meta will call the endpoint with `hub.mode`, `hub.verify_token`, and `hub.challenge`. When the token matches, the endpoint echoes the `hub.challenge` with 200.
+- Delivery (POST): the endpoint acknowledges with 200 for supported providers. Signature verification and payload processing can be added later per provider.
+
+Example verify request:
+
+```bash
+curl -G \
+	--data-urlencode "hub.mode=subscribe" \
+	--data-urlencode "hub.verify_token=$WHATSAPP_VERIFY_TOKEN" \
+	--data-urlencode "hub.challenge=abc123" \
+	http://localhost:3000/chatbot/webhooks/whatsapp
+```
+
+Example delivery request:
+
+```bash
+curl -X POST http://localhost:3000/chatbot/webhooks/whatsapp \
+	-H 'Content-Type: application/json' \
+	-d '{"entry":[]}'
+```
+
+> In order to develop locally, it is convenient to use a service such as [ngrok](https://ngrok.com)
+> to expose your local server to the internet. This allows Meta's webhook to reach your development environment.
+> If you use ngrok, just start the proxy with:
+>
+> ```bash
+> ngrok http 300
+> ```
+>
+> This will give you a domain name, change the domain of your "localhost" organization:
+>
+> ``bash
+> bin/rails c
+> Decidim::Organization.first.update(host: "the-domain-from-ngrok")
+> ```
+
+
+## Providers
+
+Note: Currently only WhatsApp is supported (PRs welcomed!)
+
+### WhatsApp API Configuration
+
+The Decidim Chatbot module supports integration with the **WhatsApp Business API**. Follow these steps to set up your WhatsApp developer environment.
+
+#### 1. Create a WhatsApp Business Account
+1. Go to [Meta for Developers](https://developers.facebook.com/) portal.
+2. Create a **Facebook Business Manager** account if you don’t already have one.
+3. Set up a **WhatsApp Business Account** and register a phone number.
+
+#### 2. Generate Access Credentials
+1. In your WhatsApp Business Account, create a **WhatsApp API app**.
+2. Obtain the following credentials:
+   - **Phone Number ID**
+   - **WhatsApp API Token**
+   - **Webhook Verify Secret** (used to validate the webhook endpoint, this is a user-defined value, needs to be configured in Decidim and Whatsapp developers settings)
+
+#### 3. Configure Webhooks
+1. In the WhatsApp API app settings, configure a **Webhook URL** pointing to your Decidim instance:
+https://your-decidim-domain.com/chatbot/webhooks/whatsapp
+2. Enable the following webhook events:
+- `messages`
+- `message_reactions`
+- `message_deliveries` (optional)
+3. Verify your webhook using the secret set in your Decidim Chatbot settings.
+
+### 4. Environment Variables
+
+Add the following variables to your `.env` or server environment:
+
+```bash
+# WhatsApp Provider Configuration
+WHATSAPP_PROVIDER_NAME=whatsapp
+WHATSAPP_VERIFY_TOKEN=anything-you-want-here
+WHATSAPP_ACCESS_TOKEN=your_whatsapp_api_token_here
+```
 
 ## Contributing
 

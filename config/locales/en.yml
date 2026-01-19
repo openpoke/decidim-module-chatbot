@@ -1,6 +1,17 @@
 ---
 en:
   decidim:
-    components:
-      Chatbot:
-        name: Chatbot
+    chatbot:
+      messages:
+        reset_workflows: "Thanks for participating! You can start again by sending any message."
+      workflows:
+        organization_welcome_workflow:
+          buttons:
+            participate: Participate
+            end: Exit & restart
+        participatory_space_workflow:
+          no_spaces: "There are no active participatory spaces at the moment. Please try again later."
+          buttons:
+            participate: Participate
+            end: Exit & restart
+  

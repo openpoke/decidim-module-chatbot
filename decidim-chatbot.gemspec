@@ -31,4 +31,5 @@ Gem::Specification.new do |s|
   end
 
   s.add_dependency "decidim-core", Decidim::Chatbot::COMPAT_DECIDIM_VERSION
+  s.add_dependency "faraday", "> 2.0"
 end
