@@ -5,10 +5,10 @@ require "spec_helper"
 module Decidim
   module Chatbot
     module Workflows
-      describe OrganizationWelcomeWorkflow do
+      describe ParticipatorySpaceWorkflow do
         subject { described_class.new(adapter:, message:) }
 
-        let(:organization) { create(:organization, name: { en: "Test Organization" }, description: { en: "Test Description" }) }
+        let(:organization) { create(:organization) }
         let(:setting) { create(:chatbot_setting, organization:) }
         let(:sender) { create(:chatbot_sender, setting:) }
         let(:message) { create(:chatbot_message, setting:, sender:) }
@@ -26,6 +26,13 @@ module Decidim
           )
         end
 
+        let!(:participatory_process) do
+          create(:participatory_process,
+                 organization:,
+                 title: { en: "Test Process" },
+                 short_description: { en: "Short description of the process" })
+        end
+
         before do
           allow(adapter).to receive(:received_message).and_return(received_message)
           allow(adapter).to receive(:mark_as_read!)
@@ -35,7 +42,7 @@ module Decidim
         end
 
         describe "#initialize" do
-          it "creates an instance of OrganizationWelcomeWorkflow" do
+          it "creates an instance of ParticipatorySpaceWorkflow" do
             expect(subject).to be_a(described_class)
           end
         end
@@ -47,12 +54,12 @@ module Decidim
               allow(received_message).to receive(:actionable?).and_return(false)
             end
 
-            it "sends a welcome message with organization info" do
+            it "sends a welcome message with participatory space info" do
               expect(adapter).to receive(:build_message).with(
                 to: "123456789",
                 type: :interactive_buttons,
                 data: hash_including(
-                  header_text: "Test Organization",
+                  footer_text: "Test Process",
                   buttons: array_including(
                     hash_including(id: "start")
                   )
@@ -73,31 +80,15 @@ module Decidim
           end
 
           context "when user clicks start button" do
-            let(:participatory_space_workflow_instance) { instance_double(ParticipatorySpaceWorkflow) }
-
             before do
               allow(received_message).to receive(:user_text?).and_return(false)
               allow(received_message).to receive(:actionable?).and_return(true)
               allow(received_message).to receive(:button_id).and_return("start")
-              allow(ParticipatorySpaceWorkflow).to receive(:new).and_return(participatory_space_workflow_instance)
-              allow(participatory_space_workflow_instance).to receive(:start)
             end
 
-            it "delegates to ParticipatorySpaceWorkflow" do
-              expect(participatory_space_workflow_instance).to receive(:start).with(true)
+            it "sends a not implemented message" do
+              expect(adapter).to receive(:send_message!).with("Hang on! The participation process is not implemented yet.")
               subject.start
-            end
-
-            it "updates sender's current_workflow_class" do
-              subject.start
-              sender.reload
-              expect(sender.current_workflow_class).to eq("Decidim::Chatbot::Workflows::ParticipatorySpaceWorkflow")
-            end
-
-            it "sets parent_workflow_class to current workflow" do
-              subject.start
-              sender.reload
-              expect(sender.parent_workflow_class).to eq("Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow")
             end
           end
 
@@ -147,7 +138,7 @@ module Decidim
 
           context "when parent_workflow exists" do
             before do
-              sender.update!(parent_workflow_class: "Decidim::Chatbot::Workflows::BaseWorkflow")
+              sender.update!(parent_workflow_class: "Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow")
             end
 
             it "includes both participate and end buttons" do
@@ -161,25 +152,102 @@ module Decidim
           end
         end
 
-        describe "organization content sanitization" do
-          let(:organization) do
-            create(:organization,
-                   name: { en: "Organization" },
-                   description: { en: "<p>Description with <strong>HTML</strong></p>" })
-          end
-
+        describe "participatory space content" do
           before do
             allow(received_message).to receive(:user_text?).and_return(true)
             allow(received_message).to receive(:actionable?).and_return(false)
           end
 
-          it "strips HTML tags from description" do
+          it "includes the participatory space title in footer" do
             expect(adapter).to receive(:build_message) do |args|
-              body_text = args[:data][:body_text]
-              expect(body_text).not_to include("<p>")
-              expect(body_text).not_to include("<strong>")
-              expect(body_text).to include("Description with HTML")
+              expect(args[:data][:footer_text]).to eq("Test Process")
             end.and_return(envelope)
+            subject.start
+          end
+
+          it "includes the short description in body" do
+            expect(adapter).to receive(:build_message) do |args|
+              expect(args[:data][:body_text]).to include("Short description")
+            end.and_return(envelope)
+            subject.start
+          end
+
+          context "with HTML in description" do
+            let!(:participatory_process) do
+              create(:participatory_process,
+                     organization:,
+                     title: { en: "Test Process" },
+                     short_description: { en: "<p>Description with <strong>HTML</strong></p>" })
+            end
+
+            it "strips HTML tags" do
+              expect(adapter).to receive(:build_message) do |args|
+                body_text = args[:data][:body_text]
+                expect(body_text).not_to include("<p>")
+                expect(body_text).not_to include("<strong>")
+              end.and_return(envelope)
+              subject.start
+            end
+          end
+
+          context "with hero image attached" do
+            let!(:participatory_process) do
+              process = create(:participatory_process,
+                               organization:,
+                               title: { en: "Test Process" },
+                               short_description: { en: "Description" })
+              process.hero_image.attach(
+                io: File.open(Decidim::Dev.asset("city.jpeg")),
+                filename: "city.jpeg",
+                content_type: "image/jpeg"
+              )
+              process
+            end
+
+            it "includes header_image in the message" do
+              expect(adapter).to receive(:build_message) do |args|
+                expect(args[:data]).to have_key(:header_image)
+                expect(args[:data][:header_image]).to be_present
+              end.and_return(envelope)
+              subject.start
+            end
+          end
+
+          context "without hero image" do
+            let!(:participatory_process) do
+              create(:participatory_process,
+                     :unpublished,
+                     organization:,
+                     title: { en: "Test Process" },
+                     short_description: { en: "Description" },
+                     hero_image: nil)
+            end
+
+            before do
+              participatory_process.hero_image.purge if participatory_process.hero_image.attached?
+              participatory_process.publish!
+            end
+
+            it "does not include header_image" do
+              expect(adapter).to receive(:build_message) do |args|
+                expect(args[:data]).not_to have_key(:header_image)
+              end.and_return(envelope)
+              subject.start
+            end
+          end
+        end
+
+        describe "when no participatory spaces exist" do
+          before do
+            participatory_process.destroy
+            allow(received_message).to receive(:user_text?).and_return(true)
+            allow(received_message).to receive(:actionable?).and_return(false)
+          end
+
+          it "sends a no spaces message" do
+            expect(adapter).to receive(:send_message!).with(
+              I18n.t("decidim.chatbot.workflows.participatory_space_workflow.no_spaces")
+            )
             subject.start
           end
         end

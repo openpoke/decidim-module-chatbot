@@ -5,6 +5,8 @@ module Decidim
     module Workflows
       class ParticipatorySpaceWorkflow < BaseWorkflow
         def process_user_input
+          return adapter.send_message!(I18n.t("decidim.chatbot.workflows.participatory_space_workflow.no_spaces")) if participatory_space.nil?
+
           send_welcome
         end
 

@@ -10,6 +10,7 @@ en:
             participate: Participate
             end: Exit & restart
         participatory_space_workflow:
+          no_spaces: "There are no active participatory spaces at the moment. Please try again later."
           buttons:
             participate: Participate
             end: Exit & restart
