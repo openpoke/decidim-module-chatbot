@@ -2,16 +2,64 @@
 en:
   decidim:
     chatbot:
+      providers:
+        whatsapp:
+          name: "WhatsApp"
+          description: "Enable to receive and respond to messages via WhatsApp Business API."
+      admin:
+        menu:
+          chatbot: "Chatbot"
+        settings:
+          index:
+            title: "Chatbot Settings"
+            providers_title: "Messaging providers"
+            provider: "Provider"
+            status: "Status"
+            enabled: "Enabled"
+            disabled: "Disabled"
+            actions: "Actions"
+            configure: "Configure"
+            enable: "Enable"
+            disable: "Disable"
+            provider_description: "Enable to receive and respond to messages via this provider."
+            provider_enabled_description: "The chatbot is enabled and ready to receive messages."
+          toggle:
+            enabled: "Chatbot has been enabled."
+            disabled: "Chatbot has been disabled."
+          edit:
+            title: "Chatbot configuration"
+          form:
+            enabled: "Enable chatbot"
+            enabled_help: "When enabled, the chatbot will respond to incoming messages"
+            current_workflow: "Current workflow (%{provider})"
+            current_workflow_help: "The workflow that starts when a user sends a message"
+            workflow_configuration_title: "Configuration for %{workflow}"
+            participatory_space: "Choose the participatory space"
+            participatory_space_help: "Select the participatory space for the chatbot"
+            select_space: "Select a participatory space..."
+            component: "Choose the component"
+            component_help: "Select the component users can interact with"
+            select_component: "Select a component..."
+            write_action: "Write action"
+            write_action_help: "Select which action users can perform through the chatbot (optional)"
+            select_action: "Select an action..."
+            save: "Save settings"
+            cancel: "Cancel"
+          update:
+            success: "Chatbot settings saved successfully."
+            error: "There was an error saving the settings."
       messages:
         reset_workflows: "Thanks for participating! You can start again by sending any message."
       workflows:
         organization_welcome_workflow:
           buttons:
-            participate: Participate
-            end: Exit & restart
+            participate: "Participate"
+            end: "Exit & restart"
         participatory_space_workflow:
+          not_configured: "The chatbot is not configured yet. Please contact the administrator."
           no_spaces: "There are no active participatory spaces at the moment. Please try again later."
           buttons:
-            participate: Participate
-            end: Exit & restart
-  
+            participate: "Participate"
+            end: "Exit & restart"
+          write_actions:
+            coming_soon: "This feature is coming soon!"

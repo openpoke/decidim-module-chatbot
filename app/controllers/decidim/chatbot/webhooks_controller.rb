@@ -9,6 +9,8 @@ module Decidim
         render json: { error: "Provider [#{provider}] not supported" }, status: :bad_request unless setting&.adapter_manifest
       end
 
+      before_action :check_enabled, only: [:receive]
+
       # GET /chatbot/webhooks/:provider
       # Used by some providers (e.g., WhatsApp) to verify the endpoint
       def verify
@@ -27,28 +29,50 @@ module Decidim
 
       # POST /chatbot/webhooks/:provider
       def receive
-        begin
-          if sender.nil?
-            # These messages include control messages like read receipts, etc.
-            # We log them but don't process further. This might be changed in the future.
-            Rails.logger.warn("Received message from unknown sender: #{received_message.from}")
-          elsif message.message_id.nil?
-            Rails.logger.warn("Received message with no ID: #{message.inspect}")
-          else
-            Rails.logger.info("Processing webhook for provider #{provider}, organization #{setting.organization.id}, sender #{sender.id} with workflow #{sender.current_workflow}")
-            I18n.with_locale(sender.locale.presence || current_locale) do
-              sender.current_workflow.new(adapter:, message:).start
-            end
-          end
-        rescue StandardError => e
-          Rails.logger.error("Error processing webhook for provider #{provider}: #{e.message}\n#{e.backtrace.join("\n")}")
-        end
-        # always respond with 200 OK to avoid repeated webhook calls
-        # (this might be changed in the future depending on provider requirements)
+        process_incoming_message
         head :ok
       end
 
       private
+
+      def check_enabled
+        return if setting&.enabled?
+
+        Rails.logger.info("Chatbot is disabled for provider #{provider}, ignoring message")
+        head :ok
+      end
+
+      def process_incoming_message
+        return log_unknown_sender if sender.nil?
+        return log_missing_message_id if message.message_id.nil?
+
+        execute_workflow
+      rescue ActiveRecord::RecordInvalid => e
+        Rails.logger.error("Database error processing webhook: #{e.message}")
+      rescue Faraday::Error => e
+        Rails.logger.error("Network error sending response: #{e.message}")
+      rescue StandardError => e
+        Rails.logger.error("Unexpected error processing webhook for provider #{provider}: #{e.message}\n#{e.backtrace.first(10).join("\n")}")
+      end
+
+      def log_unknown_sender
+        Rails.logger.warn("Received message from unknown sender: #{received_message.from}")
+      end
+
+      def log_missing_message_id
+        Rails.logger.warn("Received message with no ID: #{message.inspect}")
+      end
+
+      def execute_workflow
+        Rails.logger.info("Processing webhook for provider #{provider}, organization #{setting.organization.id}, sender #{sender.id}")
+        I18n.with_locale(sender_locale) do
+          sender.current_workflow.new(adapter:, message:).start
+        end
+      end
+
+      def sender_locale
+        sender.locale.presence || current_locale
+      end
 
       delegate :received_message, to: :adapter
 

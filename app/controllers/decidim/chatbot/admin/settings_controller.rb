@@ -1,0 +1,110 @@
+# frozen_string_literal: true
+
+module Decidim
+  module Chatbot
+    module Admin
+      class SettingsController < ApplicationController
+        helper_method :available_providers, :current_setting, :setting_for_provider
+
+        def index
+          enforce_permission_to :update, :organization, organization: current_organization
+          @provider_manifests = Decidim::Chatbot.providers_registry.manifests
+        end
+
+        def edit
+          enforce_permission_to :update, :organization, organization: current_organization
+          @form = form(SettingForm).from_model(current_setting)
+        end
+
+        def update
+          enforce_permission_to :update, :organization, organization: current_organization
+          @form = form(SettingForm).from_params(params)
+
+          UpdateSetting.call(@form, current_setting) do
+            on(:ok) do
+              flash[:notice] = I18n.t("settings.update.success", scope: "decidim.chatbot.admin")
+              redirect_to settings_path
+            end
+
+            on(:invalid) do
+              flash.now[:alert] = I18n.t("settings.update.error", scope: "decidim.chatbot.admin")
+              render :edit
+            end
+          end
+        end
+
+        def components
+          enforce_permission_to :update, :organization, organization: current_organization
+          space = find_participatory_space
+          return render json: [] unless space
+
+          render json: space.components.published.map { |c|
+            { id: c.id, name: translated_attribute(c.name), manifest_name: c.manifest_name }
+          }
+        end
+
+        def actions
+          enforce_permission_to :update, :organization, organization: current_organization
+          component = Decidim::Component.find_by(id: params[:component_id])
+          return render json: [] unless component
+
+          manifest = Decidim.find_component_manifest(component.manifest_name)
+          return render json: [] unless manifest
+
+          render json: manifest.actions.map { |action|
+            { id: action, name: action.to_s.humanize }
+          }
+        end
+
+        def toggle
+          enforce_permission_to :update, :organization, organization: current_organization
+          new_enabled = current_setting.toggle_enabled!
+
+          respond_to do |format|
+            format.html do
+              flash[:notice] = toggle_flash_message(new_enabled)
+              redirect_to settings_path
+            end
+            format.json do
+              render json: { enabled: new_enabled }
+            end
+          end
+        end
+
+        private
+
+        def find_participatory_space
+          return nil if params[:space_gid].blank?
+
+          GlobalID::Locator.locate(params[:space_gid])
+        end
+
+        def toggle_flash_message(enabled)
+          key = enabled ? "settings.toggle.enabled" : "settings.toggle.disabled"
+          I18n.t(key, scope: "decidim.chatbot.admin")
+        end
+
+        def available_providers
+          Decidim::Chatbot.providers_registry.manifests.map(&:name)
+        end
+
+        def current_setting
+          @current_setting ||= Decidim::Chatbot::Setting.find_or_initialize_by(
+            organization: current_organization,
+            provider: params[:id] || "whatsapp"
+          ) do |setting|
+            setting.start_workflow = "single_participatory_space_workflow"
+          end
+        end
+
+        def setting_for_provider(provider)
+          settings_by_provider[provider.to_s]
+        end
+
+        def settings_by_provider
+          @settings_by_provider ||= Decidim::Chatbot::Setting.where(organization: current_organization).index_by(&:provider)
+        end
+      end
+    end
+  end
+end

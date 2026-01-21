@@ -1,0 +1,56 @@
+<%= decidim_form_for(@form, url: setting_path(id: params[:id]), method: :patch, html: { class: "form-defaults form edit_setting" }) do |form| %>
+  <div class="form__wrapper"
+       data-controller="chatbot-settings"
+       data-chatbot-settings-components-url-value="<%= components_setting_path(id: params[:id]) %>"
+       data-chatbot-settings-actions-url-value="<%= actions_setting_path(id: params[:id]) %>">
+    <% workflow_name = @form.workflow_display_name %>
+
+    <div class="card pt-4">
+      <div class="card-section">
+        <div class="row column">
+          <%= form.select :start_workflow,
+              @form.available_workflows,
+              { label: t(".current_workflow", provider: provider) },
+              { data: { action: "change->chatbot-settings#updateWorkflowHeading", chatbot_settings_target: "workflowSelect" } } %>
+        </div>
+      </div>
+
+      <div class="card-divider">
+        <h2 class="card-title" data-chatbot-settings-target="configurationHeading">
+          Configuration for <%= workflow_name %>
+        </h2>
+      </div>
+
+      <div class="card-section">
+        <div class="row column">
+          <%= form.select :participatory_space_gid,
+              @form.available_spaces,
+              { include_blank: t(".select_space"), label: t(".participatory_space") },
+              { data: { action: "change->chatbot-settings#loadComponents", chatbot_settings_target: "spaceSelect" } } %>
+        </div>
+
+        <div class="row column" data-chatbot-settings-target="componentsWrapper" style="<%= @form.participatory_space.blank? ? 'display:none;' : '' %>">
+          <%= form.select :component_id,
+              @form.available_components,
+              { include_blank: t(".select_component"), label: t(".component") },
+              { data: { action: "change->chatbot-settings#loadActions", chatbot_settings_target: "componentSelect" } } %>
+        </div>
+
+        <div class="row column" data-chatbot-settings-target="actionsWrapper" style="<%= @form.component_id.blank? ? 'display:none;' : '' %>">
+          <%= form.select :write_action,
+              @form.available_actions_for_select,
+              { include_blank: t(".select_action"), label: t(".write_action") },
+              { data: { chatbot_settings_target: "actionsSelect" } } %>
+          <span class="help-text"><%= t(".write_action_help") %></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="item__edit-sticky">
+      <div class="item__edit-sticky-container">
+        <%= form.submit t(".save"), class: "button button__sm button__secondary" %>
+        <%= link_to t(".cancel"), settings_path, class: "button button__sm button__transparent-secondary" %>
+      </div>
+    </div>
+  </div>
+<% end %>

@@ -7,7 +7,7 @@ module Decidim
       has_many :senders, class_name: "Decidim::Chatbot::Sender", dependent: :destroy
       has_many :messages, class_name: "Decidim::Chatbot::Message", dependent: :destroy
 
-      validates :provider, presence: true
+      validates :provider, presence: true, uniqueness: { scope: :decidim_organization_id }
 
       def adapter_manifest
         @adapter_manifest ||= Decidim::Chatbot.providers_registry.find(provider.to_sym)
@@ -15,6 +15,82 @@ module Decidim
 
       def workflow
         @workflow ||= Decidim::Chatbot.start_workflows_registry.find(start_workflow.to_sym).workflow
+      end
+
+      def enabled?
+        configuration[:enabled] == true
+      end
+
+      def participatory_space
+        return @participatory_space if defined?(@participatory_space)
+
+        @participatory_space = find_participatory_space
+      end
+
+      def selected_component
+        return @selected_component if defined?(@selected_component)
+
+        @selected_component = find_selected_component
+      end
+
+      def write_action
+        configuration[:write_action]
+      end
+
+      def action_allowed?(action)
+        write_action == action.to_s
+      end
+
+      def available_actions
+        return [] unless selected_component
+
+        component_manifest&.actions || []
+      end
+
+      def component_manifest
+        return nil unless selected_component
+
+        Decidim.find_component_manifest(selected_component.manifest_name)
+      end
+
+      def toggle_enabled!
+        self.config = (config || {}).merge("enabled" => !enabled?)
+        save!
+        reset_memoization!
+        enabled?
+      end
+
+      def reset_memoization!
+        @configuration = nil
+        @participatory_space = nil
+        @selected_component = nil
+      end
+
+      def valid_configuration?
+        return true unless enabled?
+
+        participatory_space.present? && selected_component.present?
+      end
+
+      private
+
+      def configuration
+        @configuration ||= (config || {}).with_indifferent_access
+      end
+
+      def find_participatory_space
+        type = configuration[:participatory_space_type]
+        id = configuration[:participatory_space_id]
+        return nil if type.blank? || id.blank?
+
+        klass = type.safe_constantize
+        klass&.find_by(id: id)
+      end
+
+      def find_selected_component
+        return nil unless participatory_space && configuration[:component_id].present?
+
+        participatory_space.components.find_by(id: configuration[:component_id])
       end
     end
   end

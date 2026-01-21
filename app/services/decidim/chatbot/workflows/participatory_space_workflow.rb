@@ -5,6 +5,8 @@ module Decidim
     module Workflows
       class ParticipatorySpaceWorkflow < BaseWorkflow
         def process_user_input
+          return adapter.send_message!(I18n.t("decidim.chatbot.workflows.participatory_space_workflow.not_configured")) unless setting.enabled?
+
           return adapter.send_message!(I18n.t("decidim.chatbot.workflows.participatory_space_workflow.no_spaces")) if participatory_space.nil?
 
           send_welcome
@@ -41,9 +43,23 @@ module Decidim
           adapter.send!(message)
         end
 
-        # TODO: obtain a participatory space based database configuration or passed parameters
         def participatory_space
-          @participatory_space ||= organization.participatory_spaces.first
+          @participatory_space ||= setting.participatory_space
+        end
+
+        def component
+          @component ||= setting.selected_component
+        end
+
+        def can_write?
+          setting.write_action.present?
+        end
+
+        def handle_write_action
+          case setting.write_action
+          when "create_proposal"
+            adapter.send_message!(I18n.t("decidim.chatbot.workflows.participatory_space_workflow.write_actions.coming_soon"))
+          end
         end
       end
     end
