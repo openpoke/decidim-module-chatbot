@@ -22,9 +22,7 @@ module Decidim
           self.enabled = model.enabled?
           self.start_workflow = model.start_workflow
 
-          if model.participatory_space.present?
-            self.participatory_space_gid = model.participatory_space.to_global_id.to_s
-          end
+          self.participatory_space_gid = model.participatory_space.to_global_id.to_s if model.participatory_space.present?
 
           config = (model.config || {}).with_indifferent_access
           self.component_id = config[:component_id]
