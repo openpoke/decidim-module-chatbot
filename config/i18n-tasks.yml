@@ -5,6 +5,10 @@ locales: [en]
 
 ignore_unused:
   - "decidim.components.Chatbot.name"
+  # Dynamic keys (scope/interpolation)
+  - "decidim.chatbot.admin.menu.chatbot"
+  - "decidim.chatbot.admin.settings.toggle.*"
+  - "decidim.chatbot.providers.*"
 
 ignore_missing:
   - decidim.participatory_processes.scopes.global
