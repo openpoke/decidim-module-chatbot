@@ -11,12 +11,16 @@ en:
           form:
             cancel: Cancel
             component: Choose the component
+            configuration_for: Configuration for %{workflow}
             current_workflow: Current workflow (%{provider})
+            loading: Loading...
+            no_actions_available: No actions available
             participatory_space: Choose the participatory space
             save: Save settings
             select_action: Select an action...
             select_component: Select a component...
             select_space: Select a participatory space...
+            select_space_first: Select a participatory space first
             write_action: Write action
             write_action_help: Select which action users can perform through the chatbot
               (optional)

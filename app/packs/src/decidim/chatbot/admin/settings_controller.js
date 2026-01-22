@@ -1,24 +1,22 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["spaceSelect", "componentsWrapper", "componentSelect", "workflowSelect", "configurationHeading", "actionsWrapper", "actionsSelect"]
-  static values = { componentsUrl: String, actionsUrl: String }
+  static targets = ["spaceSelect", "componentsWrapper", "componentSelect", "actionsWrapper", "actionsSelect"]
+  static values = {
+    componentsUrl: String,
+    actionsUrl: String,
+    loadingText: String,
+    selectComponentText: String,
+    selectActionText: String,
+    noActionsText: String,
+    selectSpaceFirstText: String
+  }
 
   connect() {
     this.componentsData = []
 
     if (this.hasComponentSelectTarget && !this.spaceSelectTarget?.value) {
       this.componentSelectTarget.disabled = true
-    }
-  }
-
-  updateWorkflowHeading(event) {
-    if (!this.hasConfigurationHeadingTarget) return
-
-    const selectedOption = event.target.options[event.target.selectedIndex]
-    if (selectedOption) {
-      let workflowName = selectedOption.text.replace(/\s*Workflow$/i, "")
-      this.configurationHeadingTarget.textContent = `Configuration for ${workflowName}`
     }
   }
 
@@ -35,7 +33,7 @@ export default class extends Controller {
     this.showComponentsWrapper()
     this.hideActionsWrapper()
     componentSelect.disabled = true
-    componentSelect.innerHTML = '<option value="">Loading...</option>'
+    componentSelect.innerHTML = `<option value="">${this.loadingTextValue}</option>`
 
     try {
       const url = `${this.componentsUrlValue}?space_gid=${encodeURIComponent(spaceGid)}`
@@ -68,7 +66,7 @@ export default class extends Controller {
 
     const actionsSelect = this.actionsSelectTarget
     actionsSelect.disabled = true
-    actionsSelect.innerHTML = '<option value="">Loading...</option>'
+    actionsSelect.innerHTML = `<option value="">${this.loadingTextValue}</option>`
 
     try {
       const url = `${this.actionsUrlValue}?component_id=${encodeURIComponent(componentId)}`
@@ -85,13 +83,13 @@ export default class extends Controller {
       this.renderActionsOptions(actionsSelect, actions)
     } catch (error) {
       console.error("Failed to load actions:", error)
-      actionsSelect.innerHTML = '<option value="">No actions available</option>'
+      actionsSelect.innerHTML = `<option value="">${this.noActionsTextValue}</option>`
       actionsSelect.disabled = true
     }
   }
 
   renderComponentOptions(select, components) {
-    select.innerHTML = '<option value="">Select a component...</option>'
+    select.innerHTML = `<option value="">${this.selectComponentTextValue}</option>`
 
     components.forEach(component => {
       const option = document.createElement("option")
@@ -105,10 +103,10 @@ export default class extends Controller {
   }
 
   renderActionsOptions(select, actions) {
-    select.innerHTML = '<option value="">Select an action...</option>'
+    select.innerHTML = `<option value="">${this.selectActionTextValue}</option>`
 
     if (actions.length === 0) {
-      select.innerHTML = '<option value="">No actions available</option>'
+      select.innerHTML = `<option value="">${this.noActionsTextValue}</option>`
       select.disabled = true
       return
     }
@@ -124,7 +122,7 @@ export default class extends Controller {
   }
 
   renderEmptySelect(select) {
-    select.innerHTML = '<option value="">Select a participatory space first</option>'
+    select.innerHTML = `<option value="">${this.selectSpaceFirstTextValue}</option>`
     select.disabled = true
   }
 

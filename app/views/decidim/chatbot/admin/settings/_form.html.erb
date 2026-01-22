@@ -2,7 +2,12 @@
   <div class="form__wrapper"
        data-controller="chatbot-settings"
        data-chatbot-settings-components-url-value="<%= components_setting_path(id: params[:id]) %>"
-       data-chatbot-settings-actions-url-value="<%= actions_setting_path(id: params[:id]) %>">
+       data-chatbot-settings-actions-url-value="<%= actions_setting_path(id: params[:id]) %>"
+       data-chatbot-settings-loading-text-value="<%= t('.loading') %>"
+       data-chatbot-settings-select-component-text-value="<%= t('.select_component') %>"
+       data-chatbot-settings-select-action-text-value="<%= t('.select_action') %>"
+       data-chatbot-settings-no-actions-text-value="<%= t('.no_actions_available') %>"
+       data-chatbot-settings-select-space-first-text-value="<%= t('.select_space_first') %>">
     <% workflow_name = @form.workflow_display_name %>
 
     <div class="card pt-4">
@@ -10,14 +15,13 @@
         <div class="row column">
           <%= form.select :start_workflow,
               @form.available_workflows,
-              { label: t(".current_workflow", provider: provider) },
-              { data: { action: "change->chatbot-settings#updateWorkflowHeading", chatbot_settings_target: "workflowSelect" } } %>
+              { label: t(".current_workflow", provider: provider) } %>
         </div>
       </div>
 
       <div class="card-divider">
-        <h2 class="card-title" data-chatbot-settings-target="configurationHeading">
-          Configuration for <%= workflow_name %>
+        <h2 class="card-title">
+          <%= t(".configuration_for", workflow: workflow_name) %>
         </h2>
       </div>
 
