@@ -92,9 +92,61 @@ module Decidim
               allow(received_message).to receive(:button_id).and_return("start")
             end
 
-            it "sends a not implemented message" do
-              expect(adapter).to receive(:send_message!).with("Hang on! The participation process is not implemented yet.")
+            it "sends a participate prompt message" do
+              expect(adapter).to receive(:build_message).with(
+                to: "123456789",
+                type: :interactive_buttons,
+                data: hash_including(
+                  buttons: array_including(
+                    hash_including(id: "participate")
+                  )
+                )
+              )
               subject.start
+            end
+          end
+
+          context "when user clicks participate button" do
+            before do
+              allow(received_message).to receive(:user_text?).and_return(false)
+              allow(received_message).to receive(:actionable?).and_return(true)
+              allow(received_message).to receive(:button_id).and_return("participate")
+            end
+
+            context "when write_action is configured" do
+              let(:setting_config) do
+                {
+                  enabled: true,
+                  participatory_space_type: "Decidim::ParticipatoryProcess",
+                  participatory_space_id: participatory_process.id,
+                  write_action: "create_proposal"
+                }
+              end
+
+              it "sends a coming soon message" do
+                expect(adapter).to receive(:send_message!).with(
+                  I18n.t("decidim.chatbot.workflows.participatory_space_workflow.write_actions.coming_soon")
+                )
+                subject.start
+              end
+            end
+
+            context "when write_action is not configured" do
+              let(:setting_config) do
+                {
+                  enabled: true,
+                  participatory_space_type: "Decidim::ParticipatoryProcess",
+                  participatory_space_id: participatory_process.id,
+                  write_action: nil
+                }
+              end
+
+              it "sends a read-only mode message" do
+                expect(adapter).to receive(:send_message!).with(
+                  I18n.t("decidim.chatbot.workflows.participatory_space_workflow.read_only_mode")
+                )
+                subject.start
+              end
             end
           end
 
@@ -132,7 +184,7 @@ module Decidim
           end
 
           context "when parent_workflow is nil" do
-            it "includes only the participate button" do
+            it "includes only the start button" do
               expect(adapter).to receive(:build_message) do |args|
                 buttons = args[:data][:buttons]
                 expect(buttons.length).to eq(1)
@@ -147,7 +199,7 @@ module Decidim
               sender.update!(parent_workflow_class: "Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow")
             end
 
-            it "includes both participate and end buttons" do
+            it "includes both start and end buttons" do
               expect(adapter).to receive(:build_message) do |args|
                 buttons = args[:data][:buttons]
                 expect(buttons.length).to eq(2)

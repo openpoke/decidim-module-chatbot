@@ -50,8 +50,12 @@ en:
           buttons:
             end: Exit & restart
             participate: Participate
+            start: Start
           no_spaces: There are no active participatory spaces at the moment. Please
             try again later.
           not_configured: The chatbot is not configured yet. Please contact the administrator.
+          participate_prompt: Great! You can now participate in this space. Click the button below to continue.
+          read_only_mode: This participatory space is currently in read-only mode. You can view information but cannot submit contributions yet.
           write_actions:
-            coming_soon: This feature is coming soon!
+            coming_soon: This feature is coming soon! You will be able to create proposals through this chat.
+            unknown_action: This action is not supported yet.
