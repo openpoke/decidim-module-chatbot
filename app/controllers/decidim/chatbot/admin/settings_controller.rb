@@ -4,7 +4,7 @@ module Decidim
   module Chatbot
     module Admin
       class SettingsController < ApplicationController
-        helper_method :available_providers, :current_setting, :setting_for_provider
+        helper_method :setting_for_provider
 
         def index
           enforce_permission_to :update, :organization, organization: current_organization
@@ -28,7 +28,7 @@ module Decidim
 
             on(:invalid) do
               flash.now[:alert] = I18n.t("settings.update.error", scope: "decidim.chatbot.admin")
-              render :edit
+              render :edit, status: :unprocessable_entity
             end
           end
         end
@@ -82,10 +82,6 @@ module Decidim
         def toggle_flash_message(enabled)
           key = enabled ? "settings.toggle.enabled" : "settings.toggle.disabled"
           I18n.t(key, scope: "decidim.chatbot.admin")
-        end
-
-        def available_providers
-          Decidim::Chatbot.providers_registry.manifests.map(&:name)
         end
 
         def current_setting
