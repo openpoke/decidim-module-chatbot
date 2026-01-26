@@ -12,6 +12,7 @@ module Decidim
         attribute :component_id, Integer
 
         validates :start_workflow, presence: true
+        # TODO: refator to read only a "config"
         validates :participatory_space_gid, presence: true, if: :enabled?
         validates :component_id, presence: true, if: :enabled?
         validate :space_exists, if: -> { participatory_space_gid.present? }

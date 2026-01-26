@@ -16,6 +16,9 @@
               { label: t(".current_workflow", provider: provider) },
               { data: { action: "change->chatbot-settings#updateWorkflowTitle" } } %>
         </div>
+        <div class="row column">
+          <%= form.check_box :enabled, label: t(".enabled") %>
+        </div>
       </div>
 
       <div class="card-divider">
@@ -24,6 +27,7 @@
         </h2>
       </div>
 
+      <!-- TODO: Refactor to use manifest views for the workflow -->
       <div class="card-section">
         <div class="row column">
           <%= form.select :participatory_space_gid,
