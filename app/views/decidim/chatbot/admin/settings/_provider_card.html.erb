@@ -1,0 +1,41 @@
+<% setting = setting_for_provider(provider.name) %>
+<% is_enabled = setting&.enabled? %>
+<% toggle_id = "toggle_#{provider.name}" %>
+
+<div class="bg-white rounded border border-gray-100 p-6 mb-6" id="provider-<%= provider.name %>" data-controller="provider-toggle" data-provider-toggle-url-value="<%= toggle_setting_path(id: provider.name) %>">
+  <div class="flex items-center justify-between mb-4">
+    <div class="flex items-center gap-4">
+      <%= icon provider.icon, class: "fill-secondary w-10 h-10" %>
+      <h2 class="text-xl font-semibold mb-0"><%= t(provider.public_name_key) %></h2>
+    </div>
+
+    <div class="toggle__switch-trigger w-14 flex-shrink-0">
+      <label for="<%= toggle_id %>" class="toggle__switch-toggle !w-auto">
+        <span>
+          <input type="checkbox"
+                 id="<%= toggle_id %>"
+                 data-provider-toggle-target="checkbox"
+                 data-action="change->provider-toggle#toggle"
+                 <%= "checked" if is_enabled %>>
+          <span class="toggle__switch-toggle-content"></span>
+          <%= icon "check-line", class: "toggle__switch-toggle-icon" %>
+          <%= icon "close-line", class: "toggle__switch-toggle-icon" %>
+        </span>
+      </label>
+    </div>
+  </div>
+
+  <% description = t(provider.description_key, default: nil) %>
+  <% if description.present? %>
+    <div class="callout">
+      <%= description %>
+    </div>
+  <% end %>
+
+  <div class="mt-4">
+    <%= link_to edit_setting_path(id: provider.name), class: "button button__sm button__secondary" do %>
+      <%= icon "settings-4-line" %>
+      <%= t("configure", scope: "decidim.chatbot.admin.settings.index") %>
+    <% end %>
+  </div>
+</div>

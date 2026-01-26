@@ -5,6 +5,8 @@ module Decidim
     module Workflows
       class ParticipatorySpaceWorkflow < BaseWorkflow
         def process_user_input
+          return adapter.send_message!(I18n.t("decidim.chatbot.workflows.participatory_space_workflow.not_configured")) unless setting.enabled?
+
           return adapter.send_message!(I18n.t("decidim.chatbot.workflows.participatory_space_workflow.no_spaces")) if participatory_space.nil?
 
           send_welcome
@@ -13,7 +15,11 @@ module Decidim
         def process_action_input
           case received_message.button_id
           when "start"
-            adapter.send_message!("Hang on! The participation process is not implemented yet.")
+            # TODO: Temporary stub. Shows a message with "Participate" button.
+            # Future: This could show more details about the component or available actions.
+            send_participate_prompt
+          when "participate"
+            adapter.send_message!(I18n.t("decidim.chatbot.workflows.participatory_space_workflow.read_only_mode"))
           when "end"
             reset_workflows
           end
@@ -29,7 +35,7 @@ module Decidim
               footer_text: translated_attribute(participatory_space.title),
               body_text: strip_tags(translated_attribute(participatory_space.short_description)).truncate(200),
               buttons: [
-                { id: "start", title: I18n.t("decidim.chatbot.workflows.participatory_space_workflow.buttons.participate") }
+                { id: "start", title: I18n.t("decidim.chatbot.workflows.participatory_space_workflow.buttons.start") }
               ].tap do |buttons|
                 buttons << { id: "end", title: I18n.t("decidim.chatbot.workflows.participatory_space_workflow.buttons.end") } unless parent_workflow.nil?
               end
@@ -41,9 +47,30 @@ module Decidim
           adapter.send!(message)
         end
 
-        # TODO: obtain a participatory space based database configuration or passed parameters
+        # TODO: Temporary stub. Shows component info and "Participate" button.
+        # Future: Could show available actions, component description, etc.
+        def send_participate_prompt
+          message = build_message(
+            to: received_message.from,
+            type: :interactive_buttons,
+            data: {
+              body_text: I18n.t("decidim.chatbot.workflows.participatory_space_workflow.participate_prompt"),
+              buttons: [
+                { id: "participate", title: I18n.t("decidim.chatbot.workflows.participatory_space_workflow.buttons.participate") },
+                { id: "end", title: I18n.t("decidim.chatbot.workflows.participatory_space_workflow.buttons.end") }
+              ]
+            }
+          )
+
+          adapter.send!(message)
+        end
+
         def participatory_space
-          @participatory_space ||= organization.participatory_spaces.first
+          @participatory_space ||= setting.participatory_space
+        end
+
+        def component
+          @component ||= setting.selected_component
         end
       end
     end

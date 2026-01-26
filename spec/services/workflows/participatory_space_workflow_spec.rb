@@ -9,7 +9,20 @@ module Decidim
         subject { described_class.new(adapter:, message:) }
 
         let(:organization) { create(:organization) }
-        let(:setting) { create(:chatbot_setting, organization:) }
+        let!(:participatory_process) do
+          create(:participatory_process,
+                 organization:,
+                 title: { en: "Test Process" },
+                 short_description: { en: "Short description of the process" })
+        end
+        let(:setting_config) do
+          {
+            enabled: true,
+            participatory_space_type: "Decidim::ParticipatoryProcess",
+            participatory_space_id: participatory_process.id
+          }
+        end
+        let(:setting) { create(:chatbot_setting, organization:, config: setting_config) }
         let(:sender) { create(:chatbot_sender, setting:) }
         let(:message) { create(:chatbot_message, setting:, sender:) }
         let(:adapter) { instance_double(Providers::Whatsapp::Adapter) }
@@ -24,13 +37,6 @@ module Decidim
             acknowledgeable?: true,
             button_id: nil
           )
-        end
-
-        let!(:participatory_process) do
-          create(:participatory_process,
-                 organization:,
-                 title: { en: "Test Process" },
-                 short_description: { en: "Short description of the process" })
         end
 
         before do
@@ -86,8 +92,31 @@ module Decidim
               allow(received_message).to receive(:button_id).and_return("start")
             end
 
-            it "sends a not implemented message" do
-              expect(adapter).to receive(:send_message!).with("Hang on! The participation process is not implemented yet.")
+            it "sends a participate prompt message" do
+              expect(adapter).to receive(:build_message).with(
+                to: "123456789",
+                type: :interactive_buttons,
+                data: hash_including(
+                  buttons: array_including(
+                    hash_including(id: "participate")
+                  )
+                )
+              )
+              subject.start
+            end
+          end
+
+          context "when user clicks participate button" do
+            before do
+              allow(received_message).to receive(:user_text?).and_return(false)
+              allow(received_message).to receive(:actionable?).and_return(true)
+              allow(received_message).to receive(:button_id).and_return("participate")
+            end
+
+            it "sends a read-only mode message" do
+              expect(adapter).to receive(:send_message!).with(
+                I18n.t("decidim.chatbot.workflows.participatory_space_workflow.read_only_mode")
+              )
               subject.start
             end
           end
@@ -126,7 +155,7 @@ module Decidim
           end
 
           context "when parent_workflow is nil" do
-            it "includes only the participate button" do
+            it "includes only the start button" do
               expect(adapter).to receive(:build_message) do |args|
                 buttons = args[:data][:buttons]
                 expect(buttons.length).to eq(1)
@@ -141,7 +170,7 @@ module Decidim
               sender.update!(parent_workflow_class: "Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow")
             end
 
-            it "includes both participate and end buttons" do
+            it "includes both start and end buttons" do
               expect(adapter).to receive(:build_message) do |args|
                 buttons = args[:data][:buttons]
                 expect(buttons.length).to eq(2)
@@ -237,9 +266,32 @@ module Decidim
           end
         end
 
-        describe "when no participatory spaces exist" do
+        describe "when chatbot is not enabled" do
+          let(:setting_config) { { enabled: false } }
+
           before do
-            participatory_process.destroy
+            allow(received_message).to receive(:user_text?).and_return(true)
+            allow(received_message).to receive(:actionable?).and_return(false)
+          end
+
+          it "sends a not configured message" do
+            expect(adapter).to receive(:send_message!).with(
+              I18n.t("decidim.chatbot.workflows.participatory_space_workflow.not_configured")
+            )
+            subject.start
+          end
+        end
+
+        describe "when no participatory spaces exist" do
+          let(:setting_config) do
+            {
+              enabled: true,
+              participatory_space_type: "Decidim::ParticipatoryProcess",
+              participatory_space_id: 999_999
+            }
+          end
+
+          before do
             allow(received_message).to receive(:user_text?).and_return(true)
             allow(received_message).to receive(:actionable?).and_return(false)
           end

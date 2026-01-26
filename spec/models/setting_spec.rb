@@ -72,5 +72,180 @@ module Decidim::Chatbot
         expect(setting.workflow).to eq(Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow)
       end
     end
+
+    describe "#enabled?" do
+      context "when config has enabled set to true" do
+        let(:setting) { build(:chatbot_setting, organization:, config: { "enabled" => true }) }
+
+        it { expect(setting.enabled?).to be true }
+      end
+
+      context "when config has enabled set to false" do
+        let(:setting) { build(:chatbot_setting, organization:, config: { "enabled" => false }) }
+
+        it { expect(setting.enabled?).to be false }
+      end
+
+      context "when config is empty" do
+        let(:setting) { build(:chatbot_setting, organization:, config: {}) }
+
+        it { expect(setting.enabled?).to be false }
+      end
+
+      context "when config is nil" do
+        let(:setting) { build(:chatbot_setting, organization:, config: nil) }
+
+        it { expect(setting.enabled?).to be false }
+      end
+    end
+
+    describe "#participatory_space" do
+      let!(:participatory_process) { create(:participatory_process, organization:) }
+
+      context "when config has valid participatory space" do
+        let(:setting) do
+          build(:chatbot_setting, organization:, config: {
+                  "participatory_space_type" => "Decidim::ParticipatoryProcess",
+                  "participatory_space_id" => participatory_process.id
+                })
+        end
+
+        it "returns the participatory space" do
+          expect(setting.participatory_space).to eq(participatory_process)
+        end
+      end
+
+      context "when participatory_space_type is missing" do
+        let(:setting) do
+          build(:chatbot_setting, organization:, config: {
+                  "participatory_space_id" => participatory_process.id
+                })
+        end
+
+        it "returns nil" do
+          expect(setting.participatory_space).to be_nil
+        end
+      end
+
+      context "when participatory_space_id is missing" do
+        let(:setting) do
+          build(:chatbot_setting, organization:, config: {
+                  "participatory_space_type" => "Decidim::ParticipatoryProcess"
+                })
+        end
+
+        it "returns nil" do
+          expect(setting.participatory_space).to be_nil
+        end
+      end
+
+      context "when participatory_space_type is invalid class" do
+        let(:setting) do
+          build(:chatbot_setting, organization:, config: {
+                  "participatory_space_type" => "InvalidClass",
+                  "participatory_space_id" => participatory_process.id
+                })
+        end
+
+        it "returns nil" do
+          expect(setting.participatory_space).to be_nil
+        end
+      end
+
+      context "when participatory space does not exist" do
+        let(:setting) do
+          build(:chatbot_setting, organization:, config: {
+                  "participatory_space_type" => "Decidim::ParticipatoryProcess",
+                  "participatory_space_id" => 999_999
+                })
+        end
+
+        it "returns nil" do
+          expect(setting.participatory_space).to be_nil
+        end
+      end
+
+      context "when config is empty" do
+        let(:setting) { build(:chatbot_setting, organization:, config: {}) }
+
+        it "returns nil" do
+          expect(setting.participatory_space).to be_nil
+        end
+      end
+    end
+
+    describe "#selected_component" do
+      let!(:participatory_process) { create(:participatory_process, organization:) }
+      let!(:component) { create(:component, participatory_space: participatory_process) }
+
+      context "when config has valid component" do
+        let(:setting) do
+          build(:chatbot_setting, organization:, config: {
+                  "participatory_space_type" => "Decidim::ParticipatoryProcess",
+                  "participatory_space_id" => participatory_process.id,
+                  "component_id" => component.id
+                })
+        end
+
+        it "returns the component" do
+          expect(setting.selected_component).to eq(component)
+        end
+      end
+
+      context "when component_id is missing" do
+        let(:setting) do
+          build(:chatbot_setting, organization:, config: {
+                  "participatory_space_type" => "Decidim::ParticipatoryProcess",
+                  "participatory_space_id" => participatory_process.id
+                })
+        end
+
+        it "returns nil" do
+          expect(setting.selected_component).to be_nil
+        end
+      end
+
+      context "when participatory space is not configured" do
+        let(:setting) do
+          build(:chatbot_setting, organization:, config: {
+                  "component_id" => component.id
+                })
+        end
+
+        it "returns nil" do
+          expect(setting.selected_component).to be_nil
+        end
+      end
+
+      context "when component does not exist" do
+        let(:setting) do
+          build(:chatbot_setting, organization:, config: {
+                  "participatory_space_type" => "Decidim::ParticipatoryProcess",
+                  "participatory_space_id" => participatory_process.id,
+                  "component_id" => 999_999
+                })
+        end
+
+        it "returns nil" do
+          expect(setting.selected_component).to be_nil
+        end
+      end
+
+      context "when component belongs to different space" do
+        let!(:other_process) { create(:participatory_process, organization:) }
+        let!(:other_component) { create(:component, participatory_space: other_process) }
+        let(:setting) do
+          build(:chatbot_setting, organization:, config: {
+                  "participatory_space_type" => "Decidim::ParticipatoryProcess",
+                  "participatory_space_id" => participatory_process.id,
+                  "component_id" => other_component.id
+                })
+        end
+
+        it "returns nil" do
+          expect(setting.selected_component).to be_nil
+        end
+      end
+    end
   end
 end

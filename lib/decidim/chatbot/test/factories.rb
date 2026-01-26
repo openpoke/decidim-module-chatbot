@@ -9,6 +9,22 @@ FactoryBot.define do
     provider { "whatsapp" }
     start_workflow { "organization_welcome" }
     config { {} }
+
+    trait :enabled do
+      transient do
+        space { create(:participatory_process, organization:) }
+        component { create(:component, participatory_space: space) }
+      end
+
+      config do
+        {
+          enabled: true,
+          participatory_space_type: space.class.name,
+          participatory_space_id: space.id,
+          component_id: component.id
+        }
+      end
+    end
   end
 
   factory :chatbot_sender, class: "Decidim::Chatbot::Sender" do

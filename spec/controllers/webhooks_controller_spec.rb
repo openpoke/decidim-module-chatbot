@@ -136,6 +136,7 @@ module Decidim::Chatbot
       let(:workflow_instance) { instance_double(Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow) }
 
       before do
+        setting.update!(config: { "enabled" => true })
         allow(Decidim::Chatbot::Providers::Whatsapp::Adapter).to receive(:new).and_return(adapter_instance)
         allow(adapter_instance).to receive(:send!)
         allow(adapter_instance).to receive(:mark_as_read!)
@@ -257,9 +258,10 @@ module Decidim::Chatbot
         end
 
         it "logs the error and returns 200 OK" do
-          expect(Rails.logger).to receive(:error).with(/Error processing webhook/)
+          allow(Rails.logger).to receive(:error)
           post :receive, params: { provider: }.merge(whatsapp_payload)
           expect(response).to have_http_status(:ok)
+          expect(Rails.logger).to have_received(:error).with(/error processing webhook/i)
         end
       end
 

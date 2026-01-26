@@ -16,9 +16,15 @@ module Decidim
         end
       end
 
-      initializer "decidim-chatbot.admin_mount_routes" do
+      initializer "decidim_chatbot.mount_routes" do
         Decidim::Core::Engine.routes do
           mount Decidim::Chatbot::Engine, at: "/chatbot", as: "decidim_chatbot"
+        end
+      end
+
+      initializer "decidim_chatbot.admin_mount_routes" do
+        Decidim::Admin::Engine.routes do
+          mount Decidim::Chatbot::AdminEngine, at: "/chatbot", as: "decidim_admin_chatbot"
         end
       end
 
@@ -27,7 +33,8 @@ module Decidim
         Decidim::Chatbot.start_workflows_registry.register(:organization_welcome) do |manifest|
           manifest.workflow_class = "Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow"
         end
-        Decidim::Chatbot.start_workflows_registry.register(:participatory_space) do |manifest|
+
+        Decidim::Chatbot.start_workflows_registry.register(:single_participatory_space_workflow) do |manifest|
           manifest.workflow_class = "Decidim::Chatbot::Workflows::ParticipatorySpaceWorkflow"
         end
       end
@@ -35,6 +42,7 @@ module Decidim
       initializer "decidim-chatbot.default_providers" do
         Decidim::Chatbot.providers_registry.register(:whatsapp) do |manifest|
           manifest.adapter_class = "Decidim::Chatbot::Providers::Whatsapp::Adapter"
+          manifest.icon = "whatsapp-line"
         end
       end
 

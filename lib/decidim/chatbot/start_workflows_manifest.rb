@@ -12,6 +12,10 @@ module Decidim
       def workflow
         workflow_class.safe_constantize
       end
+
+      def title
+        I18n.t("decidim.chatbot.workflows.#{name}.title")
+      end
     end
   end
 end
