@@ -40,7 +40,8 @@ export default class extends Controller {
     componentSelect.innerHTML = `<option value="">${this.loadingTextValue}</option>`
 
     try {
-      const url = `${this.componentsUrlValue}?space_gid=${encodeURIComponent(spaceGid)}`
+      const separator = this.componentsUrlValue.includes('?') ? '&' : '?'
+      const url = `${this.componentsUrlValue}${separator}space_gid=${encodeURIComponent(spaceGid)}`
       const response = await fetch(url, {
         headers: {
           "Accept": "application/json",
