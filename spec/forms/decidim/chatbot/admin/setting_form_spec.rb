@@ -197,7 +197,7 @@ module Decidim::Chatbot::Admin
         let(:enabled) { nil }
 
         it "returns falsy" do
-          expect(form.enabled?).to be_falsey
+          expect(form).not_to be_enabled
         end
       end
     end
