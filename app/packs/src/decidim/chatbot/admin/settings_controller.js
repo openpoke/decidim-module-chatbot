@@ -1,12 +1,13 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["spaceSelect", "componentsWrapper", "componentSelect"]
+  static targets = ["spaceSelect", "componentsWrapper", "componentSelect", "workflowHeading"]
   static values = {
     componentsUrl: String,
     loadingText: String,
     selectComponentText: String,
-    selectSpaceFirstText: String
+    selectSpaceFirstText: String,
+    configurationForText: String
   }
 
   connect() {
@@ -14,6 +15,14 @@ export default class extends Controller {
 
     if (this.hasComponentSelectTarget && !this.spaceSelectTarget?.value) {
       this.componentSelectTarget.disabled = true
+    }
+  }
+
+  updateWorkflowTitle(event) {
+    const select = event.target
+    const selectedOption = select.options[select.selectedIndex]
+    if (this.hasWorkflowHeadingTarget && selectedOption) {
+      this.workflowHeadingTarget.textContent = this.configurationForTextValue.replace("%{workflow}", selectedOption.text)
     }
   }
 

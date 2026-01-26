@@ -46,10 +46,7 @@ module Decidim
         end
 
         def workflow_display_name
-          return "Workflow" if start_workflow.blank?
-
-          manifest = Decidim::Chatbot.start_workflows_registry.find(start_workflow.to_sym)
-          manifest&.title || start_workflow.to_s.titleize
+          Decidim::Chatbot.start_workflows_registry.find(start_workflow)&.title
         end
 
         def available_components

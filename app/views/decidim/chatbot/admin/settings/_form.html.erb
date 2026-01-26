@@ -4,7 +4,8 @@
        data-chatbot-settings-components-url-value="<%= components_setting_path(id: params[:id]) %>"
        data-chatbot-settings-loading-text-value="<%= t('.loading') %>"
        data-chatbot-settings-select-component-text-value="<%= t('.select_component') %>"
-       data-chatbot-settings-select-space-first-text-value="<%= t('.select_space_first') %>">
+       data-chatbot-settings-select-space-first-text-value="<%= t('.select_space_first') %>"
+       data-chatbot-settings-configuration-for-text-value="<%= t('.configuration_for', workflow: '%{workflow}') %>">
     <% workflow_name = @form.workflow_display_name %>
 
     <div class="card pt-4">
@@ -12,12 +13,13 @@
         <div class="row column">
           <%= form.select :start_workflow,
               @form.available_workflows,
-              { label: t(".current_workflow", provider: provider) } %>
+              { label: t(".current_workflow", provider: provider) },
+              { data: { action: "change->chatbot-settings#updateWorkflowTitle" } } %>
         </div>
       </div>
 
       <div class="card-divider">
-        <h2 class="card-title">
+        <h2 class="card-title" data-chatbot-settings-target="workflowHeading">
           <%= t(".configuration_for", workflow: workflow_name) %>
         </h2>
       </div>
