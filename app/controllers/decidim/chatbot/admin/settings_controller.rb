@@ -43,19 +43,6 @@ module Decidim
           }
         end
 
-        def actions
-          enforce_permission_to :update, :organization, organization: current_organization
-          component = Decidim::Component.find_by(id: params[:component_id])
-          return render json: [] unless component
-
-          manifest = Decidim.find_component_manifest(component.manifest_name)
-          return render json: [] unless manifest
-
-          render json: manifest.actions.map { |action|
-            { id: action, name: action.to_s.humanize }
-          }
-        end
-
         def toggle
           enforce_permission_to :update, :organization, organization: current_organization
           new_enabled = current_setting.toggle_enabled!

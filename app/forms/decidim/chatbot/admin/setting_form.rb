@@ -10,7 +10,6 @@ module Decidim
         attribute :start_workflow, String
         attribute :participatory_space_gid, String
         attribute :component_id, Integer
-        attribute :write_action, String
 
         validates :start_workflow, presence: true
         validates :participatory_space_gid, presence: true, if: :enabled?
@@ -26,7 +25,6 @@ module Decidim
 
           config = (model.config || {}).with_indifferent_access
           self.component_id = config[:component_id]
-          self.write_action = config[:write_action]
         end
 
         def participatory_space
@@ -36,33 +34,22 @@ module Decidim
         end
 
         def available_spaces
-          spaces = []
-
-          if defined?(Decidim::ParticipatoryProcess)
-            Decidim::ParticipatoryProcess.where(organization: current_organization).published.each do |space|
-              spaces << [translated_attribute(space.title), space.to_global_id.to_s]
-            end
+          current_organization.participatory_spaces.map do |space|
+            [translated_attribute(space.title), space.to_global_id.to_s]
           end
-
-          if defined?(Decidim::Assembly)
-            Decidim::Assembly.where(organization: current_organization).published.each do |space|
-              spaces << [translated_attribute(space.title), space.to_global_id.to_s]
-            end
-          end
-
-          spaces
         end
 
         def available_workflows
           Decidim::Chatbot.start_workflows_registry.manifests.map do |manifest|
-            [manifest.name.to_s.titleize, manifest.name.to_s]
+            [manifest.title, manifest.name.to_s]
           end
         end
 
         def workflow_display_name
           return "Workflow" if start_workflow.blank?
 
-          start_workflow.to_s.sub(/_workflow$/, "").titleize
+          manifest = Decidim::Chatbot.start_workflows_registry.find(start_workflow.to_sym)
+          manifest&.title || start_workflow.to_s.titleize
         end
 
         def available_components
@@ -71,25 +58,6 @@ module Decidim
           participatory_space.components.published.map do |component|
             [translated_attribute(component.name), component.id]
           end
-        end
-
-        def available_actions_for_select
-          return [] unless selected_component
-
-          manifest = Decidim.find_component_manifest(selected_component.manifest_name)
-          return [] unless manifest
-
-          manifest.actions.map { |action| [action.to_s.humanize, action] }
-        end
-
-        def selected_component
-          return nil unless participatory_space.present? && component_id.present?
-
-          participatory_space.components.find_by(id: component_id)
-        end
-
-        def enabled?
-          enabled == true
         end
 
         private

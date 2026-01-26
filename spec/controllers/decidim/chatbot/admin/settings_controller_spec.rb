@@ -89,8 +89,7 @@ module Decidim::Chatbot::Admin
             enabled: true,
             start_workflow: "participatory_space",
             participatory_space_gid: participatory_process.to_global_id.to_s,
-            component_id: component.id,
-            write_action: ""
+            component_id: component.id
           }
         }
       end
@@ -102,8 +101,7 @@ module Decidim::Chatbot::Admin
             enabled: true,
             start_workflow: "participatory_space",
             participatory_space_gid: "",
-            component_id: nil,
-            write_action: ""
+            component_id: nil
           }
         }
       end
@@ -173,8 +171,7 @@ module Decidim::Chatbot::Admin
               enabled: false,
               start_workflow: "organization_welcome",
               participatory_space_gid: "",
-              component_id: "",
-              write_action: ""
+              component_id: ""
             }
           }
         end

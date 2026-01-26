@@ -32,8 +32,7 @@ module Decidim
             enabled: form.enabled,
             participatory_space_type: form.participatory_space&.class&.name,
             participatory_space_id: form.participatory_space&.id,
-            component_id: form.component_id,
-            write_action: form.write_action.presence
+            component_id: form.component_id
           }
         end
       end

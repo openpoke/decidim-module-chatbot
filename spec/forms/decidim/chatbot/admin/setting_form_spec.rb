@@ -14,15 +14,13 @@ module Decidim::Chatbot::Admin
     let(:start_workflow) { "organization_welcome" }
     let(:participatory_space_gid) { nil }
     let(:component_id) { nil }
-    let(:write_action) { nil }
 
     let(:params) do
       {
         enabled:,
         start_workflow:,
         participatory_space_gid:,
-        component_id:,
-        write_action:
+        component_id:
       }
     end
 
@@ -54,12 +52,6 @@ module Decidim::Chatbot::Admin
       let(:component_id) { component.id }
 
       context "with valid space and component" do
-        it { is_expected.to be_valid }
-      end
-
-      context "with write_action set" do
-        let(:write_action) { "create_proposal" }
-
         it { is_expected.to be_valid }
       end
 
@@ -204,8 +196,8 @@ module Decidim::Chatbot::Admin
       context "when enabled is nil" do
         let(:enabled) { nil }
 
-        it "returns false" do
-          expect(form.enabled?).to be false
+        it "returns falsy" do
+          expect(form.enabled?).to be_falsey
         end
       end
     end

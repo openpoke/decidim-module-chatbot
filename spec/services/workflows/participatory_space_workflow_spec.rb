@@ -113,40 +113,11 @@ module Decidim
               allow(received_message).to receive(:button_id).and_return("participate")
             end
 
-            context "when write_action is configured" do
-              let(:setting_config) do
-                {
-                  enabled: true,
-                  participatory_space_type: "Decidim::ParticipatoryProcess",
-                  participatory_space_id: participatory_process.id,
-                  write_action: "create_proposal"
-                }
-              end
-
-              it "sends a coming soon message" do
-                expect(adapter).to receive(:send_message!).with(
-                  I18n.t("decidim.chatbot.workflows.participatory_space_workflow.write_actions.coming_soon")
-                )
-                subject.start
-              end
-            end
-
-            context "when write_action is not configured" do
-              let(:setting_config) do
-                {
-                  enabled: true,
-                  participatory_space_type: "Decidim::ParticipatoryProcess",
-                  participatory_space_id: participatory_process.id,
-                  write_action: nil
-                }
-              end
-
-              it "sends a read-only mode message" do
-                expect(adapter).to receive(:send_message!).with(
-                  I18n.t("decidim.chatbot.workflows.participatory_space_workflow.read_only_mode")
-                )
-                subject.start
-              end
+            it "sends a read-only mode message" do
+              expect(adapter).to receive(:send_message!).with(
+                I18n.t("decidim.chatbot.workflows.participatory_space_workflow.read_only_mode")
+              )
+              subject.start
             end
           end
 

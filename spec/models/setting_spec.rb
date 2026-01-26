@@ -247,31 +247,5 @@ module Decidim::Chatbot
         end
       end
     end
-
-    describe "#write_action" do
-      context "when write_action is set" do
-        let(:setting) { build(:chatbot_setting, organization:, config: { "write_action" => "create_proposal" }) }
-
-        it "returns the write action" do
-          expect(setting.write_action).to eq("create_proposal")
-        end
-      end
-
-      context "when write_action is nil" do
-        let(:setting) { build(:chatbot_setting, organization:, config: { "write_action" => nil }) }
-
-        it "returns nil" do
-          expect(setting.write_action).to be_nil
-        end
-      end
-
-      context "when write_action is not set" do
-        let(:setting) { build(:chatbot_setting, organization:, config: {}) }
-
-        it "returns nil" do
-          expect(setting.write_action).to be_nil
-        end
-      end
-    end
   end
 end

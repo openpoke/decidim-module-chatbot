@@ -8,6 +8,7 @@ module Decidim
 
       attribute :name, Symbol
       attribute :workflow_class, String
+      attribute :title, String
 
       def workflow
         workflow_class.safe_constantize

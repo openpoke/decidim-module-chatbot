@@ -2,11 +2,8 @@
   <div class="form__wrapper"
        data-controller="chatbot-settings"
        data-chatbot-settings-components-url-value="<%= components_setting_path(id: params[:id]) %>"
-       data-chatbot-settings-actions-url-value="<%= actions_setting_path(id: params[:id]) %>"
        data-chatbot-settings-loading-text-value="<%= t('.loading') %>"
        data-chatbot-settings-select-component-text-value="<%= t('.select_component') %>"
-       data-chatbot-settings-select-action-text-value="<%= t('.select_action') %>"
-       data-chatbot-settings-no-actions-text-value="<%= t('.no_actions_available') %>"
        data-chatbot-settings-select-space-first-text-value="<%= t('.select_space_first') %>">
     <% workflow_name = @form.workflow_display_name %>
 
@@ -37,15 +34,7 @@
           <%= form.select :component_id,
               @form.available_components,
               { include_blank: t(".select_component"), label: t(".component") },
-              { data: { action: "change->chatbot-settings#loadActions", chatbot_settings_target: "componentSelect" } } %>
-        </div>
-
-        <div class="row column" data-chatbot-settings-target="actionsWrapper" style="<%= @form.component_id.blank? ? 'display:none;' : '' %>">
-          <%= form.select :write_action,
-              @form.available_actions_for_select,
-              { include_blank: t(".select_action"), label: t(".write_action") },
-              { data: { chatbot_settings_target: "actionsSelect" } } %>
-          <span class="help-text"><%= t(".write_action_help") %></span>
+              { data: { chatbot_settings_target: "componentSelect" } } %>
         </div>
       </div>
     </div>

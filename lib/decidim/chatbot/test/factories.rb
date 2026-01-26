@@ -21,8 +21,7 @@ FactoryBot.define do
           enabled: true,
           participatory_space_type: space.class.name,
           participatory_space_id: space.id,
-          component_id: component.id,
-          write_action: nil
+          component_id: component.id
         }
       end
     end

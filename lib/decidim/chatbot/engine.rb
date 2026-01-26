@@ -32,10 +32,12 @@ module Decidim
         # Register workflows available for starting chatbot conversations
         Decidim::Chatbot.start_workflows_registry.register(:organization_welcome) do |manifest|
           manifest.workflow_class = "Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow"
+          manifest.title = I18n.t("decidim.chatbot.workflows.organization_welcome.title")
         end
 
         Decidim::Chatbot.start_workflows_registry.register(:single_participatory_space_workflow) do |manifest|
           manifest.workflow_class = "Decidim::Chatbot::Workflows::ParticipatorySpaceWorkflow"
+          manifest.title = I18n.t("decidim.chatbot.workflows.single_participatory_space_workflow.title")
         end
       end
 

@@ -13,7 +13,6 @@ module Decidim
         resources :settings, only: [:index, :edit, :update] do
           member do
             get :components
-            get :actions
             patch :toggle
           end
         end

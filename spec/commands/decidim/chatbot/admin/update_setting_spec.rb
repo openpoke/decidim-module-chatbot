@@ -15,15 +15,13 @@ module Decidim::Chatbot::Admin
     let(:start_workflow) { "participatory_space" }
     let(:participatory_space_gid) { participatory_process.to_global_id.to_s }
     let(:component_id) { component.id }
-    let(:write_action) { "create_proposal" }
 
     let(:params) do
       {
         enabled:,
         start_workflow:,
         participatory_space_gid:,
-        component_id:,
-        write_action:
+        component_id:
       }
     end
 
@@ -60,12 +58,6 @@ module Decidim::Chatbot::Admin
         expect(setting.selected_component).to eq(component)
       end
 
-      it "updates the config with write_action" do
-        subject.call
-        setting.reload
-        expect(setting.write_action).to eq(write_action)
-      end
-
       it "returns the setting in broadcast" do
         expect { subject.call }.to broadcast(:ok, setting)
       end
@@ -93,7 +85,6 @@ module Decidim::Chatbot::Admin
       let(:enabled) { false }
       let(:participatory_space_gid) { nil }
       let(:component_id) { nil }
-      let(:write_action) { nil }
 
       it "broadcasts :ok" do
         expect { subject.call }.to broadcast(:ok)
@@ -117,17 +108,6 @@ module Decidim::Chatbot::Admin
           expect(config[:participatory_space_type]).to eq("Decidim::ParticipatoryProcess")
           expect(config[:participatory_space_id]).to eq(participatory_process.id)
           expect(config[:component_id]).to eq(component.id)
-          expect(config[:write_action]).to eq("create_proposal")
-        end
-      end
-
-      context "when enabled without write_action" do
-        let(:write_action) { "" }
-
-        it "sets write_action to nil" do
-          subject.call
-          setting.reload
-          expect(setting.write_action).to be_nil
         end
       end
     end

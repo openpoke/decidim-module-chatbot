@@ -33,10 +33,6 @@ module Decidim
         @selected_component = find_selected_component
       end
 
-      def write_action
-        configuration[:write_action]
-      end
-
       def toggle_enabled!
         self.config = (config || {}).merge("enabled" => !enabled?)
         save!
