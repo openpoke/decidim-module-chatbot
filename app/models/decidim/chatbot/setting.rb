@@ -17,10 +17,6 @@ module Decidim
         @workflow ||= Decidim::Chatbot.start_workflows_registry.find(start_workflow.to_sym).workflow
       end
 
-      def enabled?
-        configuration[:enabled] == true
-      end
-
       def participatory_space
         return @participatory_space if defined?(@participatory_space)
 
@@ -34,10 +30,7 @@ module Decidim
       end
 
       def toggle_enabled!
-        self.config = (config || {}).merge("enabled" => !enabled?)
-        save!
-        reset_memoization!
-        enabled?
+        update!(enabled: !enabled?)
       end
 
       def reset_memoization!
