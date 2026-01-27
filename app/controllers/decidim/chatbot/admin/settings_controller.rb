@@ -14,6 +14,7 @@ module Decidim
         def edit
           enforce_permission_to :update, :organization, organization: current_organization
           @form = form(SettingForm).from_model(current_setting)
+          @workflow_manifest = @form.workflow_manifest
         end
 
         def update
@@ -27,6 +28,7 @@ module Decidim
             end
 
             on(:invalid) do
+              @workflow_manifest = @form.workflow_manifest
               flash.now[:alert] = I18n.t("settings.update.error", scope: "decidim.chatbot.admin")
               render :edit, status: :unprocessable_entity
             end
