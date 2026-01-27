@@ -1,0 +1,23 @@
+<% selected_space_gid = config[:participatory_space_gid].to_s %>
+
+<div class="row column">
+  <label for="setting_config_participatory_space_gid">
+    <%= t("decidim.chatbot.admin.settings.form.participatory_space") %>
+    <%= select_tag "setting[config][participatory_space_gid]",
+        grouped_options_for_select(grouped_participatory_spaces_for_select(current_organization), selected_space_gid),
+        include_blank: t("decidim.chatbot.admin.settings.form.select_space"),
+        id: "setting_config_participatory_space_gid",
+        data: { action: "change->chatbot-settings#loadComponents", chatbot_settings_target: "spaceSelect" } %>
+  </label>
+</div>
+
+<div class="row column" data-chatbot-settings-target="componentsWrapper" style="<%= selected_space_gid.blank? ? 'display:none;' : '' %>">
+  <label for="setting_config_component_id">
+    <%= t("decidim.chatbot.admin.settings.form.component") %>
+    <%= select_tag "setting[config][component_id]",
+        options_for_select(proposal_components_for_select(selected_space_gid), config[:component_id].to_s),
+        include_blank: t("decidim.chatbot.admin.settings.form.select_component"),
+        id: "setting_config_component_id",
+        data: { chatbot_settings_target: "componentSelect" } %>
+  </label>
+</div>

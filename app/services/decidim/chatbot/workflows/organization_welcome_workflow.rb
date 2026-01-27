@@ -11,7 +11,7 @@ module Decidim
         def process_action_input
           case received_message.button_id
           when "start"
-            delegate_workflow(ParticipatorySpaceWorkflow)
+            delegate_to_configured_workflow
           when "end"
             reset_workflows
           end
@@ -25,16 +25,47 @@ module Decidim
             type: :interactive_buttons,
             data: {
               header_text: translated_attribute(organization.name),
-              body_text: strip_tags(translated_attribute(organization.description)).truncate(200),
-              buttons: [
-                { id: "start", title: I18n.t("decidim.chatbot.workflows.organization_welcome_workflow.buttons.participate") }
-              ].tap do |buttons|
-                buttons << { id: "end", title: I18n.t("decidim.chatbot.workflows.organization_welcome_workflow.buttons.end") } unless parent_workflow.nil?
-              end
+              body_text: welcome_body_text,
+              buttons: welcome_buttons
             }
           )
 
           adapter.send!(message)
+        end
+
+        def welcome_body_text
+          custom = config[:custom_text]
+          if custom.present?
+            custom.truncate(1024)
+          else
+            strip_tags(translated_attribute(organization.description)).truncate(200)
+          end
+        end
+
+        def welcome_buttons
+          buttons = [
+            { id: "start", title: I18n.t("decidim.chatbot.workflows.organization_welcome_workflow.buttons.participate") }
+          ]
+          buttons << { id: "end", title: I18n.t("decidim.chatbot.workflows.organization_welcome_workflow.buttons.end") } unless parent_workflow.nil?
+          buttons
+        end
+
+        def delegate_to_configured_workflow
+          target_workflow_name = config[:delegate_workflow]
+          if target_workflow_name.present?
+            target_manifest = Decidim::Chatbot.start_workflows_registry.find(target_workflow_name)
+            if target_manifest&.workflow
+              delegate_workflow(target_manifest.workflow)
+              return
+            end
+          end
+
+          # Fallback: delegate to ParticipatorySpaceWorkflow (backward compatibility)
+          delegate_workflow(ParticipatorySpaceWorkflow)
+        end
+
+        def config
+          @config ||= (setting.config || {}).with_indifferent_access
         end
       end
     end

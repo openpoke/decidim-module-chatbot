@@ -2,11 +2,11 @@
   <div class="form__wrapper"
        data-controller="chatbot-settings"
        data-chatbot-settings-components-url-value="<%= components_setting_path(id: params[:id]) %>"
+       data-chatbot-settings-workflow-fields-url-value="<%= workflow_fields_setting_path(id: params[:id]) %>"
        data-chatbot-settings-loading-text-value="<%= t('.loading') %>"
        data-chatbot-settings-select-component-text-value="<%= t('.select_component') %>"
        data-chatbot-settings-select-space-first-text-value="<%= t('.select_space_first') %>"
        data-chatbot-settings-configuration-for-text-value="<%= t('.configuration_for', workflow: '%{workflow}') %>">
-    <% workflow_name = @form.workflow_display_name %>
 
     <div class="card pt-4">
       <div class="card-section">
@@ -14,33 +14,31 @@
           <%= form.select :start_workflow,
               @form.available_workflows,
               { label: t(".current_workflow", provider: provider) },
-              { data: { action: "change->chatbot-settings#updateWorkflowTitle" } } %>
-        </div>
-        <div class="row column">
-          <%= form.check_box :enabled, label: t(".enabled") %>
+              { data: { action: "change->chatbot-settings#changeWorkflow" } } %>
         </div>
       </div>
+    </div>
 
-      <div class="card-divider">
-        <h2 class="card-title" data-chatbot-settings-target="workflowHeading">
-          <%= t(".configuration_for", workflow: workflow_name) %>
-        </h2>
-      </div>
+    <div data-chatbot-settings-target="workflowConfig">
+      <% if @workflow_manifest&.configurable? %>
+        <div class="card">
+          <div class="card-divider">
+            <h2 class="card-title" data-chatbot-settings-target="workflowHeading">
+              <%= t(".configuration_for", workflow: @form.workflow_display_name) %>
+            </h2>
+          </div>
 
-      <!-- TODO: Refactor to use manifest views for the workflow -->
+          <div class="card-section">
+            <%= render partial: @workflow_manifest.settings_partial, locals: { form: form, setting_form: @form, config: @form.config } %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="card pt-4">
       <div class="card-section">
         <div class="row column">
-          <%= form.select :participatory_space_gid,
-              @form.available_spaces,
-              { include_blank: t(".select_space"), label: t(".participatory_space") },
-              { data: { action: "change->chatbot-settings#loadComponents", chatbot_settings_target: "spaceSelect" } } %>
-        </div>
-
-        <div class="row column" data-chatbot-settings-target="componentsWrapper" style="<%= @form.participatory_space.blank? ? 'display:none;' : '' %>">
-          <%= form.select :component_id,
-              @form.available_components,
-              { include_blank: t(".select_component"), label: t(".component") },
-              { data: { chatbot_settings_target: "componentSelect" } } %>
+          <%= form.check_box :enabled, label: t(".enabled") %>
         </div>
       </div>
     </div>

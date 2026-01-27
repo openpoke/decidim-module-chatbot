@@ -40,9 +40,23 @@ module Decidim
           space = find_participatory_space
           return render json: [] unless space
 
-          render json: space.components.published.map { |c|
+          render json: space.components.published.where(manifest_name: "proposals").map { |c|
             { id: c.id, name: translated_attribute(c.name), manifest_name: c.manifest_name }
           }
+        end
+
+        def workflow_fields
+          enforce_permission_to :update, :organization, organization: current_organization
+          manifest = Decidim::Chatbot.start_workflows_registry.find(params[:workflow].to_sym)
+
+          if manifest&.configurable?
+            @form = form(SettingForm).from_model(current_setting)
+            render partial: manifest.settings_partial,
+                   locals: { form: nil, setting_form: @form, config: @form.config },
+                   layout: false
+          else
+            render plain: ""
+          end
         end
 
         def toggle
