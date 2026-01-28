@@ -112,6 +112,5 @@ module Decidim::Chatbot
         expect(Setting.find(setting.id).enabled?).to be true
       end
     end
-
   end
 end

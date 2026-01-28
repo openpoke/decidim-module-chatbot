@@ -3,7 +3,7 @@
 require "spec_helper"
 
 module Decidim::Chatbot
-  describe ApplicationHelper, type: :helper do
+  describe ApplicationHelper do
     let(:organization) { create(:organization) }
     let!(:participatory_process) { create(:participatory_process, organization:, title: { en: "My Process" }) }
     let!(:proposal_component) { create(:component, :published, participatory_space: participatory_process, manifest_name: "proposals") }
