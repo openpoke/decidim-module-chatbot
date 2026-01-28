@@ -9,7 +9,8 @@ module Decidim
         subject { described_class.new(adapter:, message:) }
 
         let(:organization) { create(:organization, name: { en: "Test Organization" }, description: { en: "Test Description" }) }
-        let(:setting) { create(:chatbot_setting, organization:) }
+        let(:setting) { create(:chatbot_setting, organization:, config: setting_config) }
+        let(:setting_config) { {} }
         let(:sender) { create(:chatbot_sender, setting:) }
         let(:message) { create(:chatbot_message, setting:, sender:) }
         let(:adapter) { instance_double(Providers::Whatsapp::Adapter) }
@@ -181,6 +182,85 @@ module Decidim
               expect(body_text).to include("Description with HTML")
             end.and_return(envelope)
             subject.start
+          end
+        end
+
+        describe "custom_text in config" do
+          before do
+            allow(received_message).to receive(:user_text?).and_return(true)
+            allow(received_message).to receive(:actionable?).and_return(false)
+          end
+
+          context "when custom_text is present in config" do
+            let(:setting_config) { { "custom_text" => "Welcome to our custom chatbot!" } }
+
+            it "uses custom_text as body_text" do
+              expect(adapter).to receive(:build_message) do |args|
+                expect(args[:data][:body_text]).to eq("Welcome to our custom chatbot!")
+              end.and_return(envelope)
+              subject.start
+            end
+          end
+
+          context "when custom_text is empty" do
+            let(:setting_config) { { "custom_text" => "" } }
+
+            it "falls back to organization description" do
+              expect(adapter).to receive(:build_message) do |args|
+                expect(args[:data][:body_text]).to include("Test Description")
+              end.and_return(envelope)
+              subject.start
+            end
+          end
+        end
+
+        describe "delegate_workflow in config" do
+          before do
+            allow(received_message).to receive(:user_text?).and_return(false)
+            allow(received_message).to receive(:actionable?).and_return(true)
+            allow(received_message).to receive(:button_id).and_return("start")
+          end
+
+          context "when delegate_workflow is configured with valid workflow" do
+            let(:setting_config) { { "delegate_workflow" => "single_participatory_space_workflow" } }
+
+            it "delegates to the configured workflow" do
+              ps_instance = instance_double(ParticipatorySpaceWorkflow)
+              allow(ParticipatorySpaceWorkflow).to receive(:new).and_return(ps_instance)
+              allow(ps_instance).to receive(:start)
+
+              subject.start
+              sender.reload
+              expect(sender.current_workflow_class).to eq("Decidim::Chatbot::Workflows::ParticipatorySpaceWorkflow")
+            end
+          end
+
+          context "when delegate_workflow is empty" do
+            let(:setting_config) { { "delegate_workflow" => "" } }
+
+            it "falls back to ParticipatorySpaceWorkflow" do
+              ps_instance = instance_double(ParticipatorySpaceWorkflow)
+              allow(ParticipatorySpaceWorkflow).to receive(:new).and_return(ps_instance)
+              allow(ps_instance).to receive(:start)
+
+              subject.start
+              sender.reload
+              expect(sender.current_workflow_class).to eq("Decidim::Chatbot::Workflows::ParticipatorySpaceWorkflow")
+            end
+          end
+
+          context "when delegate_workflow is not set" do
+            let(:setting_config) { {} }
+
+            it "falls back to ParticipatorySpaceWorkflow" do
+              ps_instance = instance_double(ParticipatorySpaceWorkflow)
+              allow(ParticipatorySpaceWorkflow).to receive(:new).and_return(ps_instance)
+              allow(ps_instance).to receive(:start)
+
+              subject.start
+              sender.reload
+              expect(sender.current_workflow_class).to eq("Decidim::Chatbot::Workflows::ParticipatorySpaceWorkflow")
+            end
           end
         end
       end

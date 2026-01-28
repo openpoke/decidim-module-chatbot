@@ -30,7 +30,7 @@ module Decidim
 
         def sanitized_config
           allowed_keys = form.workflow_manifest&.config_keys || []
-          form.config.to_h.slice(*allowed_keys)
+          form.config.to_h.with_indifferent_access.slice(*allowed_keys)
         end
       end
     end

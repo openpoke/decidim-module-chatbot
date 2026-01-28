@@ -6,9 +6,7 @@ export default class extends Controller {
     componentsUrl: String,
     workflowFieldsUrl: String,
     loadingText: String,
-    selectComponentText: String,
-    selectSpaceFirstText: String,
-    configurationForText: String
+    selectSpaceFirstText: String
   }
 
   connect() {
@@ -20,9 +18,7 @@ export default class extends Controller {
   }
 
   async changeWorkflow(event) {
-    const select = event.target
-    const selectedOption = select.options[select.selectedIndex]
-    const workflow = select.value
+    const workflow = event.target.value
 
     if (!workflow || !this.hasWorkflowConfigTarget) return
 
@@ -38,21 +34,7 @@ export default class extends Controller {
 
       if (!response.ok) throw new Error("Failed to fetch workflow fields")
 
-      const html = await response.text()
-
-      if (html.trim()) {
-        const heading = this.configurationForTextValue.replace("%{workflow}", selectedOption.text)
-        this.workflowConfigTarget.innerHTML = `
-          <div class="card">
-            <div class="card-divider">
-              <h2 class="card-title" data-chatbot-settings-target="workflowHeading">${heading}</h2>
-            </div>
-            <div class="card-section">${html}</div>
-          </div>
-        `
-      } else {
-        this.workflowConfigTarget.innerHTML = ""
-      }
+      this.workflowConfigTarget.innerHTML = await response.text()
     } catch (error) {
       console.error("Failed to load workflow fields:", error)
     }
@@ -93,13 +75,14 @@ export default class extends Controller {
   }
 
   renderComponentOptions(select, components) {
-    select.innerHTML = `<option value="">${this.selectComponentTextValue}</option>`
+    select.innerHTML = ""
 
-    components.forEach(component => {
+    components.forEach((component, index) => {
       const option = document.createElement("option")
       option.value = component.id
       option.textContent = component.name
       option.dataset.manifestName = component.manifest_name
+      if (index === 0) option.selected = true
       select.appendChild(option)
     })
 

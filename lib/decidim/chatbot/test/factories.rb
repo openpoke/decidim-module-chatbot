@@ -21,8 +21,7 @@ FactoryBot.define do
 
       config do
         {
-          participatory_space_type: space.class.name,
-          participatory_space_id: space.id,
+          participatory_space_gid: space.to_global_id.to_s,
           component_id: component.id
         }
       end

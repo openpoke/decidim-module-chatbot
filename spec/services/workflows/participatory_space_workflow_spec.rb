@@ -17,12 +17,10 @@ module Decidim
         end
         let(:setting_config) do
           {
-            enabled: true,
-            participatory_space_type: "Decidim::ParticipatoryProcess",
-            participatory_space_id: participatory_process.id
+            participatory_space_gid: participatory_process.to_global_id.to_s
           }
         end
-        let(:setting) { create(:chatbot_setting, organization:, config: setting_config) }
+        let(:setting) { create(:chatbot_setting, organization:, enabled: true, config: setting_config) }
         let(:sender) { create(:chatbot_sender, setting:) }
         let(:message) { create(:chatbot_message, setting:, sender:) }
         let(:adapter) { instance_double(Providers::Whatsapp::Adapter) }
@@ -267,7 +265,7 @@ module Decidim
         end
 
         describe "when chatbot is not enabled" do
-          let(:setting_config) { { enabled: false } }
+          let(:setting) { create(:chatbot_setting, organization:, enabled: false, config: setting_config) }
 
           before do
             allow(received_message).to receive(:user_text?).and_return(true)
@@ -285,11 +283,25 @@ module Decidim
         describe "when no participatory spaces exist" do
           let(:setting_config) do
             {
-              enabled: true,
-              participatory_space_type: "Decidim::ParticipatoryProcess",
-              participatory_space_id: 999_999
+              participatory_space_gid: "gid://decidim/Decidim::ParticipatoryProcess/999999"
             }
           end
+
+          before do
+            allow(received_message).to receive(:user_text?).and_return(true)
+            allow(received_message).to receive(:actionable?).and_return(false)
+          end
+
+          it "sends a no spaces message" do
+            expect(adapter).to receive(:send_message!).with(
+              I18n.t("decidim.chatbot.workflows.participatory_space_workflow.no_spaces")
+            )
+            subject.start
+          end
+        end
+
+        describe "when participatory_space_gid is blank" do
+          let(:setting_config) { {} }
 
           before do
             allow(received_message).to receive(:user_text?).and_return(true)

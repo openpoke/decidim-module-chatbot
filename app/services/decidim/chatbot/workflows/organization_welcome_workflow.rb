@@ -34,12 +34,7 @@ module Decidim
         end
 
         def welcome_body_text
-          custom = config[:custom_text]
-          if custom.present?
-            custom.truncate(1024)
-          else
-            strip_tags(translated_attribute(organization.description)).truncate(200)
-          end
+          config[:custom_text].presence || decidim_sanitize(translated_attribute(organization.description), strip_tags: true)
         end
 
         def welcome_buttons

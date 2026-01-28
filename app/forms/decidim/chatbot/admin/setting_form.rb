@@ -38,13 +38,13 @@ module Decidim
         def validate_workflow_config
           return unless workflow_manifest&.configurable?
 
+          normalized_config = config.to_h.with_indifferent_access
+
           workflow_manifest.settings_attributes.each do |key, options|
             next unless options[:required]
+            next if normalized_config[key].present?
 
-            next if config[key.to_s].present?
-
-            errors.add(:config, :invalid,
-                       message: I18n.t("decidim.chatbot.admin.settings.form.errors.#{key}_blank", default: I18n.t("errors.messages.blank")))
+            errors.add(:config, :invalid, message: I18n.t("decidim.chatbot.admin.settings.form.errors.#{key}_blank"))
           end
         end
       end

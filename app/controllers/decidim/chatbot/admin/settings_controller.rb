@@ -48,15 +48,17 @@ module Decidim
         def workflow_fields
           enforce_permission_to :update, :organization, organization: current_organization
           manifest = Decidim::Chatbot.start_workflows_registry.find(params[:workflow].to_sym)
+          @form = form(SettingForm).from_model(current_setting)
 
-          if manifest&.configurable?
-            @form = form(SettingForm).from_model(current_setting)
-            render partial: manifest.settings_partial,
-                   locals: { form: nil, setting_form: @form, config: @form.config },
-                   layout: false
-          else
-            render plain: ""
-          end
+          render partial: "workflow_config",
+                 locals: {
+                   workflow_manifest: manifest,
+                   workflow_display_name: manifest&.title.to_s,
+                   form: nil,
+                   setting_form: @form,
+                   config: @form.config
+                 },
+                 layout: false
         end
 
         def toggle
@@ -80,6 +82,8 @@ module Decidim
           return nil if params[:space_gid].blank?
 
           GlobalID::Locator.locate(params[:space_gid])
+        rescue ActiveRecord::RecordNotFound
+          nil
         end
 
         def toggle_flash_message(enabled)

@@ -17,47 +17,8 @@ module Decidim
         @workflow ||= Decidim::Chatbot.start_workflows_registry.find(start_workflow.to_sym).workflow
       end
 
-      def participatory_space
-        return @participatory_space if defined?(@participatory_space)
-
-        @participatory_space = find_participatory_space
-      end
-
-      def selected_component
-        return @selected_component if defined?(@selected_component)
-
-        @selected_component = find_selected_component
-      end
-
       def toggle_enabled!
         update!(enabled: !enabled?)
-      end
-
-      def reset_memoization!
-        @configuration = nil
-        @participatory_space = nil
-        @selected_component = nil
-      end
-
-      private
-
-      def configuration
-        @configuration ||= (config || {}).with_indifferent_access
-      end
-
-      def find_participatory_space
-        type = configuration[:participatory_space_type]
-        id = configuration[:participatory_space_id]
-        return nil if type.blank? || id.blank?
-
-        klass = type.safe_constantize
-        klass&.find_by(id: id)
-      end
-
-      def find_selected_component
-        return nil unless participatory_space && configuration[:component_id].present?
-
-        participatory_space.components.find_by(id: configuration[:component_id])
       end
     end
   end

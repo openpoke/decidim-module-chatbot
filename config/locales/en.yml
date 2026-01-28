@@ -24,6 +24,9 @@ en:
             select_component: Select a component...
             select_space: Select a participatory space...
             select_space_first: Select a participatory space first
+            errors:
+              participatory_space_gid_blank: Participatory space is required
+              component_id_blank: Component is required
           index:
             configure: Configure
             title: Chatbot Settings
