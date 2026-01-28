@@ -24,11 +24,11 @@ module Decidim
           setting.update!(
             start_workflow: form.start_workflow,
             enabled: form.enabled,
-            config: sanitized_config
+            config: workflow_config
           )
         end
 
-        def sanitized_config
+        def workflow_config
           allowed_keys = form.workflow_manifest&.config_keys || []
           form.config.to_h.with_indifferent_access.slice(*allowed_keys)
         end
