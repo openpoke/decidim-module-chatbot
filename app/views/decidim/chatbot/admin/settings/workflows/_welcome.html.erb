@@ -1,0 +1,11 @@
+<%= delegate_workflow_select(config, exclude_workflow: :organization_welcome) %>
+
+<div class="row column">
+  <label for="setting_config_custom_text">
+    <%= t("decidim.chatbot.admin.settings.form.custom_text") %>
+    <%= text_area_tag "setting[config][custom_text]",
+        config[:custom_text],
+        id: "setting_config_custom_text",
+        rows: 5 %>
+  </label>
+</div>

@@ -1,13 +1,12 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["spaceSelect", "componentsWrapper", "componentSelect", "workflowHeading"]
+  static targets = ["spaceSelect", "componentsWrapper", "componentSelect", "workflowHeading", "workflowConfig"]
   static values = {
     componentsUrl: String,
+    workflowFieldsUrl: String,
     loadingText: String,
-    selectComponentText: String,
-    selectSpaceFirstText: String,
-    configurationForText: String
+    selectSpaceFirstText: String
   }
 
   connect() {
@@ -18,11 +17,26 @@ export default class extends Controller {
     }
   }
 
-  updateWorkflowTitle(event) {
-    const select = event.target
-    const selectedOption = select.options[select.selectedIndex]
-    if (this.hasWorkflowHeadingTarget && selectedOption) {
-      this.workflowHeadingTarget.textContent = this.configurationForTextValue.replace("%{workflow}", selectedOption.text)
+  async changeWorkflow(event) {
+    const workflow = event.target.value
+
+    if (!workflow || !this.hasWorkflowConfigTarget) return
+
+    try {
+      const separator = this.workflowFieldsUrlValue.includes("?") ? "&" : "?"
+      const url = `${this.workflowFieldsUrlValue}${separator}workflow=${encodeURIComponent(workflow)}`
+      const response = await fetch(url, {
+        headers: {
+          "Accept": "text/html",
+          "X-Requested-With": "XMLHttpRequest"
+        }
+      })
+
+      if (!response.ok) throw new Error("Failed to fetch workflow fields")
+
+      this.workflowConfigTarget.innerHTML = await response.text()
+    } catch (error) {
+      console.error("Failed to load workflow fields:", error)
     }
   }
 
@@ -40,7 +54,8 @@ export default class extends Controller {
     componentSelect.innerHTML = `<option value="">${this.loadingTextValue}</option>`
 
     try {
-      const url = `${this.componentsUrlValue}?space_gid=${encodeURIComponent(spaceGid)}`
+      const separator = this.componentsUrlValue.includes('?') ? '&' : '?'
+      const url = `${this.componentsUrlValue}${separator}space_gid=${encodeURIComponent(spaceGid)}`
       const response = await fetch(url, {
         headers: {
           "Accept": "application/json",
@@ -60,13 +75,14 @@ export default class extends Controller {
   }
 
   renderComponentOptions(select, components) {
-    select.innerHTML = `<option value="">${this.selectComponentTextValue}</option>`
+    select.innerHTML = ""
 
-    components.forEach(component => {
+    components.forEach((component, index) => {
       const option = document.createElement("option")
       option.value = component.id
       option.textContent = component.name
       option.dataset.manifestName = component.manifest_name
+      if (index === 0) option.selected = true
       select.appendChild(option)
     })
 

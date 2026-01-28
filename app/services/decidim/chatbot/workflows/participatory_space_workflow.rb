@@ -66,11 +66,34 @@ module Decidim
         end
 
         def participatory_space
-          @participatory_space ||= setting.participatory_space
+          return @participatory_space if defined?(@participatory_space)
+
+          @participatory_space = find_participatory_space
         end
 
         def component
-          @component ||= setting.selected_component
+          return @component if defined?(@component)
+
+          @component = find_component
+        end
+
+        def find_participatory_space
+          gid = config[:participatory_space_gid]
+          return nil if gid.blank?
+
+          GlobalID::Locator.locate(gid)
+        rescue ActiveRecord::RecordNotFound
+          nil
+        end
+
+        def find_component
+          return nil unless participatory_space && config[:component_id].present?
+
+          participatory_space.components.find_by(id: config[:component_id])
+        end
+
+        def config
+          @config ||= (setting.config || {}).with_indifferent_access
         end
       end
     end

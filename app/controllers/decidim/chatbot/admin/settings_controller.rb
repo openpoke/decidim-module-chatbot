@@ -14,6 +14,7 @@ module Decidim
         def edit
           enforce_permission_to :update, :organization, organization: current_organization
           @form = form(SettingForm).from_model(current_setting)
+          @workflow_manifest = @form.workflow_manifest
         end
 
         def update
@@ -27,6 +28,7 @@ module Decidim
             end
 
             on(:invalid) do
+              @workflow_manifest = @form.workflow_manifest
               flash.now[:alert] = I18n.t("settings.update.error", scope: "decidim.chatbot.admin")
               render :edit, status: :unprocessable_entity
             end
@@ -38,9 +40,25 @@ module Decidim
           space = find_participatory_space
           return render json: [] unless space
 
-          render json: space.components.published.map { |c|
+          render json: space.components.published.where(manifest_name: "proposals").map { |c|
             { id: c.id, name: translated_attribute(c.name), manifest_name: c.manifest_name }
           }
+        end
+
+        def workflow_fields
+          enforce_permission_to :update, :organization, organization: current_organization
+          manifest = Decidim::Chatbot.start_workflows_registry.find(params[:workflow].to_sym)
+          @form = form(SettingForm).from_model(current_setting)
+
+          render partial: "workflow_config",
+                 locals: {
+                   workflow_manifest: manifest,
+                   workflow_display_name: manifest&.title.to_s,
+                   form: nil,
+                   setting_form: @form,
+                   config: @form.config
+                 },
+                 layout: false
         end
 
         def toggle
@@ -64,6 +82,8 @@ module Decidim
           return nil if params[:space_gid].blank?
 
           GlobalID::Locator.locate(params[:space_gid])
+        rescue ActiveRecord::RecordNotFound
+          nil
         end
 
         def toggle_flash_message(enabled)

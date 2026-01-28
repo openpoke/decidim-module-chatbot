@@ -5,7 +5,7 @@ module Decidim
     module Workflows
       class BaseWorkflow
         include Decidim::TranslatableAttributes
-        include ActionView::Helpers::SanitizeHelper
+        include Decidim::SanitizeHelper
 
         def initialize(adapter:, message:, **options)
           @adapter = adapter

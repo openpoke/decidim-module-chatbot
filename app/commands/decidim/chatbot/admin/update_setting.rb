@@ -23,17 +23,14 @@ module Decidim
         def update_setting
           setting.update!(
             start_workflow: form.start_workflow,
-            config: build_config
+            enabled: form.enabled,
+            config: workflow_config
           )
         end
 
-        def build_config
-          {
-            enabled: form.enabled,
-            participatory_space_type: form.participatory_space&.class&.name,
-            participatory_space_id: form.participatory_space&.id,
-            component_id: form.component_id
-          }
+        def workflow_config
+          allowed_keys = form.workflow_manifest&.config_keys || []
+          form.config.to_h.with_indifferent_access.slice(*allowed_keys)
         end
       end
     end

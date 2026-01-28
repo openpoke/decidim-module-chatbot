@@ -87,9 +87,11 @@ module Decidim::Chatbot::Admin
           id: "whatsapp",
           setting: {
             enabled: true,
-            start_workflow: "participatory_space",
-            participatory_space_gid: participatory_process.to_global_id.to_s,
-            component_id: component.id
+            start_workflow: "single_participatory_space_workflow",
+            config: {
+              participatory_space_gid: participatory_process.to_global_id.to_s,
+              component_id: component.id.to_s
+            }
           }
         }
       end
@@ -99,9 +101,11 @@ module Decidim::Chatbot::Admin
           id: "whatsapp",
           setting: {
             enabled: true,
-            start_workflow: "participatory_space",
-            participatory_space_gid: "",
-            component_id: nil
+            start_workflow: "single_participatory_space_workflow",
+            config: {
+              participatory_space_gid: "",
+              component_id: ""
+            }
           }
         }
       end
@@ -170,8 +174,7 @@ module Decidim::Chatbot::Admin
             setting: {
               enabled: false,
               start_workflow: "organization_welcome",
-              participatory_space_gid: "",
-              component_id: ""
+              config: {}
             }
           }
         end
@@ -190,7 +193,9 @@ module Decidim::Chatbot::Admin
     end
 
     describe "GET #components" do
-      let!(:published_component) { component }
+      let!(:proposal_component) do
+        create(:component, :published, participatory_space: participatory_process, manifest_name: "proposals")
+      end
 
       it "returns json response" do
         get :components, params: { id: "whatsapp", space_gid: participatory_process.to_global_id.to_s }
@@ -201,7 +206,7 @@ module Decidim::Chatbot::Admin
         get :components, params: { id: "whatsapp", space_gid: participatory_process.to_global_id.to_s }
         json_response = response.parsed_body
         expect(json_response).to be_an(Array)
-        expect(json_response.map { |c| c["id"] }).to include(published_component.id)
+        expect(json_response.map { |c| c["id"] }).to include(proposal_component.id)
       end
 
       context "with invalid space_gid" do
@@ -215,6 +220,56 @@ module Decidim::Chatbot::Admin
         it "returns empty array" do
           get :components, params: { id: "whatsapp" }
           expect(response.parsed_body).to eq([])
+        end
+      end
+    end
+
+    describe "GET #workflow_fields" do
+      context "with a configurable workflow" do
+        it "returns the workflow partial" do
+          get :workflow_fields, params: { id: "whatsapp", workflow: "single_participatory_space_workflow" }
+          expect(response).to have_http_status(:ok)
+        end
+      end
+
+      context "with a non-configurable workflow" do
+        before do
+          manifest = instance_double(Decidim::Chatbot::StartWorkflowsManifest, configurable?: false, title: "Non Configurable")
+          allow(Decidim::Chatbot.start_workflows_registry).to receive(:find).and_return(manifest)
+        end
+
+        it "returns empty response" do
+          get :workflow_fields, params: { id: "whatsapp", workflow: "non_configurable" }
+          expect(response).to have_http_status(:ok)
+          expect(response.body.strip).to eq("")
+        end
+      end
+    end
+
+    describe "PATCH #toggle" do
+      let!(:setting) { create(:chatbot_setting, organization:, enabled: false) }
+
+      it "toggles the enabled status" do
+        patch :toggle, params: { id: "whatsapp" }
+        setting.reload
+        expect(setting.enabled?).to be true
+      end
+
+      it "redirects to settings path" do
+        patch :toggle, params: { id: "whatsapp" }
+        expect(response).to redirect_to(settings_path)
+      end
+
+      it "sets a flash notice" do
+        patch :toggle, params: { id: "whatsapp" }
+        expect(flash[:notice]).to be_present
+      end
+
+      context "with JSON format" do
+        it "returns JSON response" do
+          patch :toggle, params: { id: "whatsapp" }, format: :json
+          expect(response.content_type).to include("application/json")
+          expect(response.parsed_body["enabled"]).to be true
         end
       end
     end

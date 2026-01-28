@@ -12,16 +12,19 @@ module Decidim::Chatbot::Admin
     let(:component) { create(:component, :published, participatory_space: participatory_process) }
 
     let(:enabled) { true }
-    let(:start_workflow) { "participatory_space" }
-    let(:participatory_space_gid) { participatory_process.to_global_id.to_s }
-    let(:component_id) { component.id }
+    let(:start_workflow) { "single_participatory_space_workflow" }
+    let(:config) do
+      {
+        "participatory_space_gid" => participatory_process.to_global_id.to_s,
+        "component_id" => component.id.to_s
+      }
+    end
 
     let(:params) do
       {
         enabled:,
         start_workflow:,
-        participatory_space_gid:,
-        component_id:
+        config:
       }
     end
 
@@ -40,22 +43,22 @@ module Decidim::Chatbot::Admin
         expect(setting.start_workflow).to eq(start_workflow)
       end
 
-      it "updates the setting config with enabled true" do
+      it "updates the enabled column to true" do
         subject.call
         setting.reload
         expect(setting.enabled?).to be true
       end
 
-      it "updates the config with participatory space" do
+      it "updates the config with participatory space GID" do
         subject.call
         setting.reload
-        expect(setting.participatory_space).to eq(participatory_process)
+        expect(setting.config["participatory_space_gid"]).to eq(participatory_process.to_global_id.to_s)
       end
 
       it "updates the config with component" do
         subject.call
         setting.reload
-        expect(setting.selected_component).to eq(component)
+        expect(setting.config["component_id"]).to eq(component.id.to_s)
       end
 
       it "returns the setting in broadcast" do
@@ -65,8 +68,7 @@ module Decidim::Chatbot::Admin
 
     describe "when form is invalid" do
       let(:enabled) { true }
-      let(:participatory_space_gid) { nil }
-      let(:component_id) { nil }
+      let(:config) { { "participatory_space_gid" => "", "component_id" => "" } }
 
       it "broadcasts :invalid" do
         expect { subject.call }.to broadcast(:invalid)
@@ -83,14 +85,14 @@ module Decidim::Chatbot::Admin
     describe "when disabling chatbot" do
       let(:setting) { create(:chatbot_setting, :enabled, organization:) }
       let(:enabled) { false }
-      let(:participatory_space_gid) { nil }
-      let(:component_id) { nil }
+      let(:start_workflow) { "organization_welcome" }
+      let(:config) { {} }
 
       it "broadcasts :ok" do
         expect { subject.call }.to broadcast(:ok)
       end
 
-      it "sets enabled to false in config" do
+      it "sets enabled column to false" do
         subject.call
         setting.reload
         expect(setting.enabled?).to be false
@@ -99,16 +101,34 @@ module Decidim::Chatbot::Admin
 
     describe "config building" do
       context "when enabled with all fields" do
-        it "creates correct config structure" do
+        it "creates correct config structure with GID" do
           subject.call
           setting.reload
 
           config = setting.config.with_indifferent_access
-          expect(config[:enabled]).to be true
-          expect(config[:participatory_space_type]).to eq("Decidim::ParticipatoryProcess")
-          expect(config[:participatory_space_id]).to eq(participatory_process.id)
-          expect(config[:component_id]).to eq(component.id)
+          expect(config[:participatory_space_gid]).to eq(participatory_process.to_global_id.to_s)
+          expect(config[:component_id]).to eq(component.id.to_s)
         end
+      end
+    end
+
+    describe "config sanitization" do
+      let(:config) do
+        {
+          "participatory_space_gid" => participatory_process.to_global_id.to_s,
+          "component_id" => component.id.to_s,
+          "unknown_key" => "should be removed"
+        }
+      end
+
+      it "removes unknown keys from config" do
+        subject.call
+        setting.reload
+
+        config = setting.config.with_indifferent_access
+        expect(config).not_to have_key(:unknown_key)
+        expect(config[:participatory_space_gid]).to be_present
+        expect(config[:component_id]).to be_present
       end
     end
   end

@@ -136,7 +136,7 @@ module Decidim::Chatbot
       let(:workflow_instance) { instance_double(Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow) }
 
       before do
-        setting.update!(config: { "enabled" => true })
+        setting.update!(enabled: true)
         allow(Decidim::Chatbot::Providers::Whatsapp::Adapter).to receive(:new).and_return(adapter_instance)
         allow(adapter_instance).to receive(:send!)
         allow(adapter_instance).to receive(:mark_as_read!)
