@@ -10,6 +10,7 @@ module Decidim
       attribute :workflow_class, String
       attribute :settings_partial, String
       attribute :settings_attributes, Hash, default: {}
+      attribute :component_types, Array, default: []
 
       def workflow
         workflow_class.safe_constantize

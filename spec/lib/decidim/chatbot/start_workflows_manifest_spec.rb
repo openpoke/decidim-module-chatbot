@@ -93,5 +93,27 @@ module Decidim::Chatbot
         end
       end
     end
+
+    describe "#component_types" do
+      it "defaults to empty array" do
+        expect(manifest.component_types).to eq([])
+      end
+
+      context "when component_types is set" do
+        let(:manifest) do
+          described_class.new(
+            name: :test_workflow,
+            workflow_class: workflow_class,
+            settings_partial: settings_partial,
+            settings_attributes: settings_attributes,
+            component_types: ["proposals"]
+          )
+        end
+
+        it "returns the specified component types" do
+          expect(manifest.component_types).to eq(["proposals"])
+        end
+      end
+    end
   end
 end

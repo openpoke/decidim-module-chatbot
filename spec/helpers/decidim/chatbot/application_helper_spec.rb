@@ -50,9 +50,16 @@ module Decidim::Chatbot
         expect(result).to eq([])
       end
 
-      it "only returns proposal components" do
-        create(:component, :published, participatory_space: participatory_process, manifest_name: "meetings")
+      it "returns all components when component_types is empty" do
+        meeting_component = create(:component, :published, participatory_space: participatory_process, manifest_name: "meetings")
         result = helper.components_for_space(participatory_process.to_gid.to_s, organization)
+        expect(result.length).to eq(2)
+        expect(result.map { |c| c[:id] }).to contain_exactly(proposal_component.id.to_s, meeting_component.id.to_s)
+      end
+
+      it "filters by component_types when provided" do
+        create(:component, :published, participatory_space: participatory_process, manifest_name: "meetings")
+        result = helper.components_for_space(participatory_process.to_gid.to_s, organization, component_types: ["proposals"])
         expect(result.length).to eq(1)
         expect(result.first[:id]).to eq(proposal_component.id.to_s)
       end
@@ -70,6 +77,22 @@ module Decidim::Chatbot
         component_data = result[participatory_process.to_gid.to_s].first
         expect(component_data["id"]).to eq(proposal_component.id.to_s)
         expect(component_data["name"]).to be_present
+      end
+
+      it "returns all components when component_types is empty" do
+        meeting_component = create(:component, :published, participatory_space: participatory_process, manifest_name: "meetings")
+        result = JSON.parse(helper.components_for_space_json(organization))
+        components = result[participatory_process.to_gid.to_s]
+        expect(components.length).to eq(2)
+        expect(components.map { |c| c["id"] }).to contain_exactly(proposal_component.id.to_s, meeting_component.id.to_s)
+      end
+
+      it "filters by component_types when provided" do
+        create(:component, :published, participatory_space: participatory_process, manifest_name: "meetings")
+        result = JSON.parse(helper.components_for_space_json(organization, component_types: ["proposals"]))
+        components = result[participatory_process.to_gid.to_s]
+        expect(components.length).to eq(1)
+        expect(components.first["id"]).to eq(proposal_component.id.to_s)
       end
     end
 
