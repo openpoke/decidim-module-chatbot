@@ -94,24 +94,26 @@ module Decidim::Chatbot
       end
     end
 
-    describe "#component_types" do
-      it "defaults to empty array" do
-        expect(manifest.component_types).to eq([])
-      end
-
-      context "when component_types is set" do
+    describe "#form" do
+      context "when form_class is set" do
         let(:manifest) do
           described_class.new(
             name: :test_workflow,
             workflow_class: workflow_class,
             settings_partial: settings_partial,
             settings_attributes: settings_attributes,
-            component_types: ["proposals"]
+            form_class: "Decidim::Chatbot::Admin::SingleParticipatorySpaceSettingsForm"
           )
         end
 
-        it "returns the specified component types" do
-          expect(manifest.component_types).to eq(["proposals"])
+        it "returns the constantized class" do
+          expect(manifest.form).to eq(Decidim::Chatbot::Admin::SingleParticipatorySpaceSettingsForm)
+        end
+      end
+
+      context "when form_class is nil" do
+        it "returns nil" do
+          expect(manifest.form).to be_nil
         end
       end
     end

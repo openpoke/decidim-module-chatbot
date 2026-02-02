@@ -46,7 +46,7 @@ module Decidim
             participatory_space_gid: { type: :select, required: true },
             component_id: { type: :select, required: true }
           }
-          manifest.component_types = ["proposals"]
+          manifest.form_class = "Decidim::Chatbot::Admin::SingleParticipatorySpaceSettingsForm"
         end
       end
 
