@@ -79,6 +79,14 @@ module Decidim::Chatbot::Admin
           expect(form.start_workflow).to eq("single_participatory_space_workflow")
         end
       end
+
+      context "with workflow param" do
+        it "overrides the workflow in form" do
+          get :edit, params: { id: "whatsapp", workflow: "organization_welcome" }
+          form = assigns(:form)
+          expect(form.start_workflow).to eq("organization_welcome")
+        end
+      end
     end
 
     describe "PATCH #update" do
@@ -188,60 +196,6 @@ module Decidim::Chatbot::Admin
           patch :update, params: disable_params
           setting.reload
           expect(setting.enabled?).to be false
-        end
-      end
-    end
-
-    describe "GET #components" do
-      let!(:proposal_component) do
-        create(:component, :published, participatory_space: participatory_process, manifest_name: "proposals")
-      end
-
-      it "returns json response" do
-        get :components, params: { id: "whatsapp", space_gid: participatory_process.to_global_id.to_s }
-        expect(response.content_type).to include("application/json")
-      end
-
-      it "returns components for the space" do
-        get :components, params: { id: "whatsapp", space_gid: participatory_process.to_global_id.to_s }
-        json_response = response.parsed_body
-        expect(json_response).to be_an(Array)
-        expect(json_response.map { |c| c["id"] }).to include(proposal_component.id)
-      end
-
-      context "with invalid space_gid" do
-        it "returns empty array" do
-          get :components, params: { id: "whatsapp", space_gid: "invalid" }
-          expect(response.parsed_body).to eq([])
-        end
-      end
-
-      context "without space_gid" do
-        it "returns empty array" do
-          get :components, params: { id: "whatsapp" }
-          expect(response.parsed_body).to eq([])
-        end
-      end
-    end
-
-    describe "GET #workflow_fields" do
-      context "with a configurable workflow" do
-        it "returns the workflow partial" do
-          get :workflow_fields, params: { id: "whatsapp", workflow: "single_participatory_space_workflow" }
-          expect(response).to have_http_status(:ok)
-        end
-      end
-
-      context "with a non-configurable workflow" do
-        before do
-          manifest = instance_double(Decidim::Chatbot::StartWorkflowsManifest, configurable?: false, title: "Non Configurable")
-          allow(Decidim::Chatbot.start_workflows_registry).to receive(:find).and_return(manifest)
-        end
-
-        it "returns empty response" do
-          get :workflow_fields, params: { id: "whatsapp", workflow: "non_configurable" }
-          expect(response).to have_http_status(:ok)
-          expect(response.body.strip).to eq("")
         end
       end
     end

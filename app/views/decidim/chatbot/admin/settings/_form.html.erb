@@ -1,10 +1,7 @@
 <%= decidim_form_for(@form, url: setting_path(id: params[:id]), method: :patch, html: { class: "form-defaults form edit_setting" }) do |form| %>
   <div class="form__wrapper"
        data-controller="chatbot-settings"
-       data-chatbot-settings-components-url-value="<%= components_setting_path(id: params[:id]) %>"
-       data-chatbot-settings-workflow-fields-url-value="<%= workflow_fields_setting_path(id: params[:id]) %>"
-       data-chatbot-settings-loading-text-value="<%= t('.loading') %>"
-       data-chatbot-settings-select-space-first-text-value="<%= t('.select_space_first') %>">
+       data-chatbot-settings-edit-url-value="<%= edit_setting_path(id: params[:id]) %>">
 
     <div class="card pt-4">
       <div class="card-section">
@@ -17,7 +14,7 @@
       </div>
     </div>
 
-    <div data-chatbot-settings-target="workflowConfig">
+    <div>
       <%= render partial: "workflow_config", locals: {
         workflow_manifest: @workflow_manifest,
         workflow_display_name: @form.workflow_display_name,

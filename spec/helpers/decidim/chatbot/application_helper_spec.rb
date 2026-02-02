@@ -6,119 +6,94 @@ module Decidim::Chatbot
   describe ApplicationHelper do
     let(:organization) { create(:organization) }
     let!(:participatory_process) { create(:participatory_process, organization:, title: { en: "My Process" }) }
+    let!(:assembly) { create(:assembly, organization:, title: { en: "My Assembly" }) }
     let!(:proposal_component) { create(:component, :published, participatory_space: participatory_process, manifest_name: "proposals") }
+    let!(:another_component) { create(:component, :published, participatory_space: assembly, manifest_name: "proposals") }
 
     before do
       allow(helper).to receive(:current_organization).and_return(organization)
     end
 
-    describe "#participatory_space_select" do
-      let(:config) { {} }
-
-      it "renders a select element" do
-        result = helper.participatory_space_select(config, organization)
-        expect(result).to include("select")
-        expect(result).to include("setting[config][participatory_space_gid]")
+    describe "#participatory_space_options" do
+      it "returns grouped participatory spaces" do
+        result = helper.participatory_space_options(organization)
+        expect(result).to be_a(Hash)
       end
 
-      it "includes participatory spaces in options" do
-        result = helper.participatory_space_select(config, organization)
-        expect(result).to include("My Process")
+      it "groups spaces by type" do
+        result = helper.participatory_space_options(organization)
+        expect(result.keys).to include("Participatory processes")
+        expect(result.keys).to include("Assemblies")
       end
 
-      it "includes data attributes for stimulus" do
-        result = helper.participatory_space_select(config, organization)
-        expect(result).to include("chatbot-settings#loadComponents")
-        expect(result).to include("spaceSelect")
-      end
-
-      context "when config has a saved space" do
-        let(:config) { { participatory_space_gid: participatory_process.to_gid.to_s } }
-
-        it "selects the saved space" do
-          result = helper.participatory_space_select(config, organization)
-          expect(result).to include("selected")
-        end
-      end
-
-      context "when config is empty" do
-        it "selects the first space by default" do
-          result = helper.participatory_space_select(config, organization)
-          expect(result).to include("selected")
-        end
+      it "returns space title and gid pairs" do
+        result = helper.participatory_space_options(organization)
+        process_options = result["Participatory processes"]
+        expect(process_options).to include(["My Process", participatory_process.to_gid.to_s])
       end
     end
 
-    describe "#component_select" do
-      let(:config) { { participatory_space_gid: participatory_process.to_gid.to_s } }
-
-      it "renders a select element" do
-        result = helper.component_select(config, organization)
-        expect(result).to include("select")
-        expect(result).to include("setting[config][component_id]")
+    describe "#components_for_space" do
+      it "returns components for the given space" do
+        result = helper.components_for_space(participatory_process.to_gid.to_s, organization)
+        expect(result).to be_an(Array)
+        expect(result.first[:id]).to eq(proposal_component.id.to_s)
       end
 
-      it "includes components in options" do
-        result = helper.component_select(config, organization)
-        expect(result).to include(proposal_component.id.to_s)
+      it "returns empty array for blank space_gid" do
+        result = helper.components_for_space("", organization)
+        expect(result).to eq([])
       end
 
-      it "includes data attributes for stimulus" do
-        result = helper.component_select(config, organization)
-        expect(result).to include("componentSelect")
-        expect(result).to include("componentsWrapper")
+      it "returns empty array for invalid space_gid" do
+        result = helper.components_for_space("invalid-gid", organization)
+        expect(result).to eq([])
       end
 
-      context "when no space in config but organization has spaces" do
-        it "uses first space from organization and shows component select" do
-          result = helper.component_select({}, organization)
-          expect(result).not_to include("display:none")
-          expect(result).to include(proposal_component.id.to_s)
-        end
-      end
-
-      context "when config has a saved component" do
-        let(:config) do
-          {
-            participatory_space_gid: participatory_process.to_gid.to_s,
-            component_id: proposal_component.id.to_s
-          }
-        end
-
-        it "selects the saved component" do
-          result = helper.component_select(config, organization)
-          expect(result).to include("selected")
-        end
+      it "only returns proposal components" do
+        create(:component, :published, participatory_space: participatory_process, manifest_name: "meetings")
+        result = helper.components_for_space(participatory_process.to_gid.to_s, organization)
+        expect(result.length).to eq(1)
+        expect(result.first[:id]).to eq(proposal_component.id.to_s)
       end
     end
 
-    describe "#delegate_workflow_select" do
-      let(:config) { {} }
-
-      it "renders a select element" do
-        result = helper.delegate_workflow_select(config)
-        expect(result).to include("select")
-        expect(result).to include("setting[config][delegate_workflow]")
+    describe "#components_for_space_json" do
+      it "returns JSON with components grouped by space gid" do
+        result = JSON.parse(helper.components_for_space_json(organization))
+        expect(result).to be_a(Hash)
+        expect(result[participatory_process.to_gid.to_s]).to be_an(Array)
       end
 
-      it "includes data attributes" do
-        result = helper.delegate_workflow_select(config)
-        expect(result).to include("setting_config_delegate_workflow")
+      it "includes component id and name" do
+        result = JSON.parse(helper.components_for_space_json(organization))
+        component_data = result[participatory_process.to_gid.to_s].first
+        expect(component_data["id"]).to eq(proposal_component.id.to_s)
+        expect(component_data["name"]).to be_present
+      end
+    end
+
+    describe "#delegate_workflow_options" do
+      it "returns workflow options" do
+        result = helper.delegate_workflow_options
+        expect(result).to be_an(Array)
+        expect(result.first).to be_an(Array)
+        expect(result.first.length).to eq(2)
+      end
+
+      it "includes registered workflows" do
+        result = helper.delegate_workflow_options
+        workflow_names = result.map(&:last)
+        expect(workflow_names).to include("organization_welcome")
+        expect(workflow_names).to include("single_participatory_space_workflow")
       end
 
       context "when excluding a workflow" do
         it "excludes the specified workflow from options" do
-          result = helper.delegate_workflow_select(config, exclude_workflow: :organization_welcome)
-          expect(result).not_to include("organization_welcome")
-        end
-      end
-
-      context "when config has a saved workflow" do
-        let(:config) { { delegate_workflow: "single_participatory_space_workflow" } }
-
-        it "selects the saved workflow" do
-          result = helper.delegate_workflow_select(config)
-          expect(result).to include("selected")
+          result = helper.delegate_workflow_options(exclude_workflow: :organization_welcome)
+          workflow_names = result.map(&:last)
+          expect(workflow_names).not_to include("organization_welcome")
+          expect(workflow_names).to include("single_participatory_space_workflow")
         end
       end
     end

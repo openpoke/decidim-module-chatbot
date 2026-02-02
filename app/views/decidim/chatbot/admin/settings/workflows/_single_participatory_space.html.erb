@@ -1,2 +1,50 @@
-<%= participatory_space_select(config, current_organization) %>
-<%= component_select(config, current_organization) %>
+<% grouped_spaces = participatory_space_options(current_organization) %>
+<% selected_space = config[:participatory_space_gid].presence || grouped_spaces.values.first&.first&.last.to_s %>
+<% components = components_for_space(selected_space, current_organization) %>
+<% selected_component = config[:component_id].presence || components.first&.dig(:id).to_s %>
+
+<div class="row column">
+  <label for="setting_config_participatory_space_gid">
+    <%= t("decidim.chatbot.admin.settings.form.participatory_space") %>
+    <%= select_tag "setting[config][participatory_space_gid]",
+        grouped_options_for_select(grouped_spaces, selected_space),
+        id: "setting_config_participatory_space_gid",
+        data: { space_select: true } %>
+  </label>
+</div>
+
+<div class="row column" id="components_wrapper" style="<%= components.empty? ? 'display:none;' : '' %>">
+  <label for="setting_config_component_id">
+    <%= t("decidim.chatbot.admin.settings.form.component") %>
+    <%= select_tag "setting[config][component_id]",
+        options_for_select(components.map { |c| [c[:name], c[:id]] }, selected_component),
+        id: "setting_config_component_id" %>
+  </label>
+</div>
+
+<script type="text/javascript">
+  (function() {
+    const spaceSelect = document.querySelector('[data-space-select]');
+    const componentsWrapper = document.getElementById('components_wrapper');
+    const componentSelect = document.getElementById('setting_config_component_id');
+    const componentsData = <%= raw components_for_space_json(current_organization) %>;
+
+    if (!spaceSelect || !componentSelect) return;
+
+    spaceSelect.addEventListener('change', function() {
+      const spaceGid = this.value;
+      const components = componentsData[spaceGid] || [];
+
+      componentSelect.innerHTML = '';
+      components.forEach(function(component, index) {
+        const option = document.createElement('option');
+        option.value = component.id;
+        option.textContent = component.name;
+        if (index === 0) option.selected = true;
+        componentSelect.appendChild(option);
+      });
+
+      componentsWrapper.style.display = components.length ? '' : 'none';
+    });
+  })();
+</script>

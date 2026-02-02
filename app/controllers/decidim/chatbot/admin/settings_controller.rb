@@ -14,6 +14,7 @@ module Decidim
         def edit
           enforce_permission_to :update, :organization, organization: current_organization
           @form = form(SettingForm).from_model(current_setting)
+          @form.start_workflow = params[:workflow] if params[:workflow].present?
           @workflow_manifest = @form.workflow_manifest
         end
 
@@ -35,32 +36,6 @@ module Decidim
           end
         end
 
-        def components
-          enforce_permission_to :update, :organization, organization: current_organization
-          space = find_participatory_space
-          return render json: [] unless space
-
-          render json: space.components.published.where(manifest_name: "proposals").map { |c|
-            { id: c.id, name: translated_attribute(c.name), manifest_name: c.manifest_name }
-          }
-        end
-
-        def workflow_fields
-          enforce_permission_to :update, :organization, organization: current_organization
-          manifest = Decidim::Chatbot.start_workflows_registry.find(params[:workflow].to_sym)
-          @form = form(SettingForm).from_model(current_setting)
-
-          render partial: "workflow_config",
-                 locals: {
-                   workflow_manifest: manifest,
-                   workflow_display_name: manifest&.title.to_s,
-                   form: nil,
-                   setting_form: @form,
-                   config: @form.config
-                 },
-                 layout: false
-        end
-
         def toggle
           enforce_permission_to :update, :organization, organization: current_organization
           new_enabled = current_setting.toggle_enabled!
@@ -77,14 +52,6 @@ module Decidim
         end
 
         private
-
-        def find_participatory_space
-          return nil if params[:space_gid].blank?
-
-          GlobalID::Locator.locate(params[:space_gid])
-        rescue ActiveRecord::RecordNotFound
-          nil
-        end
 
         def toggle_flash_message(enabled)
           key = enabled ? "settings.toggle.enabled" : "settings.toggle.disabled"

@@ -1,4 +1,21 @@
-<%= delegate_workflow_select(config, exclude_workflow: :organization_welcome) %>
+<% workflows = delegate_workflow_options(exclude_workflow: :organization_welcome) %>
+<% selected = config[:delegate_workflow].presence || workflows.first&.last.to_s %>
+
+<div class="row column">
+  <label for="setting_config_delegate_workflow">
+    <%= t("decidim.chatbot.admin.settings.form.delegate_workflow") %>
+    <% if workflows.any? %>
+      <%= select_tag "setting[config][delegate_workflow]",
+          options_for_select(workflows, selected),
+          id: "setting_config_delegate_workflow" %>
+    <% else %>
+      <%= select_tag "setting[config][delegate_workflow]",
+          options_for_select([[t("decidim.chatbot.admin.settings.form.no_workflows_available"), ""]]),
+          id: "setting_config_delegate_workflow",
+          disabled: true %>
+    <% end %>
+  </label>
+</div>
 
 <div class="row column">
   <label for="setting_config_custom_text">

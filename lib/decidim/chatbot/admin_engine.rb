@@ -12,8 +12,6 @@ module Decidim
       routes do
         resources :settings, only: [:index, :edit, :update] do
           member do
-            get :components
-            get :workflow_fields
             patch :toggle
           end
         end
