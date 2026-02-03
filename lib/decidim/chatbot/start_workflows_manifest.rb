@@ -17,7 +17,7 @@ module Decidim
       end
 
       def form
-        form_class&.safe_constantize
+        (form_class || "Decidim::Chatbot::Admin::SettingForm").safe_constantize
       end
 
       def title

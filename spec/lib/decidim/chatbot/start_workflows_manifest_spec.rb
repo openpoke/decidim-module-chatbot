@@ -112,8 +112,8 @@ module Decidim::Chatbot
       end
 
       context "when form_class is nil" do
-        it "returns nil" do
-          expect(manifest.form).to be_nil
+        it "returns the default SettingForm" do
+          expect(manifest.form).to eq(Decidim::Chatbot::Admin::SettingForm)
         end
       end
     end

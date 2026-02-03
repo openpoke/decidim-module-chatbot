@@ -11,7 +11,6 @@ module Decidim
         attribute :config, Hash, default: {}
 
         validates :start_workflow, presence: true
-        validate :validate_workflow_config, if: :enabled?
 
         def map_model(model)
           self.enabled = model.enabled?
@@ -29,23 +28,10 @@ module Decidim
           @workflow_manifest ||= Decidim::Chatbot.start_workflows_registry.find(start_workflow)
         end
 
-        def workflow_display_name
-          workflow_manifest&.title
-        end
-
-        private
-
-        def validate_workflow_config
-          return unless workflow_manifest&.configurable?
-
-          normalized_config = config.to_h.with_indifferent_access
-
-          workflow_manifest.settings_attributes.each do |key, options|
-            next unless options[:required]
-            next if normalized_config[key].present?
-
-            errors.add(:config, :invalid, message: I18n.t("decidim.chatbot.admin.settings.form.errors.#{key}_blank"))
-          end
+        # Returns the workflow-specific config hash for saving.
+        # Override in workflow-specific forms to provide custom config.
+        def workflow_config
+          {}
         end
       end
     end

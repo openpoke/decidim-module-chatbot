@@ -9,7 +9,7 @@ module Decidim::Chatbot::Admin
     let(:organization) { create(:organization) }
     let(:current_user) { create(:user, :admin, :confirmed, organization:) }
     let(:participatory_process) { create(:participatory_process, :published, organization:) }
-    let(:component) { create(:component, :published, participatory_space: participatory_process) }
+    let(:component) { create(:component, :published, participatory_space: participatory_process, manifest_name: "proposals") }
 
     before do
       request.env["decidim.current_organization"] = organization
@@ -59,7 +59,7 @@ module Decidim::Chatbot::Admin
 
       it "assigns the form" do
         get :edit, params: { id: "whatsapp" }
-        expect(assigns(:form)).to be_a(SettingForm)
+        expect(assigns(:form)).to be_a(Decidim::Form)
       end
 
       context "with existing setting" do
@@ -73,10 +73,10 @@ module Decidim::Chatbot::Admin
       end
 
       context "without existing setting" do
-        it "initializes a new setting" do
+        it "initializes a new setting with nil workflow" do
           get :edit, params: { id: "whatsapp" }
           form = assigns(:form)
-          expect(form.start_workflow).to eq("single_participatory_space_workflow")
+          expect(form.start_workflow).to be_nil
         end
       end
 
@@ -96,10 +96,8 @@ module Decidim::Chatbot::Admin
           setting: {
             enabled: true,
             start_workflow: "single_participatory_space_workflow",
-            config: {
-              participatory_space_gid: participatory_process.to_global_id.to_s,
-              component_id: component.id.to_s
-            }
+            participatory_space_gid: participatory_process.to_global_id.to_s,
+            component_id: component.id.to_s
           }
         }
       end
@@ -110,10 +108,8 @@ module Decidim::Chatbot::Admin
           setting: {
             enabled: true,
             start_workflow: "single_participatory_space_workflow",
-            config: {
-              participatory_space_gid: "",
-              component_id: ""
-            }
+            participatory_space_gid: "",
+            component_id: ""
           }
         }
       end
@@ -139,6 +135,13 @@ module Decidim::Chatbot::Admin
           patch :update, params: valid_params
           setting = Decidim::Chatbot::Setting.find_by(organization:, provider: "whatsapp")
           expect(setting.enabled?).to be true
+        end
+
+        it "saves the workflow config" do
+          patch :update, params: valid_params
+          setting = Decidim::Chatbot::Setting.find_by(organization:, provider: "whatsapp")
+          expect(setting.config["participatory_space_gid"]).to eq(participatory_process.to_global_id.to_s)
+          expect(setting.config["component_id"]).to eq(component.id.to_s)
         end
 
         context "with existing setting" do
@@ -181,8 +184,7 @@ module Decidim::Chatbot::Admin
             id: "whatsapp",
             setting: {
               enabled: false,
-              start_workflow: "organization_welcome",
-              config: {}
+              start_workflow: "organization_welcome"
             }
           }
         end

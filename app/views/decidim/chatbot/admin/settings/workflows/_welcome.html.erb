@@ -1,28 +1,20 @@
-<% workflows = delegate_workflow_options(exclude_workflow: :organization_welcome) %>
-<% selected = config[:delegate_workflow].presence || workflows.first&.last.to_s %>
+<% workflows = @form.delegate_workflow_options %>
 
 <div class="row column">
-  <label for="setting_config_delegate_workflow">
-    <%= t("decidim.chatbot.admin.settings.form.delegate_workflow") %>
-    <% if workflows.any? %>
-      <%= select_tag "setting[config][delegate_workflow]",
-          options_for_select(workflows, selected),
-          id: "setting_config_delegate_workflow" %>
-    <% else %>
-      <%= select_tag "setting[config][delegate_workflow]",
-          options_for_select([[t("decidim.chatbot.admin.settings.form.no_workflows_available"), ""]]),
-          id: "setting_config_delegate_workflow",
-          disabled: true %>
-    <% end %>
-  </label>
+  <% if workflows.any? %>
+    <%= form.select :delegate_workflow,
+        options_for_select(workflows, @form.delegate_workflow),
+        { label: t("decidim.chatbot.admin.settings.form.delegate_workflow"), include_blank: true } %>
+  <% else %>
+    <%= form.select :delegate_workflow,
+        [[t("decidim.chatbot.admin.settings.form.no_workflows_available"), ""]],
+        { label: t("decidim.chatbot.admin.settings.form.delegate_workflow") },
+        { disabled: true } %>
+  <% end %>
 </div>
 
 <div class="row column">
-  <label for="setting_config_custom_text">
-    <%= t("decidim.chatbot.admin.settings.form.custom_text") %>
-    <%= text_area_tag "setting[config][custom_text]",
-        config[:custom_text],
-        id: "setting_config_custom_text",
-        rows: 5 %>
-  </label>
+  <%= form.text_area :custom_text,
+      label: t("decidim.chatbot.admin.settings.form.custom_text"),
+      rows: 5 %>
 </div>

@@ -7,8 +7,6 @@ module Decidim::Chatbot::Admin
     subject { form }
 
     let(:organization) { create(:organization) }
-    let(:participatory_process) { create(:participatory_process, :published, organization:) }
-    let(:component) { create(:component, :published, participatory_space: participatory_process) }
 
     let(:enabled) { false }
     let(:start_workflow) { "single_participatory_space_workflow" }
@@ -26,62 +24,20 @@ module Decidim::Chatbot::Admin
       described_class.from_params(params).with_context(current_organization: organization)
     end
 
-    describe "when enabled is false" do
-      let(:enabled) { false }
-
-      it { is_expected.to be_valid }
-
-      context "without config" do
-        let(:config) { {} }
-
-        it { is_expected.to be_valid }
-      end
-    end
-
-    describe "when enabled is true" do
-      let(:enabled) { true }
-      let(:config) do
-        {
-          participatory_space_gid: participatory_process.to_global_id.to_s,
-          component_id: component.id.to_s
-        }
-      end
-
-      context "with valid space and component" do
+    describe "validations" do
+      context "when all params are valid" do
         it { is_expected.to be_valid }
       end
 
-      context "without participatory space GID" do
-        let(:config) { { participatory_space_gid: "", component_id: component.id.to_s } }
+      context "without start_workflow" do
+        let(:start_workflow) { nil }
 
         it { is_expected.not_to be_valid }
 
-        it "adds error on config" do
+        it "adds error on start_workflow" do
           subject.valid?
-          expect(subject.errors[:config]).not_to be_empty
+          expect(subject.errors[:start_workflow]).not_to be_empty
         end
-      end
-
-      context "without component" do
-        let(:config) { { participatory_space_gid: participatory_process.to_global_id.to_s, component_id: "" } }
-
-        it { is_expected.not_to be_valid }
-
-        it "adds error on config" do
-          subject.valid?
-          expect(subject.errors[:config]).not_to be_empty
-        end
-      end
-    end
-
-    describe "without start_workflow" do
-      let(:start_workflow) { nil }
-
-      it { is_expected.not_to be_valid }
-
-      it "adds error on start_workflow" do
-        subject.valid?
-        expect(subject.errors[:start_workflow]).not_to be_empty
       end
     end
 
@@ -100,14 +56,8 @@ module Decidim::Chatbot::Admin
         expect(form.start_workflow).to eq(setting.start_workflow)
       end
 
-      it "maps config with participatory_space_gid" do
-        config = setting.config.with_indifferent_access
-        expect(form.config[:participatory_space_gid]).to eq(config[:participatory_space_gid])
-      end
-
-      it "maps config with component_id" do
-        config = setting.config.with_indifferent_access
-        expect(form.config[:component_id]).to eq(config[:component_id])
+      it "maps config correctly" do
+        expect(form.config).to respond_to(:[])
       end
 
       context "when setting is disabled" do
@@ -135,9 +85,9 @@ module Decidim::Chatbot::Admin
       end
     end
 
-    describe "#workflow_display_name" do
-      it "returns the translated workflow title" do
-        expect(form.workflow_display_name).to be_a(String)
+    describe "#workflow_config" do
+      it "returns empty hash by default" do
+        expect(form.workflow_config).to eq({})
       end
     end
   end

@@ -15,13 +15,7 @@
     </div>
 
     <div>
-      <%= render partial: "workflow_config", locals: {
-        workflow_manifest: @workflow_manifest,
-        workflow_display_name: @form.workflow_display_name,
-        form: form,
-        setting_form: @form,
-        config: @form.config
-      } %>
+      <%= render partial: "workflow_config", locals: { workflow_manifest: @workflow_manifest, form: form } %>
     </div>
 
     <div class="card pt-4">

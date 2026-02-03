@@ -13,14 +13,14 @@ module Decidim
 
         def edit
           enforce_permission_to :update, :organization, organization: current_organization
-          @form = form(SettingForm).from_model(current_setting)
+          @form = workflow_form_class.from_model(current_setting)
           @form.start_workflow = params[:workflow] if params[:workflow].present?
           @workflow_manifest = @form.workflow_manifest
         end
 
         def update
           enforce_permission_to :update, :organization, organization: current_organization
-          @form = form(SettingForm).from_params(params)
+          @form = workflow_form_class.from_params(params)
 
           UpdateSetting.call(@form, current_setting) do
             on(:ok) do
@@ -61,10 +61,14 @@ module Decidim
         def current_setting
           @current_setting ||= Decidim::Chatbot::Setting.find_or_initialize_by(
             organization: current_organization,
-            provider: params[:id] || "whatsapp"
-          ) do |setting|
-            setting.start_workflow = "single_participatory_space_workflow"
-          end
+            provider: params[:id]
+          )
+        end
+
+        def workflow_form_class
+          workflow_name = params.dig(:setting, :start_workflow) || params[:workflow] || current_setting.start_workflow
+          manifest = Decidim::Chatbot.start_workflows_registry.find(workflow_name)
+          form(manifest&.form || SettingForm)
         end
 
         def setting_for_provider(provider)

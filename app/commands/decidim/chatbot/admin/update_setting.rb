@@ -24,13 +24,8 @@ module Decidim
           setting.update!(
             start_workflow: form.start_workflow,
             enabled: form.enabled,
-            config: workflow_config
+            config: form.workflow_config
           )
-        end
-
-        def workflow_config
-          allowed_keys = form.workflow_manifest&.config_keys || []
-          form.config.to_h.with_indifferent_access.slice(*allowed_keys)
         end
       end
     end

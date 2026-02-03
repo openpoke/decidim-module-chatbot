@@ -9,27 +9,24 @@ module Decidim::Chatbot::Admin
     let(:organization) { create(:organization) }
     let(:setting) { create(:chatbot_setting, organization:) }
     let(:participatory_process) { create(:participatory_process, :published, organization:) }
-    let(:component) { create(:component, :published, participatory_space: participatory_process) }
+    let(:component) { create(:component, :published, participatory_space: participatory_process, manifest_name: "proposals") }
 
     let(:enabled) { true }
     let(:start_workflow) { "single_participatory_space_workflow" }
-    let(:config) do
-      {
-        "participatory_space_gid" => participatory_process.to_global_id.to_s,
-        "component_id" => component.id.to_s
-      }
-    end
+    let(:participatory_space_gid) { participatory_process.to_global_id.to_s }
+    let(:component_id) { component.id.to_s }
 
     let(:params) do
       {
         enabled:,
         start_workflow:,
-        config:
+        participatory_space_gid:,
+        component_id:
       }
     end
 
     let(:form) do
-      SettingForm.from_params(params).with_context(current_organization: organization)
+      SingleParticipatorySpaceSettingsForm.from_params(params).with_context(current_organization: organization)
     end
 
     describe "when form is valid" do
@@ -68,7 +65,8 @@ module Decidim::Chatbot::Admin
 
     describe "when form is invalid" do
       let(:enabled) { true }
-      let(:config) { { "participatory_space_gid" => "", "component_id" => "" } }
+      let(:participatory_space_gid) { "" }
+      let(:component_id) { "" }
 
       it "broadcasts :invalid" do
         expect { subject.call }.to broadcast(:invalid)
@@ -84,9 +82,19 @@ module Decidim::Chatbot::Admin
 
     describe "when disabling chatbot" do
       let(:setting) { create(:chatbot_setting, :enabled, organization:) }
-      let(:enabled) { false }
-      let(:start_workflow) { "organization_welcome" }
-      let(:config) { {} }
+
+      let(:params) do
+        {
+          enabled: false,
+          start_workflow: "organization_welcome",
+          delegate_workflow: "",
+          custom_text: ""
+        }
+      end
+
+      let(:form) do
+        WelcomeWorkflowSettingsForm.from_params(params).with_context(current_organization: organization)
+      end
 
       it "broadcasts :ok" do
         expect { subject.call }.to broadcast(:ok)
@@ -109,26 +117,6 @@ module Decidim::Chatbot::Admin
           expect(config[:participatory_space_gid]).to eq(participatory_process.to_global_id.to_s)
           expect(config[:component_id]).to eq(component.id.to_s)
         end
-      end
-    end
-
-    describe "config sanitization" do
-      let(:config) do
-        {
-          "participatory_space_gid" => participatory_process.to_global_id.to_s,
-          "component_id" => component.id.to_s,
-          "unknown_key" => "should be removed"
-        }
-      end
-
-      it "removes unknown keys from config" do
-        subject.call
-        setting.reload
-
-        config = setting.config.with_indifferent_access
-        expect(config).not_to have_key(:unknown_key)
-        expect(config[:participatory_space_gid]).to be_present
-        expect(config[:component_id]).to be_present
       end
     end
   end

@@ -1,34 +1,25 @@
-<% settings_form = workflow_manifest.form.new(current_organization) %>
-<% grouped_spaces = settings_form.participatory_space_options %>
-<% selected_space = config[:participatory_space_gid].presence || grouped_spaces.values.first&.first&.last.to_s %>
-<% components = settings_form.components_for_space(selected_space) %>
-<% selected_component = config[:component_id].presence || components.first&.dig(:id).to_s %>
+<% grouped_spaces = @form.participatory_space_options %>
+<% components = @form.component_options %>
 
 <div class="row column">
-  <label for="setting_config_participatory_space_gid">
-    <%= t("decidim.chatbot.admin.settings.form.participatory_space") %>
-    <%= select_tag "setting[config][participatory_space_gid]",
-        grouped_options_for_select(grouped_spaces, selected_space),
-        id: "setting_config_participatory_space_gid",
-        data: { space_select: true } %>
-  </label>
+  <%= form.select :participatory_space_gid,
+      grouped_options_for_select(grouped_spaces, @form.participatory_space_gid),
+      { label: t("decidim.chatbot.admin.settings.form.participatory_space") },
+      { data: { space_select: true } } %>
 </div>
 
 <div class="row column" id="components_wrapper" style="<%= components.empty? ? 'display:none;' : '' %>">
-  <label for="setting_config_component_id">
-    <%= t("decidim.chatbot.admin.settings.form.component") %>
-    <%= select_tag "setting[config][component_id]",
-        options_for_select(components.map { |component| [component[:name], component[:id]] }, selected_component),
-        id: "setting_config_component_id" %>
-  </label>
+  <%= form.select :component_id,
+      options_for_select(components, @form.component_id),
+      { label: t("decidim.chatbot.admin.settings.form.component") } %>
 </div>
 
 <script type="text/javascript">
   (function() {
     const spaceSelect = document.querySelector('[data-space-select]');
     const componentsWrapper = document.getElementById('components_wrapper');
-    const componentSelect = document.getElementById('setting_config_component_id');
-    const componentsData = <%= raw settings_form.components_for_space_json %>;
+    const componentSelect = document.getElementById('setting_component_id');
+    const componentsData = <%= raw @form.components_json %>;
 
     if (!spaceSelect || !componentSelect) return;
 

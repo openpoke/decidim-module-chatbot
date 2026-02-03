@@ -22,38 +22,31 @@ describe "Admin manages chatbot settings" do
 
     context "when organization_welcome workflow is selected" do
       it "renders welcome workflow form with custom_text and delegate_workflow" do
-        visit decidim_admin_chatbot.edit_setting_path(id: "whatsapp")
+        visit decidim_admin_chatbot.edit_setting_path(id: "whatsapp", workflow: "organization_welcome")
 
-        select "Organization Welcome", from: "setting_start_workflow"
-
-        expect(page).to have_field("setting_config_custom_text")
-        expect(page).to have_select("setting_config_delegate_workflow")
+        expect(page).to have_field("setting_custom_text")
+        expect(page).to have_select("setting_delegate_workflow")
       end
     end
 
     context "when single_participatory_space_workflow is selected" do
       it "renders participatory space workflow form with space select" do
-        visit decidim_admin_chatbot.edit_setting_path(id: "whatsapp")
+        visit decidim_admin_chatbot.edit_setting_path(id: "whatsapp", workflow: "single_participatory_space_workflow")
 
-        select "Single Participatory Space", from: "setting_start_workflow"
-
-        expect(page).to have_select("setting_config_participatory_space_gid")
+        expect(page).to have_select("setting_participatory_space_gid")
         # Component select is hidden until space is selected
-        expect(page).to have_css("#setting_config_component_id", visible: :all)
+        expect(page).to have_css("#setting_component_id", visible: :all)
       end
     end
 
     context "when switching workflows" do
       it "changes the configuration form" do
-        visit decidim_admin_chatbot.edit_setting_path(id: "whatsapp")
+        visit decidim_admin_chatbot.edit_setting_path(id: "whatsapp", workflow: "organization_welcome")
+        expect(page).to have_field("setting_custom_text")
 
-        select "Organization Welcome", from: "setting_start_workflow"
-        expect(page).to have_field("setting_config_custom_text")
-        expect(page).to have_no_select("setting_config_participatory_space_gid")
-
-        select "Single Participatory Space", from: "setting_start_workflow"
-        expect(page).to have_select("setting_config_participatory_space_gid")
-        expect(page).to have_no_field("setting_config_custom_text")
+        visit decidim_admin_chatbot.edit_setting_path(id: "whatsapp", workflow: "single_participatory_space_workflow")
+        expect(page).to have_select("setting_participatory_space_gid")
+        expect(page).to have_no_field("setting_custom_text")
       end
     end
   end
@@ -61,10 +54,9 @@ describe "Admin manages chatbot settings" do
   describe "saving settings" do
     context "with organization_welcome workflow" do
       it "saves custom_text and delegate_workflow" do
-        visit decidim_admin_chatbot.edit_setting_path(id: "whatsapp")
+        visit decidim_admin_chatbot.edit_setting_path(id: "whatsapp", workflow: "organization_welcome")
 
-        select "Organization Welcome", from: "setting_start_workflow"
-        fill_in "setting_config_custom_text", with: "Welcome to our chatbot!"
+        fill_in "setting_custom_text", with: "Welcome to our chatbot!"
         check "setting_enabled"
 
         click_on "Save"
@@ -80,11 +72,18 @@ describe "Admin manages chatbot settings" do
 
     context "with single_participatory_space_workflow" do
       it "saves participatory space and component" do
-        visit decidim_admin_chatbot.edit_setting_path(id: "whatsapp")
+        visit decidim_admin_chatbot.edit_setting_path(id: "whatsapp", workflow: "single_participatory_space_workflow")
 
-        select "Single Participatory Space", from: "setting_start_workflow"
-        select participatory_process.title["en"], from: "setting_config_participatory_space_gid"
-        select translated(proposal_component.name), from: "setting_config_component_id"
+        # Select participatory space
+        find("#setting_participatory_space_gid").select(participatory_process.title["en"])
+
+        # Manually trigger change event for JavaScript
+        page.execute_script("document.querySelector('[data-space-select]').dispatchEvent(new Event('change'))")
+
+        # Wait for JavaScript to show component selector
+        expect(page).to have_css("#components_wrapper:not([style*='display: none'])", wait: 5)
+
+        find("#setting_component_id").select(translated(proposal_component.name))
         check "setting_enabled"
 
         click_on "Save"
