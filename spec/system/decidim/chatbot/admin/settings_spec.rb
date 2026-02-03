@@ -75,15 +75,15 @@ describe "Admin manages chatbot settings" do
         visit decidim_admin_chatbot.edit_setting_path(id: "whatsapp", workflow: "single_participatory_space_workflow")
 
         # Select participatory space
-        find("#setting_participatory_space_gid").select(participatory_process.title["en"])
+        find_by_id("setting_participatory_space_gid").select(participatory_process.title["en"])
 
         # Manually trigger change event for JavaScript
-        page.execute_script("document.querySelector('[data-space-select]').dispatchEvent(new Event('change'))")
+        page.execute_script("document.getElementById('setting_participatory_space_gid').dispatchEvent(new Event('change'))")
 
         # Wait for JavaScript to show component selector
-        expect(page).to have_css("#components_wrapper:not([style*='display: none'])", wait: 5)
+        expect(page).to have_css("#components_wrapper:not([style*='display: none'])", wait: 2)
 
-        find("#setting_component_id").select(translated(proposal_component.name))
+        find_by_id("setting_component_id").select(translated(proposal_component.name))
         check "setting_enabled"
 
         click_on "Save"
