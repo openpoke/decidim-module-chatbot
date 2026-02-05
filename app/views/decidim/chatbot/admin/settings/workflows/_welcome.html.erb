@@ -1,0 +1,20 @@
+<% workflows = @form.delegate_workflow_options %>
+
+<div class="row column">
+  <% if workflows.any? %>
+    <%= form.select :delegate_workflow,
+        options_for_select(workflows, @form.delegate_workflow),
+        { label: t("decidim.chatbot.admin.settings.form.delegate_workflow"), include_blank: true } %>
+  <% else %>
+    <%= form.select :delegate_workflow,
+        [[t("decidim.chatbot.admin.settings.form.no_workflows_available"), ""]],
+        { label: t("decidim.chatbot.admin.settings.form.delegate_workflow") },
+        { disabled: true } %>
+  <% end %>
+</div>
+
+<div class="row column">
+  <%= form.text_area :custom_text,
+      label: t("decidim.chatbot.admin.settings.form.custom_text"),
+      rows: 5 %>
+</div>

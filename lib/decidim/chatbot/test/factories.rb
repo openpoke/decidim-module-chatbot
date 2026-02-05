@@ -8,9 +8,12 @@ FactoryBot.define do
     organization
     provider { "whatsapp" }
     start_workflow { "organization_welcome" }
+    enabled { false }
     config { {} }
 
     trait :enabled do
+      enabled { true }
+
       transient do
         space { create(:participatory_process, organization:) }
         component { create(:component, participatory_space: space) }
@@ -18,9 +21,7 @@ FactoryBot.define do
 
       config do
         {
-          enabled: true,
-          participatory_space_type: space.class.name,
-          participatory_space_id: space.id,
+          participatory_space_gid: space.to_global_id.to_s,
           component_id: component.id
         }
       end

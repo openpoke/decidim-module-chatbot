@@ -9,7 +9,7 @@ module Decidim::Chatbot::Admin
     let(:organization) { create(:organization) }
     let(:current_user) { create(:user, :admin, :confirmed, organization:) }
     let(:participatory_process) { create(:participatory_process, :published, organization:) }
-    let(:component) { create(:component, :published, participatory_space: participatory_process) }
+    let(:component) { create(:component, :published, participatory_space: participatory_process, manifest_name: "proposals") }
 
     before do
       request.env["decidim.current_organization"] = organization
@@ -59,7 +59,7 @@ module Decidim::Chatbot::Admin
 
       it "assigns the form" do
         get :edit, params: { id: "whatsapp" }
-        expect(assigns(:form)).to be_a(SettingForm)
+        expect(assigns(:form)).to be_a(Decidim::Form)
       end
 
       context "with existing setting" do
@@ -73,10 +73,18 @@ module Decidim::Chatbot::Admin
       end
 
       context "without existing setting" do
-        it "initializes a new setting" do
+        it "initializes a new setting with nil workflow" do
           get :edit, params: { id: "whatsapp" }
           form = assigns(:form)
-          expect(form.start_workflow).to eq("single_participatory_space_workflow")
+          expect(form.start_workflow).to be_nil
+        end
+      end
+
+      context "with workflow param" do
+        it "overrides the workflow in form" do
+          get :edit, params: { id: "whatsapp", workflow: "organization_welcome" }
+          form = assigns(:form)
+          expect(form.start_workflow).to eq("organization_welcome")
         end
       end
     end
@@ -87,9 +95,9 @@ module Decidim::Chatbot::Admin
           id: "whatsapp",
           setting: {
             enabled: true,
-            start_workflow: "participatory_space",
+            start_workflow: "single_participatory_space_workflow",
             participatory_space_gid: participatory_process.to_global_id.to_s,
-            component_id: component.id
+            component_id: component.id.to_s
           }
         }
       end
@@ -99,9 +107,9 @@ module Decidim::Chatbot::Admin
           id: "whatsapp",
           setting: {
             enabled: true,
-            start_workflow: "participatory_space",
+            start_workflow: "single_participatory_space_workflow",
             participatory_space_gid: "",
-            component_id: nil
+            component_id: ""
           }
         }
       end
@@ -127,6 +135,13 @@ module Decidim::Chatbot::Admin
           patch :update, params: valid_params
           setting = Decidim::Chatbot::Setting.find_by(organization:, provider: "whatsapp")
           expect(setting.enabled?).to be true
+        end
+
+        it "saves the workflow config" do
+          patch :update, params: valid_params
+          setting = Decidim::Chatbot::Setting.find_by(organization:, provider: "whatsapp")
+          expect(setting.config["participatory_space_gid"]).to eq(participatory_process.to_global_id.to_s)
+          expect(setting.config["component_id"]).to eq(component.id.to_s)
         end
 
         context "with existing setting" do
@@ -169,9 +184,7 @@ module Decidim::Chatbot::Admin
             id: "whatsapp",
             setting: {
               enabled: false,
-              start_workflow: "organization_welcome",
-              participatory_space_gid: "",
-              component_id: ""
+              start_workflow: "organization_welcome"
             }
           }
         end
@@ -189,32 +202,30 @@ module Decidim::Chatbot::Admin
       end
     end
 
-    describe "GET #components" do
-      let!(:published_component) { component }
+    describe "PATCH #toggle" do
+      let!(:setting) { create(:chatbot_setting, organization:, enabled: false) }
 
-      it "returns json response" do
-        get :components, params: { id: "whatsapp", space_gid: participatory_process.to_global_id.to_s }
-        expect(response.content_type).to include("application/json")
+      it "toggles the enabled status" do
+        patch :toggle, params: { id: "whatsapp" }
+        setting.reload
+        expect(setting.enabled?).to be true
       end
 
-      it "returns components for the space" do
-        get :components, params: { id: "whatsapp", space_gid: participatory_process.to_global_id.to_s }
-        json_response = response.parsed_body
-        expect(json_response).to be_an(Array)
-        expect(json_response.map { |c| c["id"] }).to include(published_component.id)
+      it "redirects to settings path" do
+        patch :toggle, params: { id: "whatsapp" }
+        expect(response).to redirect_to(settings_path)
       end
 
-      context "with invalid space_gid" do
-        it "returns empty array" do
-          get :components, params: { id: "whatsapp", space_gid: "invalid" }
-          expect(response.parsed_body).to eq([])
-        end
+      it "sets a flash notice" do
+        patch :toggle, params: { id: "whatsapp" }
+        expect(flash[:notice]).to be_present
       end
 
-      context "without space_gid" do
-        it "returns empty array" do
-          get :components, params: { id: "whatsapp" }
-          expect(response.parsed_body).to eq([])
+      context "with JSON format" do
+        it "returns JSON response" do
+          patch :toggle, params: { id: "whatsapp" }, format: :json
+          expect(response.content_type).to include("application/json")
+          expect(response.parsed_body["enabled"]).to be true
         end
       end
     end

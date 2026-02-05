@@ -6,16 +6,22 @@ export default class extends Controller {
 
   toggle() {
     const isEnabled = this.checkboxTarget.checked
+    const csrfMetaTag = document.querySelector('meta[name="csrf-token"]')
+    const csrfToken = csrfMetaTag?.content
+
+    if (!csrfToken) {
+      this.checkboxTarget.checked = !isEnabled
+      return
+    }
 
     fetch(this.urlValue, {
       method: "PATCH",
       headers: {
-        "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]').content,
+        "X-CSRF-Token": csrfToken,
         "Accept": "application/json",
         "Content-Type": "application/json"
       }
     }).catch(() => {
-      // Revert on error
       this.checkboxTarget.checked = !isEnabled
     })
   }

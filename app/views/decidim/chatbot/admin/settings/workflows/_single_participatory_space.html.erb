@@ -1,0 +1,41 @@
+<% grouped_spaces = @form.participatory_space_options %>
+<% components = @form.component_options %>
+
+<div class="row column">
+  <%= form.select :participatory_space_gid,
+      grouped_options_for_select(grouped_spaces, @form.participatory_space_gid),
+      { label: t("decidim.chatbot.admin.settings.form.participatory_space") } %>
+</div>
+
+<div class="row column" id="components_wrapper" style="<%= components.empty? ? 'display:none;' : '' %>">
+  <%= form.select :component_id,
+      options_for_select(components, @form.component_id),
+      { label: t("decidim.chatbot.admin.settings.form.component") } %>
+</div>
+
+<script type="text/javascript">
+  (function() {
+    const spaceSelect = document.getElementById('setting_participatory_space_gid');
+    const componentsWrapper = document.getElementById('components_wrapper');
+    const componentSelect = document.getElementById('setting_component_id');
+    const componentsData = <%= raw @form.components_json %>;
+
+    if (!spaceSelect || !componentSelect) return;
+
+    spaceSelect.addEventListener('change', function() {
+      const spaceGid = this.value;
+      const components = componentsData[spaceGid] || [];
+
+      componentSelect.innerHTML = '';
+      components.forEach(function(component, index) {
+        const option = document.createElement('option');
+        option.value = component.id;
+        option.textContent = component.name;
+        if (index === 0) option.selected = true;
+        componentSelect.appendChild(option);
+      });
+
+      componentsWrapper.style.display = components.length ? '' : 'none';
+    });
+  })();
+</script>

@@ -12,7 +12,6 @@ module Decidim
       routes do
         resources :settings, only: [:index, :edit, :update] do
           member do
-            get :components
             patch :toggle
           end
         end

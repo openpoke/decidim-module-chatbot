@@ -13,12 +13,14 @@ module Decidim
 
         def edit
           enforce_permission_to :update, :organization, organization: current_organization
-          @form = form(SettingForm).from_model(current_setting)
+          @form = workflow_form_class.from_model(current_setting)
+          @form.start_workflow = params[:workflow] if params[:workflow].present?
+          @workflow_manifest = @form.workflow_manifest
         end
 
         def update
           enforce_permission_to :update, :organization, organization: current_organization
-          @form = form(SettingForm).from_params(params)
+          @form = workflow_form_class.from_params(params)
 
           UpdateSetting.call(@form, current_setting) do
             on(:ok) do
@@ -27,20 +29,11 @@ module Decidim
             end
 
             on(:invalid) do
+              @workflow_manifest = @form.workflow_manifest
               flash.now[:alert] = I18n.t("settings.update.error", scope: "decidim.chatbot.admin")
               render :edit, status: :unprocessable_entity
             end
           end
-        end
-
-        def components
-          enforce_permission_to :update, :organization, organization: current_organization
-          space = find_participatory_space
-          return render json: [] unless space
-
-          render json: space.components.published.map { |c|
-            { id: c.id, name: translated_attribute(c.name), manifest_name: c.manifest_name }
-          }
         end
 
         def toggle
@@ -60,12 +53,6 @@ module Decidim
 
         private
 
-        def find_participatory_space
-          return nil if params[:space_gid].blank?
-
-          GlobalID::Locator.locate(params[:space_gid])
-        end
-
         def toggle_flash_message(enabled)
           key = enabled ? "settings.toggle.enabled" : "settings.toggle.disabled"
           I18n.t(key, scope: "decidim.chatbot.admin")
@@ -74,10 +61,14 @@ module Decidim
         def current_setting
           @current_setting ||= Decidim::Chatbot::Setting.find_or_initialize_by(
             organization: current_organization,
-            provider: params[:id] || "whatsapp"
-          ) do |setting|
-            setting.start_workflow = "single_participatory_space_workflow"
-          end
+            provider: params[:id]
+          )
+        end
+
+        def workflow_form_class
+          workflow_name = params.dig(:setting, :start_workflow) || params[:workflow] || current_setting.start_workflow
+          manifest = Decidim::Chatbot.start_workflows_registry.find(workflow_name)
+          form(manifest&.form || SettingForm)
         end
 
         def setting_for_provider(provider)
