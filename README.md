@@ -100,7 +100,7 @@ curl -X POST http://localhost:3000/chatbot/webhooks/whatsapp \
 > If you use ngrok, just start the proxy with:
 >
 > ```bash
-> ngrok http 300
+> ngrok http 3000
 > ```
 >
 > This will give you a domain name, change the domain of your "localhost" organization:
@@ -109,47 +109,30 @@ curl -X POST http://localhost:3000/chatbot/webhooks/whatsapp \
 > bin/rails c
 > Decidim::Organization.first.update(host: "the-domain-from-ngrok")
 > ```
+> Then connect to https://the-domain-from-ngrok/ (note the port is not necessary)
 
 
 ## Providers
 
 Note: Currently only WhatsApp is supported (PRs welcomed!)
 
-### WhatsApp API Configuration
+### WhatsApp
 
-The Decidim Chatbot module supports integration with the **WhatsApp Business API**. Follow these steps to set up your WhatsApp developer environment.
+The Decidim Chatbot module supports integration with the **WhatsApp Business API**.
 
-#### 1. Create a WhatsApp Business Account
-1. Go to [Meta for Developers](https://developers.facebook.com/) portal.
-2. Create a **Facebook Business Manager** account if you don’t already have one.
-3. Set up a **WhatsApp Business Account** and register a phone number.
+For detailed setup instructions on how to configure WhatsApp in the Meta developer site, see the [WhatsApp Configuration Guide](docs/providers/whatsapp-configuration.md).
 
-#### 2. Generate Access Credentials
-1. In your WhatsApp Business Account, create a **WhatsApp API app**.
-2. Obtain the following credentials:
-   - **Phone Number ID**
-   - **WhatsApp API Token**
-   - **Webhook Verify Secret** (used to validate the webhook endpoint, this is a user-defined value, needs to be configured in Decidim and Whatsapp developers settings)
+#### Quick Setup Summary
 
-#### 3. Configure Webhooks
-1. In the WhatsApp API app settings, configure a **Webhook URL** pointing to your Decidim instance:
-https://your-decidim-domain.com/chatbot/webhooks/whatsapp
-2. Enable the following webhook events:
-- `messages`
-- `message_reactions`
-- `message_deliveries` (optional)
-3. Verify your webhook using the secret set in your Decidim Chatbot settings.
+To quickly set up WhatsApp:
 
-### 4. Environment Variables
+1. Create a WhatsApp Business Account at [Meta for Developers](https://developers.facebook.com/)
+2. Register and verify a phone number
+3. Generate API credentials (Phone Number ID and Access Token)
+4. Configure your webhook URL in Meta
+5. Set environment variables in Decidim (see [WhatsApp Configuration Guide](docs/providers/whatsapp-configuration.md#step-8-configure-decidim-chatbot))
 
-Add the following variables to your `.env` or server environment:
-
-```bash
-# WhatsApp Provider Configuration
-WHATSAPP_PROVIDER_NAME=whatsapp
-WHATSAPP_VERIFY_TOKEN=anything-you-want-here
-WHATSAPP_ACCESS_TOKEN=your_whatsapp_api_token_here
-```
+For the complete step-by-step guide including troubleshooting, please refer to the [WhatsApp Configuration Guide](docs/providers/whatsapp-configuration.md).
 
 ## Contributing
 
