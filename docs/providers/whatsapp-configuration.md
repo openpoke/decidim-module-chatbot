@@ -95,7 +95,7 @@ In your WhatsApp app dashboard, navigate to **WhatsApp** → **Getting Started**
    - **Important**: Must use HTTPS
    - **Note**: If developing locally, use [ngrok](https://ngrok.com) to expose your local server
 
-4. Set the **Verify Token** to the value you created in step 6
+4. Set the **Verify Token** to the Webhook Verify Token value you created in Step 6
 5. In **Subscribe to webhook fields**, select these events:
    - `messages` (required - for incoming messages)
    - `message_reactions` (optional - for message reactions)
