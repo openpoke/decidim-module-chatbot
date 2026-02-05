@@ -68,7 +68,7 @@ In your WhatsApp app dashboard, navigate to **WhatsApp** → **Getting Started**
 ### Phone Number ID
 - Located in the **Getting Started** section
 - Format: a numeric ID (e.g., `1234567890`)
-- Copy and save this value
+- Decidim automatically retrieves this ID from WhatsApp webhook payloads; you do not need to configure it manually.
 
 ### Access Token
 1. Go to **WhatsApp** → **API Setup**
