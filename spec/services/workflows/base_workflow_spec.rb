@@ -139,7 +139,7 @@ module Decidim
         end
 
         describe "#delegate_workflow" do
-          let(:new_workflow_class) { Workflows::ParticipatorySpaceWorkflow }
+          let(:new_workflow_class) { Workflows::SingleParticipatorySpaceWorkflow }
           let(:new_workflow_instance) { instance_double(new_workflow_class) }
 
           before do

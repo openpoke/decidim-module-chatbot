@@ -55,8 +55,8 @@ module Decidim
             end
           end
 
-          # Fallback: delegate to ParticipatorySpaceWorkflow (backward compatibility)
-          delegate_workflow(ParticipatorySpaceWorkflow)
+          # Fallback: delegate to SingleParticipatorySpaceWorkflow (backward compatibility)
+          delegate_workflow(SingleParticipatorySpaceWorkflow)
         end
 
         def config

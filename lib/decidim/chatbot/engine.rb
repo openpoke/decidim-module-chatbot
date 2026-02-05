@@ -41,11 +41,12 @@ module Decidim
         end
 
         Decidim::Chatbot.start_workflows_registry.register(:single_participatory_space_workflow) do |manifest|
-          manifest.workflow_class = "Decidim::Chatbot::Workflows::ParticipatorySpaceWorkflow"
+          manifest.workflow_class = "Decidim::Chatbot::Workflows::SingleParticipatorySpaceWorkflow"
           manifest.settings_partial = "decidim/chatbot/admin/settings/workflows/single_participatory_space"
           manifest.settings_attributes = {
             participatory_space_gid: { type: :select, required: true },
-            component_id: { type: :select, required: true }
+            component_id: { type: :select, required: true },
+            instructions: { type: :text, required: false }
           }
           manifest.form_class = "Decidim::Chatbot::Admin::SingleParticipatorySpaceSettingsForm"
         end

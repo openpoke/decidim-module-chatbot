@@ -74,17 +74,17 @@ module Decidim
           end
 
           context "when user clicks start button" do
-            let(:participatory_space_workflow_instance) { instance_double(ParticipatorySpaceWorkflow) }
+            let(:participatory_space_workflow_instance) { instance_double(SingleParticipatorySpaceWorkflow) }
 
             before do
               allow(received_message).to receive(:user_text?).and_return(false)
               allow(received_message).to receive(:actionable?).and_return(true)
               allow(received_message).to receive(:button_id).and_return("start")
-              allow(ParticipatorySpaceWorkflow).to receive(:new).and_return(participatory_space_workflow_instance)
+              allow(SingleParticipatorySpaceWorkflow).to receive(:new).and_return(participatory_space_workflow_instance)
               allow(participatory_space_workflow_instance).to receive(:start)
             end
 
-            it "delegates to ParticipatorySpaceWorkflow" do
+            it "delegates to SingleParticipatorySpaceWorkflow" do
               expect(participatory_space_workflow_instance).to receive(:start).with(true)
               subject.start
             end
@@ -92,7 +92,7 @@ module Decidim
             it "updates sender's current_workflow_class" do
               subject.start
               sender.reload
-              expect(sender.current_workflow_class).to eq("Decidim::Chatbot::Workflows::ParticipatorySpaceWorkflow")
+              expect(sender.current_workflow_class).to eq("Decidim::Chatbot::Workflows::SingleParticipatorySpaceWorkflow")
             end
 
             it "sets parent_workflow_class to current workflow" do
@@ -225,41 +225,41 @@ module Decidim
             let(:setting_config) { { "delegate_workflow" => "single_participatory_space_workflow" } }
 
             it "delegates to the configured workflow" do
-              ps_instance = instance_double(ParticipatorySpaceWorkflow)
-              allow(ParticipatorySpaceWorkflow).to receive(:new).and_return(ps_instance)
+              ps_instance = instance_double(SingleParticipatorySpaceWorkflow)
+              allow(SingleParticipatorySpaceWorkflow).to receive(:new).and_return(ps_instance)
               allow(ps_instance).to receive(:start)
 
               subject.start
               sender.reload
-              expect(sender.current_workflow_class).to eq("Decidim::Chatbot::Workflows::ParticipatorySpaceWorkflow")
+              expect(sender.current_workflow_class).to eq("Decidim::Chatbot::Workflows::SingleParticipatorySpaceWorkflow")
             end
           end
 
           context "when delegate_workflow is empty" do
             let(:setting_config) { { "delegate_workflow" => "" } }
 
-            it "falls back to ParticipatorySpaceWorkflow" do
-              ps_instance = instance_double(ParticipatorySpaceWorkflow)
-              allow(ParticipatorySpaceWorkflow).to receive(:new).and_return(ps_instance)
+            it "falls back to SingleParticipatorySpaceWorkflow" do
+              ps_instance = instance_double(SingleParticipatorySpaceWorkflow)
+              allow(SingleParticipatorySpaceWorkflow).to receive(:new).and_return(ps_instance)
               allow(ps_instance).to receive(:start)
 
               subject.start
               sender.reload
-              expect(sender.current_workflow_class).to eq("Decidim::Chatbot::Workflows::ParticipatorySpaceWorkflow")
+              expect(sender.current_workflow_class).to eq("Decidim::Chatbot::Workflows::SingleParticipatorySpaceWorkflow")
             end
           end
 
           context "when delegate_workflow is not set" do
             let(:setting_config) { {} }
 
-            it "falls back to ParticipatorySpaceWorkflow" do
-              ps_instance = instance_double(ParticipatorySpaceWorkflow)
-              allow(ParticipatorySpaceWorkflow).to receive(:new).and_return(ps_instance)
+            it "falls back to SingleParticipatorySpaceWorkflow" do
+              ps_instance = instance_double(SingleParticipatorySpaceWorkflow)
+              allow(SingleParticipatorySpaceWorkflow).to receive(:new).and_return(ps_instance)
               allow(ps_instance).to receive(:start)
 
               subject.start
               sender.reload
-              expect(sender.current_workflow_class).to eq("Decidim::Chatbot::Workflows::ParticipatorySpaceWorkflow")
+              expect(sender.current_workflow_class).to eq("Decidim::Chatbot::Workflows::SingleParticipatorySpaceWorkflow")
             end
           end
         end

@@ -46,7 +46,7 @@ FactoryBot.define do
     end
 
     trait :with_parent_workflow do
-      current_workflow_class { "Decidim::Chatbot::Workflows::ParticipatorySpaceWorkflow" }
+      current_workflow_class { "Decidim::Chatbot::Workflows::SingleParticipatorySpaceWorkflow" }
       parent_workflow_class { "Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow" }
     end
   end

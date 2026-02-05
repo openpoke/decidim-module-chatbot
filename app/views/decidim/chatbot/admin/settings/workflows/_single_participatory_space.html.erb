@@ -13,6 +13,12 @@
       { label: t("decidim.chatbot.admin.settings.form.component") } %>
 </div>
 
+<div class="row column">
+  <%= form.text_area :instructions,
+      label: t("decidim.chatbot.admin.settings.form.instructions"),
+      rows: 5 %>
+</div>
+
 <script type="text/javascript">
   (function() {
     const spaceSelect = document.getElementById('setting_participatory_space_gid');

@@ -16,6 +16,7 @@ en:
             custom_text: Initial message (defaults to organization's short description)
             delegate_workflow: Choose the workflow to handle the "Participate" button
             enabled: Enabled
+            instructions: Instructions (optional) - displayed before showing the space information
             loading: Loading...
             no_extra_settings: No additional configuration needed for this workflow.
             no_workflows_available: No workflows available
@@ -51,17 +52,14 @@ en:
           buttons:
             end: Exit & restart
             participate: Participate
-        participatory_space_workflow:
+        single_participatory_space_workflow:
           buttons:
             end: Exit & restart
+            more_info: More info
             participate: Participate
-            start: Start
+          no_description: No additional description available.
           no_spaces: There are no active participatory spaces at the moment. Please
             try again later.
           not_configured: The chatbot is not configured yet. Please contact the administrator.
-          participate_prompt: Great! You can now participate in this space. Click
-            the button below to continue.
-          read_only_mode: This participatory space is currently in read-only mode.
-            You can view information but cannot submit contributions yet.
-        single_participatory_space_workflow:
+          not_ready_yet: This feature is not ready yet. Please try again later.
           title: Single Participatory Space

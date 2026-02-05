@@ -10,6 +10,7 @@ module Decidim
 
         attribute :participatory_space_gid, String
         attribute :component_id, String
+        attribute :instructions, String
 
         validates :participatory_space_gid, presence: true, if: :enabled?
         validates :component_id, presence: true, if: :enabled?
@@ -18,13 +19,15 @@ module Decidim
           super
           self.participatory_space_gid = config[:participatory_space_gid]
           self.component_id = config[:component_id]&.to_s
+          self.instructions = config[:instructions]
         end
 
         # Returns the workflow-specific config hash for saving
         def workflow_config
           {
             participatory_space_gid: participatory_space_gid,
-            component_id: component_id
+            component_id: component_id,
+            instructions: instructions
           }.compact_blank
         end
 

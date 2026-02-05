@@ -5,7 +5,7 @@ require "spec_helper"
 module Decidim
   module Chatbot
     module Workflows
-      describe ParticipatorySpaceWorkflow do
+      describe SingleParticipatorySpaceWorkflow do
         subject { described_class.new(adapter:, message:) }
 
         let(:organization) { create(:organization) }
@@ -46,7 +46,7 @@ module Decidim
         end
 
         describe "#initialize" do
-          it "creates an instance of ParticipatorySpaceWorkflow" do
+          it "creates an instance of SingleParticipatorySpaceWorkflow" do
             expect(subject).to be_a(described_class)
           end
         end
@@ -65,7 +65,9 @@ module Decidim
                 data: hash_including(
                   footer_text: "Test Process",
                   buttons: array_including(
-                    hash_including(id: "start")
+                    hash_including(id: "more_info"),
+                    hash_including(id: "participate"),
+                    hash_including(id: "end")
                   )
                 )
               )
@@ -83,23 +85,22 @@ module Decidim
             end
           end
 
-          context "when user clicks start button" do
+          context "when user clicks more_info button" do
             before do
               allow(received_message).to receive(:user_text?).and_return(false)
               allow(received_message).to receive(:actionable?).and_return(true)
-              allow(received_message).to receive(:button_id).and_return("start")
+              allow(received_message).to receive(:button_id).and_return("more_info")
+              participatory_process.update!(description: { en: "Detailed description of the process" })
             end
 
-            it "sends a participate prompt message" do
-              expect(adapter).to receive(:build_message).with(
-                to: "123456789",
-                type: :interactive_buttons,
-                data: hash_including(
-                  buttons: array_including(
-                    hash_including(id: "participate")
-                  )
-                )
-              )
+            it "sends the full description" do
+              expect(adapter).to receive(:send_message!).with(include("Detailed description"))
+              subject.start
+            end
+
+            it "then resends the welcome message" do
+              expect(adapter).to receive(:send_message!).with(include("Detailed description"))
+              expect(adapter).to receive(:send!).with(envelope)
               subject.start
             end
           end
@@ -111,23 +112,20 @@ module Decidim
               allow(received_message).to receive(:button_id).and_return("participate")
             end
 
-            it "sends a read-only mode message" do
+            it "sends a not ready message" do
               expect(adapter).to receive(:send_message!).with(
-                I18n.t("decidim.chatbot.workflows.participatory_space_workflow.read_only_mode")
+                I18n.t("decidim.chatbot.workflows.single_participatory_space_workflow.not_ready_yet")
               )
               subject.start
             end
           end
 
-          context "when user clicks end button" do
+          context "when user clicks exit button without parent workflow" do
             before do
               allow(received_message).to receive(:user_text?).and_return(false)
               allow(received_message).to receive(:actionable?).and_return(true)
               allow(received_message).to receive(:button_id).and_return("end")
-              sender.update!(
-                current_workflow_class: "SomeWorkflow",
-                parent_workflow_class: "ParentWorkflow"
-              )
+              sender.update!(parent_workflow_class: nil)
             end
 
             it "resets all workflows" do
@@ -144,6 +142,56 @@ module Decidim
               subject.start
             end
           end
+
+          context "when user clicks exit button with parent workflow" do
+            before do
+              allow(received_message).to receive(:user_text?).and_return(false)
+              allow(received_message).to receive(:actionable?).and_return(true)
+              allow(received_message).to receive(:button_id).and_return("end")
+              sender.update!(parent_workflow_class: "Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow")
+            end
+
+            it "delegates back to parent workflow" do
+              parent_workflow_instance = instance_double(Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow)
+              allow(Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow).to receive(:new).and_return(parent_workflow_instance)
+              allow(parent_workflow_instance).to receive(:start)
+
+              subject.start
+              sender.reload
+              expect(sender.current_workflow_class).to eq("Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow")
+              expect(sender.parent_workflow_class).to be_nil
+            end
+          end
+        end
+
+        describe "instructions handling" do
+          before do
+            allow(received_message).to receive(:user_text?).and_return(true)
+            allow(received_message).to receive(:actionable?).and_return(false)
+          end
+
+          context "when instructions are configured" do
+            let(:setting_config) do
+              {
+                participatory_space_gid: participatory_process.to_global_id.to_s,
+                instructions: "These are custom instructions for the user"
+              }
+            end
+
+            it "sends the instructions before the welcome message" do
+              expect(adapter).to receive(:send_message!).with("These are custom instructions for the user").ordered
+              expect(adapter).to receive(:send!).ordered
+              subject.start
+            end
+          end
+
+          context "when instructions are not configured" do
+            it "skips instructions and sends welcome message" do
+              expect(adapter).not_to receive(:send_message!).with("")
+              expect(adapter).to receive(:send!).with(envelope)
+              subject.start
+            end
+          end
         end
 
         describe "welcome message content" do
@@ -152,30 +200,13 @@ module Decidim
             allow(received_message).to receive(:actionable?).and_return(false)
           end
 
-          context "when parent_workflow is nil" do
-            it "includes only the start button" do
-              expect(adapter).to receive(:build_message) do |args|
-                buttons = args[:data][:buttons]
-                expect(buttons.length).to eq(1)
-                expect(buttons.first[:id]).to eq("start")
-              end.and_return(envelope)
-              subject.start
-            end
-          end
-
-          context "when parent_workflow exists" do
-            before do
-              sender.update!(parent_workflow_class: "Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow")
-            end
-
-            it "includes both start and end buttons" do
-              expect(adapter).to receive(:build_message) do |args|
-                buttons = args[:data][:buttons]
-                expect(buttons.length).to eq(2)
-                expect(buttons.map { |b| b[:id] }).to contain_exactly("start", "end")
-              end.and_return(envelope)
-              subject.start
-            end
+          it "includes all action buttons" do
+            expect(adapter).to receive(:build_message) do |args|
+              buttons = args[:data][:buttons]
+              expect(buttons.length).to eq(3)
+              expect(buttons.map { |b| b[:id] }).to contain_exactly("more_info", "participate", "end")
+            end.and_return(envelope)
+            subject.start
           end
         end
 
@@ -274,7 +305,7 @@ module Decidim
 
           it "sends a not configured message" do
             expect(adapter).to receive(:send_message!).with(
-              I18n.t("decidim.chatbot.workflows.participatory_space_workflow.not_configured")
+              I18n.t("decidim.chatbot.workflows.single_participatory_space_workflow.not_configured")
             )
             subject.start
           end
@@ -294,7 +325,7 @@ module Decidim
 
           it "sends a no spaces message" do
             expect(adapter).to receive(:send_message!).with(
-              I18n.t("decidim.chatbot.workflows.participatory_space_workflow.no_spaces")
+              I18n.t("decidim.chatbot.workflows.single_participatory_space_workflow.no_spaces")
             )
             subject.start
           end
@@ -310,7 +341,7 @@ module Decidim
 
           it "sends a no spaces message" do
             expect(adapter).to receive(:send_message!).with(
-              I18n.t("decidim.chatbot.workflows.participatory_space_workflow.no_spaces")
+              I18n.t("decidim.chatbot.workflows.single_participatory_space_workflow.no_spaces")
             )
             subject.start
           end
