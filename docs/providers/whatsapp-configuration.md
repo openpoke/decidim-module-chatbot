@@ -115,7 +115,8 @@ Add the following to your `.env` file or server environment:
 # WhatsApp Provider Configuration
 WHATSAPP_VERIFY_TOKEN=<your-secure-token-from-step-6>
 WHATSAPP_ACCESS_TOKEN=<your-access-token-from-step-6>
-WHATSAPP_PHONE_NUMBER_ID=<your-phone-number-id-from-step-6>
+# Optional: override default Meta Graph API URL if needed
+WHATSAPP_GRAPH_API_URL=<optional-custom-graph-api-url>
 ```
 
 ### Decidim Admin Configuration
