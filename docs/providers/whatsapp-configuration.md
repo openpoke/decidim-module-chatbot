@@ -58,7 +58,7 @@ This guide explains how to configure WhatsApp integration with the Decidim Chatb
 
 1. In your app dashboard, click **+ Add Product**
 2. Find **WhatsApp** and click **Set Up**
-3. Select **WhatsApp Business API** (not WhatsApp Cloud API)
+3. Select **WhatsApp Cloud API**
 4. Complete the setup wizard
 
 ## Step 6: Obtain Credentials
