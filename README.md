@@ -128,7 +128,7 @@ To quickly set up WhatsApp:
 
 1. Create a WhatsApp Business Account at [Meta for Developers](https://developers.facebook.com/)
 2. Register and verify a phone number
-3. Generate API credentials (Phone Number ID and Access Token)
+3. Generate API credentials (Access Token)
 4. Configure your webhook URL in Meta
 5. Set environment variables in Decidim (see [WhatsApp Configuration Guide](docs/providers/whatsapp-configuration.md#step-8-configure-decidim-chatbot))
 
