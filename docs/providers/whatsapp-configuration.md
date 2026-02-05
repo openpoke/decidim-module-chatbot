@@ -113,7 +113,6 @@ Add the following to your `.env` file or server environment:
 
 ```bash
 # WhatsApp Provider Configuration
-WHATSAPP_PROVIDER_NAME=whatsapp
 WHATSAPP_VERIFY_TOKEN=<your-secure-token-from-step-6>
 WHATSAPP_ACCESS_TOKEN=<your-access-token-from-step-6>
 WHATSAPP_PHONE_NUMBER_ID=<your-phone-number-id-from-step-6>
