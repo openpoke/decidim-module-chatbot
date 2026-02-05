@@ -122,7 +122,7 @@ WHATSAPP_PHONE_NUMBER_ID=<your-phone-number-id-from-step-6>
 ### Decidim Admin Configuration
 
 1. Log in to your Decidim instance as an administrator
-2. Navigate to **System** → **Chatbot Settings**
+2. Navigate to **Chatbot** in the admin menu
 3. Enable the WhatsApp provider
 4. Configure any additional settings (if applicable):
    - Conversation timeout
