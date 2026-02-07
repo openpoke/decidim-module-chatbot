@@ -32,6 +32,12 @@ module Decidim
       Decidim::Env.new("CHATBOT_DEACTIVATED_MESSAGE", "decidim.chatbot.messages.deactivated").value
     end
 
+    # Message sent to users when their workflows are cleared due to inactivity.
+    # return nil if you want to disable this message.
+    config_accessor :stale_cleared_message do
+      Decidim::Env.new("CHATBOT_STALE_CLEARED_MESSAGE", "decidim.chatbot.messages.stale_cleared").value
+    end
+
     def self.start_workflows_registry
       @start_workflows_registry ||= ManifestRegistry.new("chatbot/start_workflows")
     end

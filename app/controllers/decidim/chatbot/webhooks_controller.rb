@@ -93,6 +93,7 @@ module Decidim
           parent_workflow_class: nil,
           updated_at: Time.current
         )
+        adapter.send_message!(I18n.t(Decidim::Chatbot.stale_cleared_message)) if Decidim::Chatbot.stale_cleared_message.present?
         Rails.logger.info("Cleared stale workflows for sender #{sender.id}")
       end
 
