@@ -30,10 +30,6 @@ module Decidim
         def welcome_body_text
           config[:custom_text].presence || decidim_sanitize(translated_attribute(organization.description), strip_tags: true)
         end
-
-        def config
-          @config ||= (setting.config || {}).with_indifferent_access
-        end
       end
     end
   end

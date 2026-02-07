@@ -26,6 +26,12 @@ module Decidim
       Decidim::Env.new("CHATBOT_WORKFLOW_CLEAR_TIMEOUT", 30).to_i.minutes
     end
 
+    # Message sent to users when the chatbot is not configured or enabled.
+    # return nil if you want to disable this message and just ignore incoming messages when the chatbot is not enabled.
+    config_accessor :deactivated_message do
+      Decidim::Env.new("CHATBOT_DEACTIVATED_MESSAGE", "decidim.chatbot.messages.deactivated").value
+    end
+
     def self.start_workflows_registry
       @start_workflows_registry ||= ManifestRegistry.new("chatbot/start_workflows")
     end

@@ -56,6 +56,21 @@ module Decidim
           sender.update!(current_workflow_class: nil, parent_workflow_class: nil)
           adapter.send_message!(I18n.t("decidim.chatbot.messages.reset_workflows"))
         end
+
+        def exit_workflow
+          if parent_workflow.nil?
+            reset_workflows
+          else
+            # Go back to parent workflow
+            sender.update!(current_workflow_class: parent_workflow, parent_workflow_class: nil)
+            parent_workflow_instance = parent_workflow.constantize.new(adapter:, message:)
+            parent_workflow_instance.start(true)
+          end
+        end
+
+        def config
+          @config ||= (setting.config || {}).with_indifferent_access
+        end
       end
     end
   end

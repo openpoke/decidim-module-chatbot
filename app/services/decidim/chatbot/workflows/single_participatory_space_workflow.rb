@@ -5,8 +5,6 @@ module Decidim
     module Workflows
       class SingleParticipatorySpaceWorkflow < BaseWorkflow
         def process_user_input
-          return adapter.send_message!(I18n.t("decidim.chatbot.workflows.single_participatory_space.not_configured")) unless setting.enabled?
-
           return adapter.send_message!(I18n.t("decidim.chatbot.workflows.single_participatory_space.no_spaces")) if participatory_space.nil?
 
           send_instructions_if_configured
@@ -39,7 +37,7 @@ module Decidim
             type: :interactive_buttons,
             data: {
               footer_text: translated_attribute(participatory_space.title),
-              body_text: strip_tags(translated_attribute(participatory_space.short_description)).truncate(200),
+              body_text: strip_tags(translated_attribute(participatory_space.short_description)).truncate(200).to_s,
               buttons: build_action_buttons
             }.tap do |data|
               data[:header_image] = participatory_space.attached_uploader(:hero_image).url if participatory_space.hero_image.attached?
@@ -51,74 +49,48 @@ module Decidim
 
         def build_action_buttons
           [
-            { id: "more_info", title: I18n.t("decidim.chatbot.workflows.single_participatory_space_workflow.buttons.more_info") },
-            { id: "participate", title: I18n.t("decidim.chatbot.workflows.single_participatory_space_workflow.buttons.participate") }
+            { id: "more_info", title: I18n.t("decidim.chatbot.workflows.single_participatory_space.buttons.more_info") },
+            { id: "participate", title: I18n.t("decidim.chatbot.workflows.single_participatory_space.buttons.participate") }
           ].tap do |buttons|
-            buttons << { id: "end", title: I18n.t("decidim.chatbot.workflows.single_participatory_space_workflow.buttons.end") }
+            buttons << { id: "end", title: I18n.t("decidim.chatbot.workflows.single_participatory_space.buttons.end") } if parent_workflow.present?
           end
         end
 
         def send_more_info
-          description = translated_attribute(participatory_space.description)
-          return adapter.send_message!(I18n.t("decidim.chatbot.workflows.single_participatory_space_workflow.no_description")) if description.blank?
+          description = translated_attribute(participatory_space.description).presence || translated_attribute(participatory_space.short_description)
+          body = "*#{translated_attribute(participatory_space.title)}*\n\n#{strip_tags(description)}\n\n#{participatory_space_url}"
+          message = build_message(
+            to: received_message.from,
+            type: :text,
+            data: {
+              body: body,
+              preview_url: true
+            }
+          )
 
-          adapter.send_message!(strip_tags(description))
-          # Resend the main welcome message for next action
-          send_space_welcome
+          adapter.send!(message)
         end
 
         def delegate_to_proposals_workflow
-          if proposals_workflow_class.present?
-            delegate_workflow(proposals_workflow_class)
+          if component.present? && component.manifest_name == "proposals"
+            delegate_workflow(Decidim::Chatbot::Workflows::ProposalsWorkflow)
           else
-            adapter.send_message!(I18n.t("decidim.chatbot.workflows.single_participatory_space_workflow.not_ready_yet"))
+            adapter.send_message!(I18n.t("decidim.chatbot.workflows.single_participatory_space.not_ready_yet"))
           end
         end
 
-        def exit_workflow
-          if parent_workflow.nil?
-            reset_workflows
-          else
-            # Go back to parent workflow
-            sender.update!(current_workflow_class: parent_workflow, parent_workflow_class: nil)
-            parent_workflow_instance = parent_workflow.constantize.new(adapter:, message:)
-            parent_workflow_instance.start(true)
-          end
+        def participatory_space_url
+          Decidim::ResourceLocatorPresenter.new(participatory_space).url
         end
 
         def participatory_space
-          return @participatory_space if defined?(@participatory_space)
-
-          @participatory_space = find_participatory_space
-        end
-
-        def component
-          return @component if defined?(@component)
-
-          @component = find_component
-        end
-
-        def proposals_workflow_class
-          Decidim::Chatbot.start_workflows_registry.find(:proposals_workflow)&.workflow
-        end
-
-        def find_participatory_space
-          gid = config[:participatory_space_gid]
-          return nil if gid.blank?
-
-          GlobalID::Locator.locate(gid)
+          @participatory_space ||= GlobalID::Locator.locate(config[:participatory_space_gid])
         rescue ActiveRecord::RecordNotFound
           nil
         end
 
-        def find_component
-          return nil unless participatory_space && config[:component_id].present?
-
-          participatory_space.components.find_by(id: config[:component_id])
-        end
-
-        def config
-          @config ||= (setting.config || {}).with_indifferent_access
+        def component
+          @component ||= participatory_space&.components&.find_by(id: config[:component_id])
         end
       end
     end

@@ -38,7 +38,12 @@ module Decidim
       def check_enabled
         return if setting&.enabled?
 
-        Rails.logger.info("Chatbot is disabled for provider #{provider}, ignoring message")
+        deactivated_message = I18n.t(Decidim::Chatbot.deactivated_message, default: Decidim::Chatbot.deactivated_message)
+
+        action = deactivated_message.present? ? "sending deactivated response" : "ignoring incoming message"
+        Rails.logger.info("Chatbot is disabled for provider #{provider} (#{action})")
+        adapter.send_message!(deactivated_message) if deactivated_message.present?
+
         head :ok
       end
 
