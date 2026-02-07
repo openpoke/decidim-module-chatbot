@@ -7,11 +7,11 @@ module Decidim
       belongs_to :decidim_user, class_name: "Decidim::User", optional: true
 
       def current_workflow
-        current_workflow_class&.safe_constantize || setting.workflow
+        workflow_stack.last&.dig("class")&.safe_constantize || setting.workflow
       end
 
       def parent_workflow
-        parent_workflow_class&.safe_constantize
+        workflow_stack[-2]&.dig("class")&.safe_constantize
       end
 
       def locale
@@ -19,19 +19,40 @@ module Decidim
       end
 
       def current_workflow_options
-        metadata["current_workflow_options"].presence || {}
+        workflow_stack.last&.dig("options").presence || {}
       end
 
       def parent_workflow_options
-        metadata["parent_workflow_options"].presence || {}
+        workflow_stack[-2]&.dig("options").presence || {}
       end
 
-      def set_workflows!(current_workflow_class, parent_workflow_class = nil, **options)
-        update!(
-          current_workflow_class: current_workflow_class,
-          parent_workflow_class: parent_workflow_class,
-          metadata: metadata.merge(options)
-        )
+      # Override to ensure workflow_stack is always an array
+      def workflow_stack
+        self[:workflow_stack] || []
+      end
+
+      # Start a new workflow by pushing it to the stack
+      def push_to_workflow_stack(workflow_class, options = {})
+        stack = workflow_stack.dup
+        stack << {
+          class: workflow_class.name,
+          options: options
+        }
+        update!(workflow_stack: stack)
+      end
+
+      # Exit current workflow by popping from the stack
+      def pop_from_workflow_stack
+        stack = workflow_stack.dup
+        return nil if stack.empty?
+
+        stack.pop
+        update!(workflow_stack: stack)
+      end
+
+      # Reset all workflows (clear the stack)
+      def clear_workflow_stack
+        update!(workflow_stack: [])
       end
     end
   end

@@ -7,6 +7,7 @@ class CreateDecidimChatbotSettings < ActiveRecord::Migration[7.2]
       t.string :provider, null: false
       t.string :start_workflow, null: false
       t.jsonb :config, null: false, default: {}
+      t.boolean :enabled, default: false, null: false
       t.timestamps
 
       t.index [:decidim_organization_id, :provider, :start_workflow], unique: true, name: "index_decidim_chatbot_settings_on_org_and_provider"

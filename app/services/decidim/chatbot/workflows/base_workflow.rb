@@ -54,37 +54,25 @@ module Decidim
         end
 
         # Delegate the workflow to another workflow class so subsequent messages are handled there
+        # Pushes the new workflow onto the stack, preserving the current workflow history
+        # To replace the entire stack instead, call sender.clear_workflow_stack first
         def delegate_workflow(workflow_class, conf = {})
-          sender.set_workflows!(
-            workflow_class.name,
-            self.class.name,
-            {
-              current_workflow_options: conf,
-              parent_workflow_options: options
-            }
-          )
+          sender.push_to_workflow_stack(workflow_class, conf)
           sender.current_workflow.new(adapter:, message:, **conf).start(true)
         end
 
         def reset_workflows
-          sender.set_workflows!(nil)
+          sender.clear_workflow_stack
           adapter.send_message!(I18n.t(Chatbot.reset_workflows_message, default: Chatbot.reset_workflows_message)) if Chatbot.reset_workflows_message.present?
         end
 
         def exit_workflow
-          if parent_workflow.nil?
-            reset_workflows
-          else
-            # Go back to parent workflow
-            sender.set_workflows!(
-              parent_workflow,
-              nil,
-              current_workflow_options: sender.parent_workflow_options,
-              parent_workflow_options: nil
-            )
-            parent_workflow_instance = parent_workflow.constantize.new(adapter:, message:, **sender.parent_workflow_options)
-            parent_workflow_instance.start(true)
-          end
+          # Pop current workflow from stack
+          sender.pop_from_workflow_stack
+
+          # If stack is empty, reset everything
+          reset_workflows if sender.workflow_stack.empty?
+          # If stack has workflows, next message will be handled by the new current workflow (stack.last)
         end
 
         # Helper to access the workflow configuration, which is a combination of the setting's config and the options passed when delegating the workflow
