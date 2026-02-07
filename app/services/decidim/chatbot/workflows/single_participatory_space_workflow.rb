@@ -5,9 +5,9 @@ module Decidim
     module Workflows
       class SingleParticipatorySpaceWorkflow < BaseWorkflow
         def process_user_input
-          return adapter.send_message!(I18n.t("decidim.chatbot.workflows.single_participatory_space_workflow.not_configured")) unless setting.enabled?
+          return adapter.send_message!(I18n.t("decidim.chatbot.workflows.single_participatory_space.not_configured")) unless setting.enabled?
 
-          return adapter.send_message!(I18n.t("decidim.chatbot.workflows.single_participatory_space_workflow.no_spaces")) if participatory_space.nil?
+          return adapter.send_message!(I18n.t("decidim.chatbot.workflows.single_participatory_space.no_spaces")) if participatory_space.nil?
 
           send_instructions_if_configured
           send_space_welcome

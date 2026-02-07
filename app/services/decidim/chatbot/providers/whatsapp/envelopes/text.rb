@@ -10,7 +10,8 @@ module Decidim
               super.merge(
                 type: "text",
                 text: {
-                  body: data[:body]
+                  body: data[:body],
+                  preview_url: data[:preview_url].present?
                 }
               )
             end

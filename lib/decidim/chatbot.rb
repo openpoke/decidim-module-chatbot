@@ -20,6 +20,12 @@ module Decidim
       }
     end
 
+    # Timeout (minutes) for clearing workflows after inactivity.
+    # This is to prevent workflows from being left open indefinitely if the user stops responding.
+    config_accessor :workflow_clear_timeout do
+      Decidim::Env.new("CHATBOT_WORKFLOW_CLEAR_TIMEOUT", 30).to_i.minutes
+    end
+
     def self.start_workflows_registry
       @start_workflows_registry ||= ManifestRegistry.new("chatbot/start_workflows")
     end

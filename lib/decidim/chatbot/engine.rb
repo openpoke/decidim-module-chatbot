@@ -40,7 +40,7 @@ module Decidim
           manifest.form_class = "Decidim::Chatbot::Admin::WelcomeWorkflowSettingsForm"
         end
 
-        Decidim::Chatbot.start_workflows_registry.register(:single_participatory_space_workflow) do |manifest|
+        Decidim::Chatbot.start_workflows_registry.register(:single_participatory_space) do |manifest|
           manifest.workflow_class = "Decidim::Chatbot::Workflows::SingleParticipatorySpaceWorkflow"
           manifest.settings_partial = "decidim/chatbot/admin/settings/workflows/single_participatory_space"
           manifest.settings_attributes = {

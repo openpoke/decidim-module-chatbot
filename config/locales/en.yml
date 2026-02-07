@@ -10,27 +10,33 @@ en:
             title: Chatbot configuration
           form:
             cancel: Cancel
-            component: Choose the component
             configuration_for: Configuration for %{workflow}
             current_workflow: Current workflow (%{provider})
-            custom_text: Initial message (defaults to organization's short description)
-            delegate_workflow: Choose the workflow to handle the "Participate" button
             enabled: Enabled
-            instructions: Instructions (optional) - displayed before showing the space information
             loading: Loading...
             no_extra_settings: No additional configuration needed for this workflow.
-            no_workflows_available: No workflows available
-            participatory_space: Choose the participatory space
             save: Save settings
-            select_component: Select a component...
-            select_space: Select a participatory space...
-            select_space_first: Select a participatory space first
-            errors:
-              participatory_space_gid_blank: Participatory space is required
-              component_id_blank: Component is required
           index:
             configure: Configure
             title: Chatbot Settings
+          organization_welcome_form:
+            custom_text: Initial message (defaults to organization's short description)
+            delegate_workflow: Choose the workflow to handle the "Participate" button
+            errors:
+              invalid_delegate_workflow: The selected workflow is not valid or not
+                configured.
+            no_workflows_available: No workflows available
+          single_participatory_space_form:
+            component: Choose the component
+            errors:
+              component_id_blank: Component is required
+              participatory_space_gid_blank: Participatory space is required
+            instructions: Instructions (optional) - displayed before showing the space
+              information
+            participatory_space: Choose the participatory space
+            select_component: Select a component...
+            select_space: Select a participatory space...
+            select_space_first: Select a participatory space first
           toggle:
             disabled: Chatbot has been disabled.
             enabled: Chatbot has been enabled.
@@ -47,12 +53,11 @@ en:
           name: WhatsApp
       workflows:
         organization_welcome:
-          title: Organization Welcome
-        organization_welcome_workflow:
           buttons:
             end: Exit & restart
             participate: Participate
-        single_participatory_space_workflow:
+          title: Organization Welcome
+        single_participatory_space:
           buttons:
             end: Exit & restart
             more_info: More info

@@ -43,9 +43,9 @@ module Decidim
       end
 
       def process_incoming_message
-        return log_unknown_sender if sender.nil?
-        return log_missing_message_id if message.message_id.nil?
+        return log_unprocessable_message unless sender && message
 
+        clear_stale_workflows_for_sender
         execute_workflow
       rescue ActiveRecord::RecordInvalid => e
         Rails.logger.error("Database error processing webhook: #{e.message}")
@@ -55,12 +55,17 @@ module Decidim
         Rails.logger.error("Unexpected error processing webhook for provider #{provider}: #{e.message}\n#{e.backtrace.first(10).join("\n")}")
       end
 
-      def log_unknown_sender
-        Rails.logger.warn("Received message from unknown sender: #{received_message.from}")
-      end
-
-      def log_missing_message_id
-        Rails.logger.warn("Received message with no ID: #{message.inspect}")
+      def log_unprocessable_message
+        reason = if received_message.message_id.blank?
+                   "missing message ID"
+                 elsif sender.nil?
+                   "sender not found or created"
+                 elsif message.nil?
+                   "message not found or created"
+                 else
+                   "unknown reason"
+                 end
+        Rails.logger.warn("Received unprocessable message (#{reason}): #{received_message.json}")
       end
 
       def execute_workflow
@@ -72,6 +77,18 @@ module Decidim
 
       def sender_locale
         sender.locale.presence || current_locale
+      end
+
+      def clear_stale_workflows_for_sender
+        cutoff_time = Decidim::Chatbot.workflow_clear_timeout.ago
+        return unless sender.updated_at < cutoff_time && sender.current_workflow_class.present?
+
+        sender.update(
+          current_workflow_class: nil,
+          parent_workflow_class: nil,
+          updated_at: Time.current
+        )
+        Rails.logger.info("Cleared stale workflows for sender #{sender.id}")
       end
 
       delegate :received_message, to: :adapter

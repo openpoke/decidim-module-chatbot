@@ -33,6 +33,10 @@ module Decidim
       def config_keys
         settings_attributes.keys.map(&:to_s)
       end
+
+      def model_class_name
+        workflow_class.to_s
+      end
     end
   end
 end

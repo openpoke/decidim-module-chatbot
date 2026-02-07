@@ -23,7 +23,7 @@ module Decidim
           menu.add_item :chatbot,
                         I18n.t("menu.chatbot", scope: "decidim.chatbot.admin"),
                         decidim_admin_chatbot.settings_path,
-                        icon_name: "chat-1-line",
+                        icon_name: "whatsapp-line",
                         position: 7.5,
                         active: is_active_link?(decidim_admin_chatbot.settings_path, :inclusive),
                         if: allowed_to?(:update, :organization, organization: current_organization)
