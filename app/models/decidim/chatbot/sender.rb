@@ -17,6 +17,22 @@ module Decidim
       def locale
         metadata["locale"].presence || decidim_user&.locale.presence || setting.organization.default_locale
       end
+
+      def current_workflow_options
+        metadata["current_workflow_options"].presence || {}
+      end
+
+      def parent_workflow_options
+        metadata["parent_workflow_options"].presence || {}
+      end
+
+      def set_workflows!(current_workflow_class, parent_workflow_class = nil, **options)
+        update!(
+          current_workflow_class: current_workflow_class,
+          parent_workflow_class: parent_workflow_class,
+          metadata: metadata.merge(options)
+        )
+      end
     end
   end
 end

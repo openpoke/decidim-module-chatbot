@@ -38,6 +38,10 @@ module Decidim
       Decidim::Env.new("CHATBOT_STALE_CLEARED_MESSAGE", "decidim.chatbot.messages.stale_cleared").value
     end
 
+    config_accessor :reset_workflows_message do
+      Decidim::Env.new("CHATBOT_RESET_WORKFLOWS_MESSAGE", "decidim.chatbot.messages.reset_workflows").value
+    end
+
     def self.start_workflows_registry
       @start_workflows_registry ||= ManifestRegistry.new("chatbot/start_workflows")
     end

@@ -38,7 +38,7 @@ module Decidim
       def check_enabled
         return if setting&.enabled?
 
-        deactivated_message = I18n.t(Decidim::Chatbot.deactivated_message, default: Decidim::Chatbot.deactivated_message)
+        deactivated_message = I18n.t(Chatbot.deactivated_message, default: Chatbot.deactivated_message)
 
         action = deactivated_message.present? ? "sending deactivated response" : "ignoring incoming message"
         Rails.logger.info("Chatbot is disabled for provider #{provider} (#{action})")
@@ -85,7 +85,7 @@ module Decidim
       end
 
       def clear_stale_workflows_for_sender
-        cutoff_time = Decidim::Chatbot.workflow_clear_timeout.ago
+        cutoff_time = Chatbot.workflow_clear_timeout.ago
         return unless sender.updated_at < cutoff_time && sender.current_workflow_class.present?
 
         sender.update(
@@ -93,7 +93,7 @@ module Decidim
           parent_workflow_class: nil,
           updated_at: Time.current
         )
-        adapter.send_message!(I18n.t(Decidim::Chatbot.stale_cleared_message)) if Decidim::Chatbot.stale_cleared_message.present?
+        adapter.send_message!(I18n.t(Chatbot.stale_cleared_message, default: Chatbot.stale_cleared_message)) if Chatbot.stale_cleared_message.present?
         Rails.logger.info("Cleared stale workflows for sender #{sender.id}")
       end
 
@@ -104,7 +104,7 @@ module Decidim
       end
 
       def setting
-        @setting ||= Decidim::Chatbot::Setting.find_by(organization: current_organization, provider:)
+        @setting ||= Setting.find_by(organization: current_organization, provider:)
       end
 
       def adapter

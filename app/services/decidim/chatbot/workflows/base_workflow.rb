@@ -41,20 +41,34 @@ module Decidim
           raise NotImplementedError
         end
 
+        # Prepare a message to be sent to the user, applying necessary sanitization and formatting.
+        # TODO: limit message length depending on the provider's requirements, for example WhatsApp has a 4096 character limit for text messages.
+        # Accepts a string or hash with languages
+        def sanitize(text)
+          strip_tags(translated_attribute(text))
+        end
+
         def mark_as_read
           adapter.mark_as_read! if received_message.acknowledgeable?
           message.mark_as_read! if message
         end
 
         # Delegate the workflow to another workflow class so subsequent messages are handled there
-        def delegate_workflow(workflow_class)
-          sender.update!(current_workflow_class: workflow_class.name, parent_workflow_class: self.class.name)
-          sender.current_workflow.new(adapter:, message:).start(true)
+        def delegate_workflow(workflow_class, conf = {})
+          sender.set_workflows!(
+            workflow_class.name,
+            self.class.name,
+            {
+              current_workflow_options: conf,
+              parent_workflow_options: options
+            }
+          )
+          sender.current_workflow.new(adapter:, message:, **conf).start(true)
         end
 
         def reset_workflows
-          sender.update!(current_workflow_class: nil, parent_workflow_class: nil)
-          adapter.send_message!(I18n.t("decidim.chatbot.messages.reset_workflows"))
+          sender.set_workflows!(nil)
+          adapter.send_message!(I18n.t(Chatbot.reset_workflows_message, default: Chatbot.reset_workflows_message)) if Chatbot.reset_workflows_message.present?
         end
 
         def exit_workflow
@@ -62,14 +76,21 @@ module Decidim
             reset_workflows
           else
             # Go back to parent workflow
-            sender.update!(current_workflow_class: parent_workflow, parent_workflow_class: nil)
-            parent_workflow_instance = parent_workflow.constantize.new(adapter:, message:)
+            sender.set_workflows!(
+              parent_workflow,
+              nil,
+              current_workflow_options: sender.parent_workflow_options,
+              parent_workflow_options: nil
+            )
+            parent_workflow_instance = parent_workflow.constantize.new(adapter:, message:, **sender.parent_workflow_options)
             parent_workflow_instance.start(true)
           end
         end
 
+        # Helper to access the workflow configuration, which is a combination of the setting's config and the options passed when delegating the workflow
+        # The options passed when delegating the workflow take precedence over the setting's config, allowing to override specific values for specific users or flows.
         def config
-          @config ||= (setting.config || {}).with_indifferent_access
+          @config ||= (setting.config || {}).with_indifferent_access.merge(options)
         end
       end
     end

@@ -36,8 +36,8 @@ module Decidim
             to: received_message.from,
             type: :interactive_buttons,
             data: {
-              footer_text: translated_attribute(participatory_space.title),
-              body_text: strip_tags(translated_attribute(participatory_space.short_description)).truncate(200).to_s,
+              footer_text: sanitize(participatory_space.title),
+              body_text: sanitize(participatory_space.short_description).truncate(200).to_s,
               buttons: build_action_buttons
             }.tap do |data|
               data[:header_image] = participatory_space.attached_uploader(:hero_image).url if participatory_space.hero_image.attached?
@@ -57,8 +57,8 @@ module Decidim
         end
 
         def send_more_info
-          description = translated_attribute(participatory_space.description).presence || translated_attribute(participatory_space.short_description)
-          body = "*#{translated_attribute(participatory_space.title)}*\n\n#{strip_tags(description)}\n\n#{participatory_space_url}"
+          description = sanitize(participatory_space.description).presence || sanitize(participatory_space.short_description)
+          body = "*#{sanitize(participatory_space.title)}*\n\n#{description}\n\n#{participatory_space_url}"
           message = build_message(
             to: received_message.from,
             type: :text,
@@ -73,7 +73,7 @@ module Decidim
 
         def delegate_to_proposals_workflow
           if component.present? && component.manifest_name == "proposals"
-            delegate_workflow(Decidim::Chatbot::Workflows::ProposalsWorkflow)
+            delegate_workflow(Decidim::Chatbot::Workflows::ProposalsWorkflow, component_id: component.id)
           else
             adapter.send_message!(I18n.t("decidim.chatbot.workflows.single_participatory_space.not_ready_yet"))
           end

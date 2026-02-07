@@ -11,7 +11,24 @@ module Decidim
         private
 
         def send_welcome
-          adapter.send_message!("hi #{sender.name}, here are the proposals")
+          message = build_message(
+            to: received_message.from,
+            type: :text,
+            data: {
+              body: body
+            }
+          )
+
+          adapter.send!(message)
+        end
+
+        def body
+          announcement = sanitize(component&.settings&.announcement)
+          "*#{sanitize(component.name)}*\n\n#{announcement}"
+        end
+
+        def component
+          @component ||= Decidim::Component.find_by(id: config[:component_id])
         end
       end
     end

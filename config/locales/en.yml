@@ -47,7 +47,8 @@ en:
         deactivated: The chatbot is currently deactivated. Please try again later.
         reset_workflows: Thanks for participating! You can start again by sending
           any message.
-        stale_cleared: Your previous session was cleared due to inactivity. Starting fresh!
+        stale_cleared: Your previous session was cleared due to inactivity. Starting
+          fresh!
       providers:
         whatsapp:
           description: Enable to receive and respond to messages via WhatsApp Business
