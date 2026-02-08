@@ -22,7 +22,7 @@ module Decidim
             exit_workflow
           else
             mark_as_responding
-            delegate_workflow(ProposalDetailsWorkflow, proposal_id: received_message.button_id)
+            # TODO: show proposal details
           end
         end
 
