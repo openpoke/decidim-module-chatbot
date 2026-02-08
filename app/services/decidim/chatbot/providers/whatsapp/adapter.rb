@@ -35,6 +35,16 @@ module Decidim
             send!(read_receipt)
           end
 
+          def mark_as_responding!
+            typing_indicator = build_message(
+              type: :typing_indicator,
+              data: {
+                message_id: received_message.message_id
+              }
+            )
+            send!(typing_indicator)
+          end
+
           def send!(message)
             Rails.logger.debug { "Sending Whatsapp message: #{message.body.inspect}" }
             url = "#{Decidim::Chatbot.whatsapp_config[:graph_api_url]}#{received_message.phone_number_id}/messages"

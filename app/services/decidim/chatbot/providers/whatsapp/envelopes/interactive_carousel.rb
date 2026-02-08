@@ -36,15 +36,17 @@ module Decidim
                     text: card[:body_text]
                   },
                   action: {
-                    name: "cta_url",
-                    parameters: {
-                      display_text: card[:url_title],
-                      url: card[:url]
-                    }
+                    buttons: [
+                      {
+                        type: "quick_reply",
+                        quick_reply: {
+                          id: card[:id],
+                          title: card[:title]
+                        }
+                      }
+                    ]
                   }
-                }.tap do |card_hash|
-                  card_hash.delete(:body) if card[:body_text].blank?
-                end
+                }
               end
             end
           end

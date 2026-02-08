@@ -41,34 +41,31 @@ module Decidim
           raise NotImplementedError
         end
 
-        # Prepare a message to be sent to the user, applying necessary sanitization and formatting.
-        # TODO: limit message length depending on the provider's requirements, for example WhatsApp has a 4096 character limit for text messages.
-        # Accepts a string or hash with languages
-        def sanitize(text)
-          strip_tags(translated_attribute(text))
-        end
-
         def mark_as_read
           adapter.mark_as_read! if received_message.acknowledgeable?
           message.mark_as_read! if message
+        end
+
+        def mark_as_responding
+          adapter.mark_as_responding! if received_message.acknowledgeable?
         end
 
         # Delegate the workflow to another workflow class so subsequent messages are handled there
         # Pushes the new workflow onto the stack, preserving the current workflow history
         # To replace the entire stack instead, call sender.clear_workflow_stack first
         def delegate_workflow(workflow_class, conf = {})
-          sender.push_to_workflow_stack(workflow_class, conf)
+          sender.push_to_workflow_stack!(workflow_class, conf)
           sender.current_workflow.new(adapter:, message:, **conf).start(true)
         end
 
         def reset_workflows
-          sender.clear_workflow_stack
+          sender.clear_workflow_stack!
           adapter.send_message!(I18n.t(Chatbot.reset_workflows_message, default: Chatbot.reset_workflows_message)) if Chatbot.reset_workflows_message.present?
         end
 
         def exit_workflow
           # Pop current workflow from stack
-          sender.pop_from_workflow_stack
+          sender.pop_from_workflow_stack!
 
           # If stack is empty, reset everything
           reset_workflows if sender.workflow_stack.empty?
@@ -79,6 +76,17 @@ module Decidim
         # The options passed when delegating the workflow take precedence over the setting's config, allowing to override specific values for specific users or flows.
         def config
           @config ||= (setting.config || {}).with_indifferent_access.merge(options)
+        end
+
+        # Prepare a message to be sent to the user, applying necessary sanitization and formatting.
+        # TODO: limit message length depending on the provider's requirements, for example WhatsApp has a 4096 character limit for text messages.
+        # Accepts a string or hash with languages
+        def sanitize(text)
+          strip_tags(translated_attribute(text))
+        end
+
+        def image_url(path)
+          ActionController::Base.helpers.image_pack_url(path, host: "https://#{organization.host}")
         end
       end
     end

@@ -76,7 +76,7 @@ module Decidim
       def execute_workflow
         Rails.logger.info("Processing webhook for provider #{provider}, organization #{setting.organization.id}, sender #{sender.id}")
         I18n.with_locale(sender_locale) do
-          sender.current_workflow.new(adapter:, message:).start
+          sender.current_workflow.new(adapter:, message:, **sender.current_workflow_options).start
         end
       end
 
@@ -88,11 +88,7 @@ module Decidim
         cutoff_time = Chatbot.workflow_clear_timeout.ago
         return unless sender.updated_at < cutoff_time && sender.current_workflow_class.present?
 
-        sender.update(
-          current_workflow_class: nil,
-          parent_workflow_class: nil,
-          updated_at: Time.current
-        )
+        sender.clear_workflow_stack!
         adapter.send_message!(I18n.t(Chatbot.stale_cleared_message, default: Chatbot.stale_cleared_message)) if Chatbot.stale_cleared_message.present?
         Rails.logger.info("Cleared stale workflows for sender #{sender.id}")
       end
