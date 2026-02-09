@@ -15,7 +15,7 @@ module Decidim
 
         attr_reader :adapter, :message, :options
 
-        delegate :build_message, :received_message, to: :adapter
+        delegate :send_message!, :build_message, :received_message, to: :adapter
         delegate :setting, :sender, to: :message
         delegate :organization, to: :setting
         delegate :current_workflow, :parent_workflow, to: :sender
@@ -60,7 +60,7 @@ module Decidim
 
         def reset_workflows
           sender.clear_workflow_stack!
-          adapter.send_message!(I18n.t(Chatbot.reset_workflows_message, default: Chatbot.reset_workflows_message)) if Chatbot.reset_workflows_message.present?
+          send_message!(I18n.t(Chatbot.reset_workflows_message, default: Chatbot.reset_workflows_message)) if Chatbot.reset_workflows_message.present?
         end
 
         def exit_workflow
@@ -76,6 +76,24 @@ module Decidim
         # The options passed when delegating the workflow take precedence over the setting's config, allowing to override specific values for specific users or flows.
         def config
           @config ||= (setting.config || {}).with_indifferent_access.merge(options)
+        end
+
+        def current_page
+          config[:page].to_i.positive? ? config[:page].to_i : 1
+        end
+
+        def per_page
+          10
+        end
+
+        # TODO: Propose deterministic random ordering in Decidim::Randomable for stable pagination.
+        def order_randomly(scope, seed)
+          connection = scope.klass.connection
+          quoted_seed = connection.quote(seed)
+
+          scope.order(
+            Arel.sql("md5(#{scope.table_name}.#{scope.primary_key}::text || #{quoted_seed})")
+          )
         end
 
         # Prepare a message to be sent to the user, applying necessary sanitization and formatting.

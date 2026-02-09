@@ -86,7 +86,7 @@ module Decidim
 
       def clear_stale_workflows_for_sender
         cutoff_time = Chatbot.workflow_clear_timeout.ago
-        return unless sender.updated_at < cutoff_time && sender.current_workflow_class.present?
+        return unless sender.updated_at < cutoff_time && sender.workflow_stack.any?
 
         sender.clear_workflow_stack!
         adapter.send_message!(I18n.t(Chatbot.stale_cleared_message, default: Chatbot.stale_cleared_message)) if Chatbot.stale_cleared_message.present?
@@ -114,6 +114,9 @@ module Decidim
           sender.name = received_message.from_name
           sender.metadata = received_message.from_metadata || {}
           sender.metadata["locale"] = received_message.from_locale.presence || current_organization.default_locale
+        end.tap do |sender| # rubocop:disable Style/MultilineBlockChain
+          # Touch updated_at on every message to track activity for stale workflow detection
+          sender.touch unless sender.previous_changes.has_key?("id") # rubocop:disable Rails/SkipsModelValidations
         end
       end
 

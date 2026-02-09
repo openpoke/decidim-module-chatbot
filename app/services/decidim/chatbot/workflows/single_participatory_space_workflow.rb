@@ -28,23 +28,20 @@ module Decidim
           instructions = config[:instructions].presence
           return if instructions.blank?
 
-          adapter.send_message!(instructions)
+          send_message!(instructions)
         end
 
         def send_space_welcome
-          message = build_message(
-            to: received_message.from,
-            type: :interactive_buttons,
-            data: {
-              footer_text: sanitize(participatory_space.title),
+          send_message!(
+            {
+              type: :interactive_buttons,
               body_text: sanitize(participatory_space.short_description).truncate(200).to_s,
+              footer_text: sanitize(participatory_space.title),
               buttons: build_action_buttons
             }.tap do |data|
               data[:header_image] = participatory_space.attached_uploader(:hero_image).url if participatory_space.hero_image.attached?
             end
           )
-
-          adapter.send!(message)
         end
 
         def build_action_buttons
@@ -52,30 +49,26 @@ module Decidim
             { id: "more_info", title: I18n.t("decidim.chatbot.workflows.single_participatory_space.buttons.more_info") },
             { id: "participate", title: I18n.t("decidim.chatbot.workflows.single_participatory_space.buttons.participate") }
           ].tap do |buttons|
-            buttons << { id: "end", title: I18n.t("decidim.chatbot.workflows.single_participatory_space.buttons.end") } if parent_workflow.present?
+            buttons << { id: "exit", title: I18n.t("decidim.chatbot.workflows.single_participatory_space.buttons.exit") } if parent_workflow.present?
           end
         end
 
         def send_more_info
           description = sanitize(participatory_space.description).presence || sanitize(participatory_space.short_description)
           body = "*#{sanitize(participatory_space.title)}*\n\n#{description}\n\n#{participatory_space_url}"
-          message = build_message(
-            to: received_message.from,
-            type: :text,
-            data: {
+          send_message!(
+            {
               body: body,
               preview_url: true
             }
           )
-
-          adapter.send!(message)
         end
 
         def delegate_to_proposals_workflow
           if component.present? && component.manifest_name == "proposals"
             delegate_workflow(Decidim::Chatbot::Workflows::ProposalsWorkflow, component_id: component.id)
           else
-            adapter.send_message!(I18n.t("decidim.chatbot.workflows.single_participatory_space.not_ready_yet"))
+            send_message!(I18n.t("decidim.chatbot.workflows.single_participatory_space.not_ready_yet"))
           end
         end
 

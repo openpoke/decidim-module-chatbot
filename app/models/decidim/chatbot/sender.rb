@@ -26,6 +26,10 @@ module Decidim
         workflow_stack[-2]&.dig("options").presence || {}
       end
 
+      def current_workflow_merge!(options)
+        current_workflow_options!(current_workflow_options.merge(options))
+      end
+
       def current_workflow_options!(options)
         stack = workflow_stack.dup
         if stack.empty?

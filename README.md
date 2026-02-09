@@ -53,22 +53,147 @@ bin/rails decidim:upgrade
 
 #### Workflows
 
-Workflows provide a way to define what logic will users encounter when interacting with the chatbot.
-Some workflows can be registered as "start workflows" using the standard Manifest mechanism in Decidim.
+Workflows provide a way to define what logic users encounter when interacting with the chatbot.
 
-The admin must enable one of these "starting workflow" in order to allow communication between users and the chatbot.
-Workflows can also be configured with certain settings (if applicable).
+##### Workflow Types
 
-Other workflows can be started from the initial one, these workflows do not need to be registered in any manifest.
+**Start Workflows**: Registered workflows that can be selected by administrators as the initial conversation entry point. These are registered using Decidim's standard Manifest mechanism.
 
+**Nested Workflows**: Any workflow can delegate to another workflow, creating a conversation flow. These don't need manifest registration.
 
-See the [Engine](lib/decidim/chatbot/engine.rb) for the initialization of the built-in start workflows:
+##### Workflow Lifecycle
+
+Each workflow inherits from `BaseWorkflow` and implements:
+
+- `process_user_input` - Handles text messages from users
+- `process_action_input` - Handles button clicks and interactive elements
+
+When a message arrives:
+1. The sender's current workflow is instantiated
+2. If text message: `process_user_input` is called
+3. If button click: `process_action_input` is called
+
+##### Workflow Stack
+
+Workflows are managed using a **stack** stored in `sender.workflow_stack`:
 
 ```ruby
-	Decidim::Chatbot.start_workflows_registry.register(:organization_welcome) do |manifest|
-		manifest.workflow_class = "Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow"
-	end
+# Delegate to another workflow (pushes to stack)
+delegate_workflow(ProposalsWorkflow, component_id: 123)
+
+# Exit current workflow (pops from stack)
+exit_workflow
 ```
+
+**Stack behavior:**
+- **Empty stack**: Falls back to `setting.workflow` (the admin-configured start workflow)
+- **Pushing**: Preserves the current workflow, switches to new one
+- **Popping**: Returns to previous workflow (or resets if stack becomes empty)
+
+**Example flow:**
+```
+Initial message:
+  Stack: []
+  Current: OrganizationWelcomeWorkflow (from settings)
+
+User clicks "Participate":
+  Stack: [ProposalsWorkflow]
+  Current: ProposalsWorkflow
+
+User views proposal details:
+  Stack: [ProposalsWorkflow, CommentsWorkflow]
+  Current: CommentsWorkflow
+
+User exits comments:
+  Stack: [ProposalsWorkflow]
+  Current: ProposalsWorkflow
+
+User exits proposals:
+  Stack: []
+  Current: OrganizationWelcomeWorkflow (from settings)
+```
+
+##### Configuration & Options
+
+Workflows access configuration through the `config` helper:
+
+```ruby
+def config
+  @config ||= (setting.config || {}).merge(options)
+end
+```
+
+- **`setting.config`**: Admin-configured settings for start workflows
+- **`options`**: Runtime options passed when delegating (e.g., `component_id`)
+- Options take precedence over settings
+
+**Updating options dynamically:**
+```ruby
+# Update current workflow's options (e.g., for pagination)
+sender.current_workflow_options!(
+  sender.current_workflow_options.merge(page: current_page + 1)
+)
+```
+
+##### Creating Custom Workflows
+
+1. **Create the workflow class:**
+
+```ruby
+module Decidim
+  module Chatbot
+    module Workflows
+      class MyCustomWorkflow < BaseWorkflow
+        def process_user_input
+          send_message!(body: "Hello! You sent: #{received_message.text}")
+        end
+
+        def process_action_input
+          case received_message.button_id
+          when "option_1"
+            send_message!("You chose option 1")
+          when "exit"
+            exit_workflow
+          end
+        end
+      end
+    end
+  end
+end
+```
+
+2. **Register as start workflow (optional):**
+
+```ruby
+# In an initializer or lib/decidim/chatbot/engine.rb
+Decidim::Chatbot.start_workflows_registry.register(:my_custom) do |manifest|
+  manifest.workflow_class = "Decidim::Chatbot::Workflows::MyCustomWorkflow"
+  manifest.settings_attributes = {
+    custom_option: { type: :text, required: false }
+  }
+end
+```
+
+3. **Or delegate from another workflow:**
+
+```ruby
+delegate_workflow(MyCustomWorkflow, custom_param: "value")
+```
+
+##### Built-in Workflows
+
+See the [Engine](lib/decidim/chatbot/engine.rb) for built-in start workflows:
+
+```ruby
+Decidim::Chatbot.start_workflows_registry.register(:organization_welcome) do |manifest|
+  manifest.workflow_class = "Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow"
+end
+```
+
+- **OrganizationWelcomeWorkflow**: Welcome message with organization info
+- **SingleParticipatorySpaceWorkflow**: Navigate a specific participatory space
+- **ProposalsWorkflow**: Browse and interact with proposals (nested workflow)
+- **CommentsWorkflow**: View and interact with proposal comments (nested workflow)
 
 ### Webhook endpoint
 

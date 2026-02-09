@@ -11,84 +11,90 @@ module Decidim
           send_cards
           sleep(1) # Sleep for a short time to ensure the user receives the first message before the continuation
           remaining_proposals_count <= per_page ? send_ending : send_continuation
-          sender.current_workflow_options!(sender.current_workflow_options.merge(page: current_page + 1))
+          sender.current_workflow_merge!(page: current_page + 1, random_seed:)
         end
 
         def process_action_input
           case received_message.button_id
           when "more"
             process_user_input
-          when "end"
+          when "exit"
             exit_workflow
           else
             mark_as_responding
-            # TODO: show proposal details
+            if comment_on_id
+              delegate_workflow(CommentsWorkflow, proposal_id: comment_on_id)
+            else
+              send_proposal_details
+            end
           end
         end
 
         private
 
         def send_cards
-          message = build_message(
-            to: received_message.from,
+          body = "*#{sanitize(component&.name)}*\n\n#{sanitize(component&.settings&.announcement)}"
+
+          send_message!(
             type: :interactive_carousel,
-            data: {
-              body_text: body,
-              cards: current_proposals.map do |proposal|
-                {
-                  id: proposal.id,
-                  title: I18n.t("decidim.chatbot.workflows.proposals.buttons.view_proposal"),
-                  body_text: sanitize(proposal.title).presence || I18n.t("decidim.chatbot.workflows.proposals.buttons.view_proposal"),
-                  image_url: proposal.photo&.attached? ? proposal.photo.attached_uploader(:file).url : image_url("media/images/chatbot-card-placeholder.png")
-                }
-              end
-            }
+            body_text: body,
+            cards: current_proposals.map do |proposal|
+              {
+                id: proposal.id,
+                title: I18n.t("decidim.chatbot.workflows.proposals.buttons.view_proposal"),
+                body_text: sanitize(proposal.title).presence || I18n.t("decidim.chatbot.workflows.proposals.buttons.view_proposal"),
+                image_url: proposal.photo&.attached? ? proposal.photo.attached_uploader(:file).url : image_url("media/images/chatbot-card-placeholder.png")
+              }
+            end
           )
-          adapter.send!(message)
+        end
+
+        def send_proposal_details
+          return unless proposal
+
+          body = "*#{sanitize(proposal.title)}*\n\n#{sanitize(proposal.body)}"
+          send_message!(
+            type: :interactive_buttons,
+            body_text: body,
+            footer_text: proposal.creator_author&.presenter&.name,
+            buttons: [
+              {
+                id: "comment-#{proposal.id}",
+                title: I18n.t("decidim.chatbot.workflows.proposals.buttons.comment")
+              }
+            ]
+          )
         end
 
         def send_continuation
           body = I18n.t("decidim.chatbot.workflows.proposals.remaining_proposals", count: remaining_proposals_count)
-          message = build_message(
-            to: received_message.from,
+          send_message!(
             type: :interactive_buttons,
-            data: {
-              body_text: body,
-              buttons: [
-                {
-                  id: "more",
-                  title: I18n.t("decidim.chatbot.workflows.proposals.buttons.more")
-                },
-                {
-                  id: "end",
-                  title: I18n.t("decidim.chatbot.workflows.proposals.buttons.end")
-                }
-              ]
-            }
+            body_text: body,
+            buttons: [
+              {
+                id: "more",
+                title: I18n.t("decidim.chatbot.workflows.proposals.buttons.more")
+              },
+              {
+                id: "exit",
+                title: I18n.t("decidim.chatbot.workflows.proposals.buttons.exit")
+              }
+            ]
           )
-          adapter.send!(message)
         end
 
         def send_ending
-          message = build_message(
-            to: received_message.from,
+          send_message!(
             type: :interactive_buttons,
-            data: {
-              body_text: I18n.t("decidim.chatbot.workflows.proposals.#{proposals.empty? ? "no_proposals" : "no_more_proposals"}"),
-              buttons: [
-                {
-                  id: "end",
-                  title: I18n.t("decidim.chatbot.workflows.proposals.buttons.end")
-                }
-              ]
-            }
+            body_text: I18n.t("decidim.chatbot.workflows.proposals.#{proposals.empty? ? "no_proposals" : "no_more_proposals"}"),
+            buttons: [
+              {
+                id: "exit",
+                title: I18n.t("decidim.chatbot.workflows.proposals.buttons.exit")
+              }
+            ]
           )
-          adapter.send!(message)
-        end
-
-        def body
-          announcement = sanitize(component&.settings&.announcement)
-          "*#{sanitize(component.name)}*\n\n#{announcement}"
         end
 
         def component
@@ -96,23 +102,30 @@ module Decidim
         end
 
         def proposals
-          @proposals ||= Decidim::Proposals::Proposal.where(component:).published
+          @proposals ||= Decidim::Proposals::Proposal.where(component:).published.only_amendables
         end
 
-        def current_page
-          config[:page].to_i.positive? ? config[:page].to_i : 1
+        def comment_on_id
+          @comment_on_id ||= received_message.button_id.to_s.start_with?("comment-") && received_message.button_id.to_s.sub("comment-", "")
+        end
+
+        def proposal
+          @proposal ||= proposals.find_by(id: received_message.button_id)
         end
 
         def current_proposals
-          proposals.page(current_page).per(per_page)
+          # Use deterministic ordering to keep pagination stable across requests.
+          order_randomly(proposals, random_seed).page(current_page).per(per_page)
         end
 
         def remaining_proposals_count
           proposals.count - (per_page * current_page)
         end
 
-        def per_page
-          10
+        # Returns: A random float number between -1 and 1 to be used as a
+        # random seed at the database.
+        def random_seed
+          @random_seed ||= options[:random_seed].presence || ((rand * 2) - 1).to_f
         end
       end
     end

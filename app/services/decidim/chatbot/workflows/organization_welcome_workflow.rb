@@ -5,23 +5,10 @@ module Decidim
     module Workflows
       class OrganizationWelcomeWorkflow < BaseWorkflow
         def process_user_input
-          send_welcome
+          send_message!(body:, preview_url: true)
         end
 
         private
-
-        def send_welcome
-          message = build_message(
-            to: received_message.from,
-            type: :text,
-            data: {
-              body: body,
-              preview_url: true
-            }
-          )
-
-          adapter.send!(message)
-        end
 
         def body
           "*#{translated_attribute(organization.name)}*\n\n#{welcome_body_text}\n\n#{Decidim::Core::Engine.routes.url_helpers.root_url(host: organization.host)}"

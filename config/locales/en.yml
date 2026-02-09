@@ -55,22 +55,25 @@ en:
             API.
           name: WhatsApp
       workflows:
-        proposals:
-          no_proposals: There are no proposals published yet. Please check back later.
-          no_more_proposals: There are no more proposals to show. Please choose one of the proposals above.
-          remaining_proposals: There are %{count} more proposals. Click "View more" to see them.
-          buttons:
-            view_proposal: View proposal
-            end: Exit & restart
-            more: View more
         organization_welcome:
           buttons:
-            end: Exit & restart
+            exit: Exit & restart
             participate: Participate
           title: Organization Welcome
+        proposals:
+          buttons:
+            comment: Comment proposal
+            exit: Exit & restart
+            more: View more
+            view_proposal: View proposal
+          no_more_proposals: There are no more proposals to show. Please choose one
+            of the proposals above.
+          no_proposals: There are no proposals published yet. Please check back later.
+          remaining_proposals: There are %{count} more proposals. Click "View more"
+            to see them.
         single_participatory_space:
           buttons:
-            end: Exit & restart
+            exit: Exit & restart
             more_info: More info
             participate: Participate
           no_spaces: There are no active participatory spaces at the moment. Please
