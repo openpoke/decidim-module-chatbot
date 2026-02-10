@@ -11,7 +11,7 @@ module Decidim
       end
 
       def parent_workflow
-        workflow_stack[-2]&.dig("class")&.safe_constantize
+        workflow_stack[-2]&.dig("class")&.safe_constantize || setting.workflow if current_workflow != setting.workflow
       end
 
       def locale
@@ -47,6 +47,20 @@ module Decidim
       # Override to ensure workflow_stack is always an array
       def workflow_stack
         self[:workflow_stack] || []
+      end
+
+      # Incorporates the current workflow stack with the parent workflow to provide a full view of the workflow history
+      def full_workflow_stack
+        @full_workflow_stack ||= begin
+          stack = workflow_stack.dup
+          if parent_workflow && (stack.empty? || stack.first["class"] != setting.workflow.name)
+            stack.unshift({
+                            "class" => setting.workflow.name,
+                            "options" => {}
+                          })
+          end
+          stack
+        end
       end
 
       # Start a new workflow by pushing it to the stack

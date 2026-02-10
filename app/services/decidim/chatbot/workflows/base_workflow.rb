@@ -22,10 +22,20 @@ module Decidim
 
         def start(force_welcome = false) # rubocop:disable Style/OptionalBooleanParameter
           mark_as_read
+
           if received_message.user_text? || force_welcome
             process_user_input
           elsif received_message.actionable?
-            process_action_input
+            case received_message.button_id
+            when "exit"
+              exit_workflow
+            when "reset"
+              reset_workflows
+            else
+              process_action_input
+            end
+          else
+            process_unprocessable_input
           end
         end
 
@@ -39,6 +49,26 @@ module Decidim
         # Actions started by the user are processed here (button clicks, etc.)
         def process_action_input
           raise NotImplementedError
+        end
+
+        # Messages that cannot be processed as user input or action input are processed here
+        def process_unprocessable_input
+          send_message!(
+            type: :interactive_buttons,
+            body_text: I18n.t("decidim.chatbot.workflows.base.unprocessable_input"),
+            buttons: [
+              {
+                id: "reset",
+                title: I18n.t("decidim.chatbot.workflows.base.buttons.reset")
+              },
+              {
+                id: "exit",
+                title: I18n.t("decidim.chatbot.workflows.base.buttons.exit")
+              }
+            ].tap do |buttons|
+              buttons.delete_if { |button| button[:id] == "reset" } if parent_workflow.nil? # Don't offer exit button if there's no parent workflow to return to
+            end
+          )
         end
 
         def mark_as_read
@@ -66,10 +96,10 @@ module Decidim
         def exit_workflow
           # Pop current workflow from stack
           sender.pop_from_workflow_stack!
+          conf = sender.current_workflow_options || setting.config
 
-          # If stack is empty, reset everything
-          reset_workflows if sender.workflow_stack.empty?
-          # If stack has workflows, next message will be handled by the new current workflow (stack.last)
+          # Restart the workflow, which will now be the previous one in the stack (or the start workflow if the stack is empty)
+          sender.current_workflow.new(adapter:, message:, **conf).start(true)
         end
 
         # Helper to access the workflow configuration, which is a combination of the setting's config and the options passed when delegating the workflow
@@ -105,6 +135,23 @@ module Decidim
 
         def image_url(path)
           ActionController::Base.helpers.image_pack_url(path, host: "https://#{organization.host}")
+        end
+
+        def resource_url(resource, fallback_image: false)
+          fallback_image_url = fallback_image && image_url("media/images/chatbot-card-placeholder.png")
+
+          case resource
+          when Decidim::Organization
+            Decidim::Core::Engine.routes.url_helpers.organization_url(resource, host: "https://#{organization.host}")
+          when Decidim::Participable, Decidim::Resourceable
+            Decidim::ResourceLocatorPresenter.new(resource).url
+          when Decidim::Attachment
+            resource.attached? ? resource.attached_uploader(:file).url : fallback_image_url
+          when ActiveStorage::Attached
+            resource.attached? ? resource.record.attached_uploader(resource.name).url : fallback_image_url
+          else
+            fallback_image_url
+          end
         end
       end
     end

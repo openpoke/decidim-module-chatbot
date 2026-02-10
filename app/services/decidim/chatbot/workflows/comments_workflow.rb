@@ -5,13 +5,39 @@ module Decidim
     module Workflows
       class CommentsWorkflow < BaseWorkflow
         def process_user_input
-          send_message!("todo: process user input for comments workflow for proposal #{proposal.id}")
+          return send_ending unless resource
+
+          send_instructions
+        end
+
+        def process_action_input
+          return send_ending unless resource
+
+          send_message!("todo: process action input for comments workflow for resource #{resource.id}")
+          exit_workflow
         end
 
         private
 
-        def proposal
-          @proposal ||= Decidim::Proposals::Proposal.find_by(id: options[:proposal_id])
+        def send_instructions
+          send_message!(I18n.t("decidim.chatbot.workflows.comments.instructions", title: "*#{sanitize(resource.title)}*"))
+        end
+
+        def send_ending
+          send_message!(
+            type: :interactive_buttons,
+            body_text: I18n.t("decidim.chatbot.workflows.comments.resource_not_found"),
+            buttons: [
+              {
+                id: "exit",
+                title: I18n.t("decidim.chatbot.workflows.base.buttons.exit")
+              }
+            ]
+          )
+        end
+
+        def resource
+          @resource ||= GlobalID::Locator.locate(options["resource_gid"])
         end
       end
     end

@@ -55,15 +55,21 @@ en:
             API.
           name: WhatsApp
       workflows:
-        organization_welcome:
+        base:
           buttons:
-            exit: Exit & restart
-            participate: Participate
+            exit: Exit & go back
+            reset: End conversation
+          unprocessable_input: Sorry, I couldn't process that. Please try again with
+            a different message or click "Exit & restart" to start over.
+        comments:
+          resource_not_found: Unfortunately, the requested resource could not be found.
+            Please choose another one or exit and restart.
+          instructions: Thanks for your interest in commenting "%{title}"! Please write your comment below and send it to me. You will have the chance to review and edit your comment before submitting it.
+        organization_welcome:
           title: Organization Welcome
         proposals:
           buttons:
             comment: Comment proposal
-            exit: Exit & restart
             more: View more
             view_proposal: View proposal
           no_more_proposals: There are no more proposals to show. Please choose one
@@ -73,7 +79,6 @@ en:
             to see them.
         single_participatory_space:
           buttons:
-            exit: Exit & restart
             more_info: More info
             participate: Participate
           no_spaces: There are no active participatory spaces at the moment. Please

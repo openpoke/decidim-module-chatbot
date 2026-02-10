@@ -18,12 +18,10 @@ module Decidim
           case received_message.button_id
           when "more"
             process_user_input
-          when "exit"
-            exit_workflow
           else
             mark_as_responding
-            if comment_on_id
-              delegate_workflow(CommentsWorkflow, proposal_id: comment_on_id)
+            if commentable_id
+              delegate_workflow(CommentsWorkflow, resource_gid: commentable_gid)
             else
               send_proposal_details
             end
@@ -34,7 +32,6 @@ module Decidim
 
         def send_cards
           body = "*#{sanitize(component&.name)}*\n\n#{sanitize(component&.settings&.announcement)}"
-
           send_message!(
             type: :interactive_carousel,
             body_text: body,
@@ -43,20 +40,20 @@ module Decidim
                 id: proposal.id,
                 title: I18n.t("decidim.chatbot.workflows.proposals.buttons.view_proposal"),
                 body_text: sanitize(proposal.title).presence || I18n.t("decidim.chatbot.workflows.proposals.buttons.view_proposal"),
-                image_url: proposal.photo&.attached? ? proposal.photo.attached_uploader(:file).url : image_url("media/images/chatbot-card-placeholder.png")
+                image_url: resource_url(proposal.photo, fallback_image: true)
               }
             end
           )
         end
 
         def send_proposal_details
-          return unless proposal
+          return process_unprocessable_input unless proposal
 
-          body = "*#{sanitize(proposal.title)}*\n\n#{sanitize(proposal.body)}"
+          body = "*#{sanitize(proposal.title)}*\n\n#{sanitize(proposal.body)}\n\n#{resource_url(proposal)}"
           send_message!(
             type: :interactive_buttons,
             body_text: body,
-            header_image: proposal.photo&.attached? && proposal.photo.attached_uploader(:file).url,
+            header_image: resource_url(proposal.photo),
             footer_text: proposal.creator_author&.presenter&.name,
             buttons: [
               {
@@ -79,7 +76,7 @@ module Decidim
               },
               {
                 id: "exit",
-                title: I18n.t("decidim.chatbot.workflows.proposals.buttons.exit")
+                title: I18n.t("decidim.chatbot.workflows.base.buttons.exit")
               }
             ]
           )
@@ -92,7 +89,7 @@ module Decidim
             buttons: [
               {
                 id: "exit",
-                title: I18n.t("decidim.chatbot.workflows.proposals.buttons.exit")
+                title: I18n.t("decidim.chatbot.workflows.base.buttons.exit")
               }
             ]
           )
@@ -106,8 +103,12 @@ module Decidim
           @proposals ||= Decidim::Proposals::Proposal.where(component:).published.only_amendables
         end
 
-        def comment_on_id
-          @comment_on_id ||= received_message.button_id.to_s.start_with?("comment-") && received_message.button_id.to_s.sub("comment-", "")
+        def commentable_id
+          @commentable_id ||= received_message.button_id.to_s.start_with?("comment-") && received_message.button_id.to_s.sub("comment-", "")
+        end
+
+        def commentable_gid
+          @commentable_gid ||= proposals.find_by(id: commentable_id)&.to_global_id
         end
 
         def proposal
@@ -126,7 +127,7 @@ module Decidim
         # Returns: A random float number between -1 and 1 to be used as a
         # random seed at the database.
         def random_seed
-          @random_seed ||= options[:random_seed].presence || ((rand * 2) - 1).to_f
+          @random_seed ||= options["random_seed"].presence || ((rand * 2) - 1).to_f
         end
       end
     end
