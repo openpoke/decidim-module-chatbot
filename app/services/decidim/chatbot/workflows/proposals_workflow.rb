@@ -9,7 +9,6 @@ module Decidim
 
           mark_as_responding
           send_cards
-          # Maybe a sleep for a short time is necessary to ensure the user receives the first message before the continuation
           remaining_proposals_count <= per_page ? send_ending : send_continuation
           sender.current_workflow_merge!(page: current_page + 1, random_seed:)
         end
@@ -72,6 +71,7 @@ module Decidim
           body = I18n.t("decidim.chatbot.workflows.proposals.remaining_proposals", count: remaining_proposals_count)
           send_message!(
             type: :interactive_buttons,
+            delay: 3,
             body_text: body,
             buttons: [
               {

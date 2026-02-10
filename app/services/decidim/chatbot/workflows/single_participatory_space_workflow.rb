@@ -8,6 +8,7 @@ module Decidim
           return send_message!(I18n.t("decidim.chatbot.workflows.single_participatory_space.no_spaces")) if participatory_space.nil?
 
           send_instructions_if_configured
+          mark_as_responding
           send_space_welcome
         end
 

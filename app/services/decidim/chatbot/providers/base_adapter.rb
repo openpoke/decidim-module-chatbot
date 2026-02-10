@@ -32,18 +32,25 @@ module Decidim
           nil
         end
 
-        # Send a simple text message to the user
+        # Send a message to the user with optional delay
         def send_message!(data)
           data = { body: data } if data.is_a?(String)
           type = data.delete(:type) || :text
           to = data.delete(:to) || received_message.from
+          delay = data.delete(:delay) || 0
 
           message = build_message(to:, data:, type:)
-          send!(message)
+          # Convert to JSON and back to ensure no SafeBuffer objects
+          message_json = JSON.parse(message.body.to_json)
+          Decidim::Chatbot::SendMessageJob.set(wait: delay.to_i).perform_later(
+            message_json,
+            self.class.name,
+            params.as_json
+          )
         end
 
         # Send a message to the user
-        def send!(_message)
+        def send!(_message_body, **_options)
           raise NotImplementedError
         end
       end

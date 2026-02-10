@@ -21,6 +21,7 @@ module Decidim
           if received_message.button_id == "submit"
             mark_as_responding
             create_comment
+            send_comment_created_message
           else
             exit_workflow
           end
@@ -77,6 +78,9 @@ module Decidim
             author: sender.user,
             commentable: resource
           )
+        end
+
+        def send_comment_created_message
           body = "*#{I18n.t("decidim.chatbot.workflows.comments.comment_created")}*\n\n#{resource_url(resource)}#comments"
           send_message!(
             type: :interactive_buttons,
@@ -94,7 +98,7 @@ module Decidim
         end
 
         def comment_body
-          options[:comment_body] || received_message.body
+          sender.current_workflow_options["comment"]
         end
 
         def resource
