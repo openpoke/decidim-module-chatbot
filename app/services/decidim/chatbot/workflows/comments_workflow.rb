@@ -19,6 +19,7 @@ module Decidim
           return send_ending unless resource
 
           if received_message.button_id == "submit"
+            mark_as_responding
             create_comment
           else
             exit_workflow

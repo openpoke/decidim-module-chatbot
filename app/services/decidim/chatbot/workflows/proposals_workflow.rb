@@ -9,7 +9,7 @@ module Decidim
 
           mark_as_responding
           send_cards
-          sleep(1) # Sleep for a short time to ensure the user receives the first message before the continuation
+          # Maybe a sleep for a short time is necessary to ensure the user receives the first message before the continuation
           remaining_proposals_count <= per_page ? send_ending : send_continuation
           sender.current_workflow_merge!(page: current_page + 1, random_seed:)
         end

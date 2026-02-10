@@ -14,7 +14,7 @@ module Decidim
 
         new_user = Decidim::User.create!(
           # Because Decidim is picky with names and we don't want to break it with weird characters from the provider
-          name: name.gsub(/[<>?%&\^*#@()\[\]=+:;"{}\\|]/, ""),
+          name: name.gsub(/[<>?%&\^*#@()\[\]=+:;"{}\\|]/, "").presence || "#{provider.titleize} #{id}",
           nickname: UserBaseEntity.nicknamize("#{name}_#{provider}", organization.id),
           organization: organization,
           tos_agreement: true,
