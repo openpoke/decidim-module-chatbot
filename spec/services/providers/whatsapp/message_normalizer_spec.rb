@@ -13,11 +13,11 @@ module Decidim
             let(:json) { JSON.parse(file_fixture("whatsapp_received_user.json").read) }
 
             it "extracts the from number" do
-              expect(subject.from).to eq("34685173326")
+              expect(subject.from).to eq("34123456789")
             end
 
             it "extracts the from name" do
-              expect(subject.from_name).to eq("Ivan")
+              expect(subject.from_name).to eq("John Doe")
             end
 
             it "extracts the phone_number_id" do
@@ -25,7 +25,7 @@ module Decidim
             end
 
             it "extracts the display phone number as to" do
-              expect(subject.to).to eq("15551918371")
+              expect(subject.to).to eq("15551111111")
             end
 
             it "extracts the chat_id" do
@@ -117,7 +117,7 @@ module Decidim
                         "value" => {
                           "messaging_product" => "whatsapp",
                           "metadata" => {
-                            "display_phone_number" => "15551918371",
+                            "display_phone_number" => "15551111111",
                             "phone_number_id" => "873575429163486"
                           },
                           "contacts" => [
@@ -191,7 +191,7 @@ module Decidim
                         "value" => {
                           "messaging_product" => "whatsapp",
                           "metadata" => {
-                            "display_phone_number" => "15551918371",
+                            "display_phone_number" => "15551111111",
                             "phone_number_id" => "873575429163486"
                           },
                           "contacts" => [
@@ -250,7 +250,7 @@ module Decidim
                         "value" => {
                           "messaging_product" => "whatsapp",
                           "metadata" => {
-                            "display_phone_number" => "15551918371",
+                            "display_phone_number" => "15551111111",
                             "phone_number_id" => "873575429163486"
                           }
                         },
@@ -303,7 +303,7 @@ module Decidim
 
             it "contains the contacts" do
               expect(subject.message_data["contacts"]).to be_present
-              expect(subject.message_data.dig("contacts", 0, "wa_id")).to eq("34685173326")
+              expect(subject.message_data.dig("contacts", 0, "wa_id")).to eq("34123456789")
             end
 
             it "contains the messages" do

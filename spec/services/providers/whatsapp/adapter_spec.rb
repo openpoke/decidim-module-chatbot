@@ -89,7 +89,7 @@ module Decidim
             end
 
             it "extracts the correct from number" do
-              expect(subject.received_message.from).to eq("34685173326")
+              expect(subject.received_message.from).to eq("34123456789")
             end
 
             it "extracts the correct message body" do

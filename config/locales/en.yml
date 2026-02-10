@@ -49,6 +49,7 @@ en:
           any message.
         stale_cleared: Your previous session was cleared due to inactivity. Starting
           fresh!
+        generic_error: Sorry, something went wrong while processing your request. Please try again later.
       providers:
         whatsapp:
           description: Enable to receive and respond to messages via WhatsApp Business
@@ -62,9 +63,15 @@ en:
           unprocessable_input: Sorry, I couldn't process that. Please try again with
             a different message or click "Exit & restart" to start over.
         comments:
+          comment_received: Here is your comment, if you want to change it just send a new message. If you're happy with it, click "Submit comment".
           resource_not_found: Unfortunately, the requested resource could not be found.
             Please choose another one or exit and restart.
           instructions: Thanks for your interest in commenting "%{title}"! Please write your comment below and send it to me. You will have the chance to review and edit your comment before submitting it.
+          comment_created: "Your comment has been published successfully! You can view it here:"
+          signature: "\n\nSent via %{provider}"
+          buttons:
+            submit: Publish comment
+            exit: Cancel & go back
         organization_welcome:
           title: Organization Welcome
         proposals:

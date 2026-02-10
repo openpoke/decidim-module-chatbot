@@ -118,8 +118,8 @@ module Decidim::Chatbot
           Decidim::Chatbot::Providers::Whatsapp::Adapter,
           received_message: instance_double(
             Decidim::Chatbot::Providers::Whatsapp::MessageNormalizer,
-            from: "34685173326",
-            from_name: "Ivan",
+            from: "34123456789",
+            from_name: "John Doe",
             from_metadata: {},
             from_locale: nil,
             message_id: "wamid.HBgLMzQ2ODUxNzMzMjYVAgASGBYzRUIwMThFMjdEQzMwMkQ0REZCQ0M1AA==",
@@ -166,8 +166,8 @@ module Decidim::Chatbot
           post :receive, params: { provider: }.merge(whatsapp_payload)
 
           sender = Sender.last
-          expect(sender.from).to eq("34685173326")
-          expect(sender.name).to eq("Ivan")
+          expect(sender.from).to eq("34123456789")
+          expect(sender.name).to eq("John Doe")
           expect(sender.setting).to eq(setting)
         end
 
@@ -220,7 +220,7 @@ module Decidim::Chatbot
       end
 
       context "with existing sender" do
-        let!(:existing_sender) { create(:chatbot_sender, setting:, from: "34685173326") }
+        let!(:existing_sender) { create(:chatbot_sender, setting:, from: "34123456789") }
 
         it "does not create a new sender" do
           expect do
@@ -237,7 +237,7 @@ module Decidim::Chatbot
       end
 
       context "with existing message (duplicate message_id)" do
-        let!(:existing_sender) { create(:chatbot_sender, setting:, from: "34685173326") }
+        let!(:existing_sender) { create(:chatbot_sender, setting:, from: "34123456789") }
         let!(:existing_message) do
           create(:chatbot_message,
                  setting:,

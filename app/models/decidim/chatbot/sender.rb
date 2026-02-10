@@ -6,16 +6,35 @@ module Decidim
       belongs_to :setting, class_name: "Decidim::Chatbot::Setting"
       belongs_to :decidim_user, class_name: "Decidim::User", optional: true
 
+      delegate :provider, :organization, :workflow, to: :setting
+
+      def user
+        existing_user = decidim_user || Decidim::User.find_by("extended_data->>'chatbot_sender_id' = ?", id)
+        return existing_user if existing_user
+
+        new_user = Decidim::User.create!(
+          # Because Decidim is picky with names and we don't want to break it with weird characters from the provider
+          name: name.gsub(/[<>?%&\^*#@()\[\]=+:;"{}\\|]/, ""),
+          nickname: UserBaseEntity.nicknamize("#{name}_#{provider}", organization.id),
+          organization: organization,
+          tos_agreement: true,
+          managed: true,
+          extended_data: { chatbot_sender_id: id }
+        )
+        update!(decidim_user: new_user)
+        new_user
+      end
+
       def current_workflow
-        workflow_stack.last&.dig("class")&.safe_constantize || setting.workflow
+        workflow_stack.last&.dig("class")&.safe_constantize || workflow
       end
 
       def parent_workflow
-        workflow_stack[-2]&.dig("class")&.safe_constantize || setting.workflow if current_workflow != setting.workflow
+        workflow_stack[-2]&.dig("class")&.safe_constantize || workflow if current_workflow != workflow
       end
 
       def locale
-        metadata["locale"].presence || decidim_user&.locale.presence || setting.organization.default_locale
+        metadata["locale"].presence || decidim_user&.locale.presence || organization.default_locale
       end
 
       def current_workflow_options
@@ -35,7 +54,7 @@ module Decidim
         if stack.empty?
           # If stack is empty, initialize it with the current workflow
           stack << {
-            class: setting.workflow.name,
+            class: workflow.name,
             options: options
           }
         else
@@ -53,9 +72,9 @@ module Decidim
       def full_workflow_stack
         @full_workflow_stack ||= begin
           stack = workflow_stack.dup
-          if parent_workflow && (stack.empty? || stack.first["class"] != setting.workflow.name)
+          if parent_workflow && (stack.empty? || stack.first["class"] != workflow.name)
             stack.unshift({
-                            "class" => setting.workflow.name,
+                            "class" => workflow.name,
                             "options" => {}
                           })
           end

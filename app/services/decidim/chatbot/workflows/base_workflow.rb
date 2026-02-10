@@ -10,10 +10,10 @@ module Decidim
         def initialize(adapter:, message:, **options)
           @adapter = adapter
           @message = message
-          @options = options
+          @options = options.with_indifferent_access
         end
 
-        attr_reader :adapter, :message, :options
+        attr_reader :adapter, :message, :options, :force_welcome
 
         delegate :send_message!, :build_message, :received_message, to: :adapter
         delegate :setting, :sender, to: :message
@@ -21,6 +21,7 @@ module Decidim
         delegate :current_workflow, :parent_workflow, to: :sender
 
         def start(force_welcome = false) # rubocop:disable Style/OptionalBooleanParameter
+          @force_welcome = force_welcome
           mark_as_read
 
           if received_message.user_text? || force_welcome
@@ -37,6 +38,10 @@ module Decidim
           else
             process_unprocessable_input
           end
+        rescue StandardError => e
+          send_message!(I18n.t(Chatbot.generic_error_message, default: Chatbot.generic_error_message)) if Chatbot.generic_error_message.present?
+          send_message!("Error details: *#{e.message}*\n\n#{e.backtrace.first(5).join("\n")}") unless Rails.env.production?
+          raise e
         end
 
         protected
@@ -93,13 +98,13 @@ module Decidim
           send_message!(I18n.t(Chatbot.reset_workflows_message, default: Chatbot.reset_workflows_message)) if Chatbot.reset_workflows_message.present?
         end
 
-        def exit_workflow
+        def exit_workflow(with_welcome = true) # rubocop:disable Style/OptionalBooleanParameter
           # Pop current workflow from stack
           sender.pop_from_workflow_stack!
           conf = sender.current_workflow_options || setting.config
 
           # Restart the workflow, which will now be the previous one in the stack (or the start workflow if the stack is empty)
-          sender.current_workflow.new(adapter:, message:, **conf).start(true)
+          sender.current_workflow.new(adapter:, message:, **conf).start(true) if with_welcome
         end
 
         # Helper to access the workflow configuration, which is a combination of the setting's config and the options passed when delegating the workflow
@@ -129,8 +134,8 @@ module Decidim
         # Prepare a message to be sent to the user, applying necessary sanitization and formatting.
         # TODO: limit message length depending on the provider's requirements, for example WhatsApp has a 4096 character limit for text messages.
         # Accepts a string or hash with languages
-        def sanitize(text)
-          strip_tags(translated_attribute(text))
+        def sanitize(text, truncate = 4000)
+          strip_tags(translated_attribute(text)).truncate(truncate)
         end
 
         def image_url(path)

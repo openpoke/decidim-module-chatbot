@@ -7,14 +7,22 @@ module Decidim
         def process_user_input
           return send_ending unless resource
 
-          send_instructions
+          if force_welcome
+            send_instructions
+          else
+            sender.current_workflow_merge!(comment: received_message.body)
+            send_comment_confirmation
+          end
         end
 
         def process_action_input
           return send_ending unless resource
 
-          send_message!("todo: process action input for comments workflow for resource #{resource.id}")
-          exit_workflow
+          if received_message.button_id == "submit"
+            create_comment
+          else
+            exit_workflow
+          end
         end
 
         private
@@ -36,8 +44,60 @@ module Decidim
           )
         end
 
+        def send_comment_confirmation
+          body = "*#{I18n.t("decidim.chatbot.workflows.comments.comment_received")}*\n\n#{received_message.body}"
+          send_message!(
+            type: :interactive_buttons,
+            header_text: sanitize(resource.title, 60),
+            body_text: body,
+            buttons: [
+              {
+                id: "submit",
+                title: I18n.t("decidim.chatbot.workflows.comments.buttons.submit")
+              },
+              {
+                id: "exit",
+                title: I18n.t("decidim.chatbot.workflows.comments.buttons.exit")
+              },
+              {
+                id: "reset",
+                title: I18n.t("decidim.chatbot.workflows.base.buttons.reset")
+              }
+            ]
+          )
+        end
+
+        def create_comment
+          resource.comments.create!(
+            body: {
+              sender.locale =>
+              "#{comment_body}\n\n#{I18n.t("decidim.chatbot.workflows.comments.signature", provider: setting.provider.titleize)}"
+            },
+            author: sender.user,
+            commentable: resource
+          )
+          body = "*#{I18n.t("decidim.chatbot.workflows.comments.comment_created")}*\n\n#{resource_url(resource)}#comments"
+          send_message!(
+            type: :interactive_buttons,
+            header_text: sanitize(resource.title, 60),
+            body_text: body,
+            buttons: [
+              {
+                id: "reset",
+                title: I18n.t("decidim.chatbot.workflows.base.buttons.reset")
+              }
+            ].tap do |buttons|
+              buttons.unshift(options[:back_button]) if options[:back_button].present?
+            end
+          )
+        end
+
+        def comment_body
+          options[:comment_body] || received_message.body
+        end
+
         def resource
-          @resource ||= GlobalID::Locator.locate(options["resource_gid"])
+          @resource ||= GlobalID::Locator.locate(options[:resource_gid])
         end
       end
     end

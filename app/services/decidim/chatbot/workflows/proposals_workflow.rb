@@ -21,7 +21,11 @@ module Decidim
           else
             mark_as_responding
             if commentable_id
-              delegate_workflow(CommentsWorkflow, resource_gid: commentable_gid)
+              delegate_workflow(
+                Decidim::Chatbot::Workflows::CommentsWorkflow,
+                resource_gid: commentable_gid.to_s,
+                back_button: { id: "more", title: I18n.t("decidim.chatbot.workflows.proposals.buttons.more") }
+              )
             else
               send_proposal_details
             end
