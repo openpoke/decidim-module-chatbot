@@ -51,6 +51,9 @@ module Decidim
         return log_unprocessable_message unless sender && message
 
         clear_stale_workflows_for_sender
+        # Touch updated_at on every message to track activity for stale workflow detection
+        sender.update(updated_at: Time.current)
+
         execute_workflow
       rescue ActiveRecord::RecordInvalid => e
         Rails.logger.error("Database error processing webhook: #{e.message}")
@@ -114,9 +117,6 @@ module Decidim
           sender.name = received_message.from_name
           sender.metadata = received_message.from_metadata || {}
           sender.metadata["locale"] = received_message.from_locale.presence || current_organization.default_locale
-        end.tap do |sender| # rubocop:disable Style/MultilineBlockChain
-          # Touch updated_at on every message to track activity for stale workflow detection
-          sender.touch unless sender.previous_changes.has_key?("id") # rubocop:disable Rails/SkipsModelValidations
         end
       end
 

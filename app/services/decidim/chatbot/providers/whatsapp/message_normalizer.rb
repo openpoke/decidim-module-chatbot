@@ -21,16 +21,20 @@ module Decidim
             @body = @message_data.dig("messages", 0, "text", "body")
             @message_id = @message_data.dig("messages", 0, "id")
             @type = @message_data.dig("messages", 0, "type")
-            return unless @type == "interactive"
-
-            # Extract interactive message details
-            interactive = @message_data.dig("messages", 0, "interactive")
-            if interactive["type"] == "button_reply"
-              @body = interactive.dig("button_reply", "title")
-              @button_id = interactive.dig("button_reply", "id")
-            elsif interactive["type"] == "list_reply"
-              @body = interactive.dig("list_reply", "title")
-              @button_id = interactive.dig("list_reply", "id")
+            if @type == "interactive"
+              # Extract interactive message details
+              interactive = @message_data.dig("messages", 0, "interactive")
+              if interactive["type"] == "button_reply"
+                @body = interactive.dig("button_reply", "title")
+                @button_id = interactive.dig("button_reply", "id")
+              elsif interactive["type"] == "list_reply"
+                @body = interactive.dig("list_reply", "title")
+                @button_id = interactive.dig("list_reply", "id")
+              end
+            elsif @type == "button"
+              button = @message_data.dig("messages", 0, "button")
+              @body = button&.dig("text")
+              @button_id = button&.dig("payload")
             end
           end
 

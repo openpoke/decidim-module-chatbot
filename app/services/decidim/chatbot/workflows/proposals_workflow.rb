@@ -56,6 +56,7 @@ module Decidim
           send_message!(
             type: :interactive_buttons,
             body_text: body,
+            header_image: proposal.photo&.attached? && proposal.photo.attached_uploader(:file).url,
             footer_text: proposal.creator_author&.presenter&.name,
             buttons: [
               {
