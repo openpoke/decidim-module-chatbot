@@ -13,8 +13,12 @@ module Decidim
         @adapter_manifest ||= Decidim::Chatbot.providers_registry.find(provider.to_sym)
       end
 
+      def workflow_manifest
+        @workflow_manifest ||= Decidim::Chatbot.start_workflows_registry.find(start_workflow.to_sym)
+      end
+
       def workflow
-        @workflow ||= Decidim::Chatbot.start_workflows_registry.find(start_workflow.to_sym).workflow
+        @workflow ||= workflow_manifest.workflow
       end
 
       def toggle_enabled!

@@ -15,26 +15,24 @@ describe "Admin manages chatbot settings" do
 
   describe "editing settings" do
     it "shows workflow selector" do
-      visit decidim_admin_chatbot.edit_setting_path(id: "whatsapp")
+      visit decidim_admin_chatbot.edit_setting_path(id: "whatsapp", workflow: "organization_welcome")
 
       expect(page).to have_select("setting_start_workflow")
     end
 
     context "when organization_welcome workflow is selected" do
-      it "renders welcome workflow form with custom_text and delegate_workflow" do
+      it "renders welcome workflow form with custom_text" do
         visit decidim_admin_chatbot.edit_setting_path(id: "whatsapp", workflow: "organization_welcome")
 
         expect(page).to have_field("setting_custom_text")
-        expect(page).to have_select("setting_delegate_workflow")
       end
     end
 
-    context "when single_participatory_space_workflow is selected" do
+    context "when single_participatory_space is selected" do
       it "renders participatory space workflow form with space select" do
-        visit decidim_admin_chatbot.edit_setting_path(id: "whatsapp", workflow: "single_participatory_space_workflow")
+        visit decidim_admin_chatbot.edit_setting_path(id: "whatsapp", workflow: "single_participatory_space")
 
         expect(page).to have_select("setting_participatory_space_gid")
-        # Component select is hidden until space is selected
         expect(page).to have_css("#setting_component_id", visible: :all)
       end
     end
@@ -44,7 +42,7 @@ describe "Admin manages chatbot settings" do
         visit decidim_admin_chatbot.edit_setting_path(id: "whatsapp", workflow: "organization_welcome")
         expect(page).to have_field("setting_custom_text")
 
-        visit decidim_admin_chatbot.edit_setting_path(id: "whatsapp", workflow: "single_participatory_space_workflow")
+        visit decidim_admin_chatbot.edit_setting_path(id: "whatsapp", workflow: "single_participatory_space")
         expect(page).to have_select("setting_participatory_space_gid")
         expect(page).to have_no_field("setting_custom_text")
       end
@@ -53,7 +51,7 @@ describe "Admin manages chatbot settings" do
 
   describe "saving settings" do
     context "with organization_welcome workflow" do
-      it "saves custom_text and delegate_workflow" do
+      it "saves custom_text" do
         visit decidim_admin_chatbot.edit_setting_path(id: "whatsapp", workflow: "organization_welcome")
 
         fill_in "setting_custom_text", with: "Welcome to our chatbot!"
@@ -70,9 +68,9 @@ describe "Admin manages chatbot settings" do
       end
     end
 
-    context "with single_participatory_space_workflow" do
+    context "with single_participatory_space" do
       it "saves participatory space and component" do
-        visit decidim_admin_chatbot.edit_setting_path(id: "whatsapp", workflow: "single_participatory_space_workflow")
+        visit decidim_admin_chatbot.edit_setting_path(id: "whatsapp", workflow: "single_participatory_space")
 
         # Select participatory space
         find_by_id("setting_participatory_space_gid").select(participatory_process.title["en"])
@@ -91,7 +89,7 @@ describe "Admin manages chatbot settings" do
         expect(page).to have_content("Chatbot settings saved successfully")
 
         setting = Decidim::Chatbot::Setting.find_by(organization:, provider: "whatsapp")
-        expect(setting.start_workflow).to eq("single_participatory_space_workflow")
+        expect(setting.start_workflow).to eq("single_participatory_space")
         expect(setting.config["participatory_space_gid"]).to eq(participatory_process.to_global_id.to_s)
         expect(setting.config["component_id"]).to eq(proposal_component.id.to_s)
         expect(setting.enabled?).to be true

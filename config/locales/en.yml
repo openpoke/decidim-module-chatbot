@@ -10,26 +10,33 @@ en:
             title: Chatbot configuration
           form:
             cancel: Cancel
-            component: Choose the component
             configuration_for: Configuration for %{workflow}
             current_workflow: Current workflow (%{provider})
-            custom_text: Initial message (defaults to organization's short description)
-            delegate_workflow: Choose the workflow to handle the "Participate" button
             enabled: Enabled
             loading: Loading...
             no_extra_settings: No additional configuration needed for this workflow.
-            no_workflows_available: No workflows available
-            participatory_space: Choose the participatory space
             save: Save settings
-            select_component: Select a component...
-            select_space: Select a participatory space...
-            select_space_first: Select a participatory space first
-            errors:
-              participatory_space_gid_blank: Participatory space is required
-              component_id_blank: Component is required
           index:
             configure: Configure
             title: Chatbot Settings
+          organization_welcome_form:
+            custom_text: Initial message (defaults to organization's short description)
+            delegate_workflow: Choose the workflow to handle the "Participate" button
+            errors:
+              invalid_delegate_workflow: The selected workflow is not valid or not
+                configured.
+            no_workflows_available: No workflows available
+          single_participatory_space_form:
+            component: Choose the component
+            errors:
+              component_id_blank: Component is required
+              participatory_space_gid_blank: Participatory space is required
+            instructions: Instructions (optional) - displayed before showing the space
+              information
+            participatory_space: Choose the participatory space
+            select_component: Select a component...
+            select_space: Select a participatory space...
+            select_space_first: Select a participatory space first
           toggle:
             disabled: Chatbot has been disabled.
             enabled: Chatbot has been enabled.
@@ -37,8 +44,11 @@ en:
             error: There was an error saving the settings.
             success: Chatbot settings saved successfully.
       messages:
+        deactivated: The chatbot is currently deactivated. Please try again later.
         reset_workflows: Thanks for participating! You can start again by sending
           any message.
+        stale_cleared: Your previous session was cleared due to inactivity. Starting
+          fresh!
       providers:
         whatsapp:
           description: Enable to receive and respond to messages via WhatsApp Business
@@ -46,22 +56,27 @@ en:
           name: WhatsApp
       workflows:
         organization_welcome:
+          buttons:
+            exit: Exit & restart
+            participate: Participate
           title: Organization Welcome
-        organization_welcome_workflow:
+        proposals:
           buttons:
-            end: Exit & restart
-            participate: Participate
-        participatory_space_workflow:
+            comment: Comment proposal
+            exit: Exit & restart
+            more: View more
+            view_proposal: View proposal
+          no_more_proposals: There are no more proposals to show. Please choose one
+            of the proposals above.
+          no_proposals: There are no proposals published yet. Please check back later.
+          remaining_proposals: There are %{count} more proposals. Click "View more"
+            to see them.
+        single_participatory_space:
           buttons:
-            end: Exit & restart
+            exit: Exit & restart
+            more_info: More info
             participate: Participate
-            start: Start
           no_spaces: There are no active participatory spaces at the moment. Please
             try again later.
-          not_configured: The chatbot is not configured yet. Please contact the administrator.
-          participate_prompt: Great! You can now participate in this space. Click
-            the button below to continue.
-          read_only_mode: This participatory space is currently in read-only mode.
-            You can view information but cannot submit contributions yet.
-        single_participatory_space_workflow:
+          not_ready_yet: This feature is not ready yet. Please try again later.
           title: Single Participatory Space

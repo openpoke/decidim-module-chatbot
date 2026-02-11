@@ -9,7 +9,6 @@ module Decidim
       attribute :name, Symbol
       attribute :workflow_class, String
       attribute :settings_partial, String
-      attribute :settings_attributes, Hash, default: {}
       attribute :form_class, String
 
       def workflow
@@ -29,9 +28,8 @@ module Decidim
         settings_partial.present?
       end
 
-      # Returns the list of allowed config keys declared in settings_attributes
-      def config_keys
-        settings_attributes.keys.map(&:to_s)
+      def model_class_name
+        workflow_class.to_s
       end
     end
   end

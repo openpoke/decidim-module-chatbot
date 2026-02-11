@@ -10,19 +10,12 @@ module Decidim::Chatbot
       described_class.new(
         name: :test_workflow,
         workflow_class: workflow_class,
-        settings_partial: settings_partial,
-        settings_attributes: settings_attributes
+        settings_partial: settings_partial
       )
     end
 
     let(:workflow_class) { "Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow" }
     let(:settings_partial) { "decidim/chatbot/admin/settings/workflows/welcome" }
-    let(:settings_attributes) do
-      {
-        custom_text: { type: :text, required: false },
-        delegate_workflow: { type: :select, required: false }
-      }
-    end
 
     describe "#configurable?" do
       context "when settings_partial is present" do
@@ -48,17 +41,9 @@ module Decidim::Chatbot
       end
     end
 
-    describe "#config_keys" do
-      it "returns string keys from settings_attributes" do
-        expect(manifest.config_keys).to contain_exactly("custom_text", "delegate_workflow")
-      end
-
-      context "when settings_attributes is empty" do
-        let(:settings_attributes) { {} }
-
-        it "returns an empty array" do
-          expect(manifest.config_keys).to eq([])
-        end
+    describe "#model_class_name" do
+      it "returns the workflow_class as a string" do
+        expect(manifest.model_class_name).to eq("Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow")
       end
     end
 
@@ -67,8 +52,7 @@ module Decidim::Chatbot
         described_class.new(
           name: :organization_welcome,
           workflow_class: workflow_class,
-          settings_partial: settings_partial,
-          settings_attributes: settings_attributes
+          settings_partial: settings_partial
         )
       end
 
@@ -101,7 +85,6 @@ module Decidim::Chatbot
             name: :test_workflow,
             workflow_class: workflow_class,
             settings_partial: settings_partial,
-            settings_attributes: settings_attributes,
             form_class: "Decidim::Chatbot::Admin::SingleParticipatorySpaceSettingsForm"
           )
         end

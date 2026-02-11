@@ -38,13 +38,21 @@ module Decidim
       def check_enabled
         return if setting&.enabled?
 
-        Rails.logger.info("Chatbot is disabled for provider #{provider}, ignoring message")
+        deactivated_message = I18n.t(Chatbot.deactivated_message, default: Chatbot.deactivated_message)
+
+        action = deactivated_message.present? ? "sending deactivated response" : "ignoring incoming message"
+        Rails.logger.info("Chatbot is disabled for provider #{provider} (#{action})")
+        adapter.send_message!(deactivated_message) if deactivated_message.present?
+
         head :ok
       end
 
       def process_incoming_message
-        return log_unknown_sender if sender.nil?
-        return log_missing_message_id if message.message_id.nil?
+        return log_unprocessable_message unless sender && message
+
+        clear_stale_workflows_for_sender
+        # Touch updated_at on every message to track activity for stale workflow detection
+        sender.update(updated_at: Time.current)
 
         execute_workflow
       rescue ActiveRecord::RecordInvalid => e
@@ -55,23 +63,37 @@ module Decidim
         Rails.logger.error("Unexpected error processing webhook for provider #{provider}: #{e.message}\n#{e.backtrace.first(10).join("\n")}")
       end
 
-      def log_unknown_sender
-        Rails.logger.warn("Received message from unknown sender: #{received_message.from}")
-      end
-
-      def log_missing_message_id
-        Rails.logger.warn("Received message with no ID: #{message.inspect}")
+      def log_unprocessable_message
+        reason = if received_message.message_id.blank?
+                   "missing message ID"
+                 elsif sender.nil?
+                   "sender not found or created"
+                 elsif message.nil?
+                   "message not found or created"
+                 else
+                   "unknown reason"
+                 end
+        Rails.logger.warn("Received unprocessable message (#{reason}): #{received_message.json}")
       end
 
       def execute_workflow
         Rails.logger.info("Processing webhook for provider #{provider}, organization #{setting.organization.id}, sender #{sender.id}")
         I18n.with_locale(sender_locale) do
-          sender.current_workflow.new(adapter:, message:).start
+          sender.current_workflow.new(adapter:, message:, **sender.current_workflow_options).start
         end
       end
 
       def sender_locale
         sender.locale.presence || current_locale
+      end
+
+      def clear_stale_workflows_for_sender
+        cutoff_time = Chatbot.workflow_clear_timeout.ago
+        return unless sender.updated_at < cutoff_time && sender.workflow_stack.any?
+
+        sender.clear_workflow_stack!
+        adapter.send_message!(I18n.t(Chatbot.stale_cleared_message, default: Chatbot.stale_cleared_message)) if Chatbot.stale_cleared_message.present?
+        Rails.logger.info("Cleared stale workflows for sender #{sender.id}")
       end
 
       delegate :received_message, to: :adapter
@@ -81,7 +103,7 @@ module Decidim
       end
 
       def setting
-        @setting ||= Decidim::Chatbot::Setting.find_by(organization: current_organization, provider:)
+        @setting ||= Setting.find_by(organization: current_organization, provider:)
       end
 
       def adapter

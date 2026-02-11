@@ -33,12 +33,12 @@ module Decidim
         end
 
         # Send a simple text message to the user
-        def send_message!(text)
-          message = build_message(
-            to: received_message.from,
-            data: { body: text },
-            type: :text
-          )
+        def send_message!(data)
+          data = { body: data } if data.is_a?(String)
+          type = data.delete(:type) || :text
+          to = data.delete(:to) || received_message.from
+
+          message = build_message(to:, data:, type:)
           send!(message)
         end
 

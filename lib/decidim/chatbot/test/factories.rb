@@ -34,20 +34,23 @@ FactoryBot.define do
     sequence(:from) { |n| "3468517332#{n}" }
     name { "Test User" }
     metadata { {} }
-    current_workflow_class { nil }
-    parent_workflow_class { nil }
+    workflow_stack { [] }
 
     trait :with_user do
       decidim_user { association :user, organization: setting.organization }
     end
 
     trait :with_workflow do
-      current_workflow_class { "Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow" }
+      workflow_stack { [{ "class" => "Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow", "options" => {} }] }
     end
 
     trait :with_parent_workflow do
-      current_workflow_class { "Decidim::Chatbot::Workflows::ParticipatorySpaceWorkflow" }
-      parent_workflow_class { "Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow" }
+      workflow_stack do
+        [
+          { "class" => "Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow", "options" => {} },
+          { "class" => "Decidim::Chatbot::Workflows::SingleParticipatorySpaceWorkflow", "options" => {} }
+        ]
+      end
     end
   end
 

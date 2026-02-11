@@ -7,23 +7,16 @@
       <div class="card-section">
         <div class="row column">
           <%= form.select :start_workflow,
-              @form.available_workflows,
-              { label: t(".current_workflow", provider: provider) },
-              { data: { action: "change->chatbot-settings#changeWorkflow" } } %>
+                          @form.available_workflows,
+                          { label: t(".current_workflow", provider: provider) },
+                          { data: { action: "change->chatbot-settings#changeWorkflow" } } %>
+          <%= form.check_box :enabled, label: t(".enabled") %>
         </div>
       </div>
     </div>
 
     <div>
-      <%= render partial: "workflow_config", locals: { workflow_manifest: @workflow_manifest, form: form } %>
-    </div>
-
-    <div class="card pt-4">
-      <div class="card-section">
-        <div class="row column">
-          <%= form.check_box :enabled, label: t(".enabled") %>
-        </div>
-      </div>
+      <%= render "workflow_config", form: form %>
     </div>
 
     <div class="item__edit-sticky">

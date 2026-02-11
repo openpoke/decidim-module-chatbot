@@ -27,6 +27,7 @@ module Decidim
         before do
           allow(adapter).to receive(:received_message).and_return(received_message)
           allow(adapter).to receive(:mark_as_read!)
+          allow(adapter).to receive(:mark_as_responding!)
           allow(adapter).to receive(:build_message)
           allow(adapter).to receive(:send!)
           allow(adapter).to receive(:send_message!)
@@ -54,6 +55,11 @@ module Decidim
           it "delegates build_message to adapter" do
             subject.build_message(data: { body: "test" })
             expect(adapter).to have_received(:build_message).with(data: { body: "test" })
+          end
+
+          it "delegates send_message! to adapter" do
+            subject.send_message!("test message")
+            expect(adapter).to have_received(:send_message!).with("test message")
           end
 
           it "delegates received_message to adapter" do
@@ -139,7 +145,7 @@ module Decidim
         end
 
         describe "#delegate_workflow" do
-          let(:new_workflow_class) { Workflows::ParticipatorySpaceWorkflow }
+          let(:new_workflow_class) { Workflows::SingleParticipatorySpaceWorkflow }
           let(:new_workflow_instance) { instance_double(new_workflow_class) }
 
           before do
@@ -147,36 +153,44 @@ module Decidim
             allow(new_workflow_instance).to receive(:start)
           end
 
-          it "updates sender's current_workflow_class" do
+          it "pushes the new workflow to the stack" do
             subject.send(:delegate_workflow, new_workflow_class)
             sender.reload
-            expect(sender.current_workflow_class).to eq(new_workflow_class.name)
+            expect(sender.workflow_stack.last["class"]).to eq(new_workflow_class.name)
           end
 
-          it "updates sender's parent_workflow_class" do
+          it "preserves existing stack entries" do
+            sender.update!(workflow_stack: [
+                             { "class" => "Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow", "options" => {} }
+                           ])
             subject.send(:delegate_workflow, new_workflow_class)
             sender.reload
-            expect(sender.parent_workflow_class).to eq(described_class.name)
+            expect(sender.workflow_stack.length).to eq(2)
           end
 
           it "starts the new workflow with force_welcome=true" do
             expect(new_workflow_instance).to receive(:start).with(true)
             subject.send(:delegate_workflow, new_workflow_class)
           end
+
+          it "passes config to the new workflow" do
+            subject.send(:delegate_workflow, new_workflow_class, { component_id: 42 })
+            sender.reload
+            expect(sender.workflow_stack.last["options"]).to eq({ "component_id" => 42 })
+          end
         end
 
         describe "#reset_workflows" do
-          it "clears sender's workflow classes" do
-            sender.update!(
-              current_workflow_class: "SomeWorkflow",
-              parent_workflow_class: "ParentWorkflow"
-            )
+          it "clears the workflow stack" do
+            sender.update!(workflow_stack: [
+                             { "class" => "Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow", "options" => {} },
+                             { "class" => "Decidim::Chatbot::Workflows::SingleParticipatorySpaceWorkflow", "options" => {} }
+                           ])
 
             subject.send(:reset_workflows)
             sender.reload
 
-            expect(sender.current_workflow_class).to be_nil
-            expect(sender.parent_workflow_class).to be_nil
+            expect(sender.workflow_stack).to eq([])
           end
 
           it "sends a reset message" do
@@ -184,6 +198,119 @@ module Decidim
               I18n.t("decidim.chatbot.messages.reset_workflows")
             )
             subject.send(:reset_workflows)
+          end
+        end
+
+        describe "#exit_workflow" do
+          context "when stack has one entry" do
+            before do
+              sender.update!(workflow_stack: [
+                               { "class" => "Decidim::Chatbot::Workflows::SingleParticipatorySpaceWorkflow", "options" => {} }
+                             ])
+            end
+
+            it "pops from stack and resets workflows" do
+              subject.send(:exit_workflow)
+              sender.reload
+              expect(sender.workflow_stack).to eq([])
+            end
+
+            it "sends reset message" do
+              expect(adapter).to receive(:send_message!).with(
+                I18n.t("decidim.chatbot.messages.reset_workflows")
+              )
+              subject.send(:exit_workflow)
+            end
+          end
+
+          context "when stack has two entries" do
+            before do
+              sender.update!(workflow_stack: [
+                               { "class" => "Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow", "options" => {} },
+                               { "class" => "Decidim::Chatbot::Workflows::SingleParticipatorySpaceWorkflow", "options" => {} }
+                             ])
+            end
+
+            it "pops only the current workflow" do
+              subject.send(:exit_workflow)
+              sender.reload
+              expect(sender.workflow_stack.length).to eq(1)
+              expect(sender.workflow_stack.last["class"]).to eq("Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow")
+            end
+
+            it "does not send reset message" do
+              expect(adapter).not_to receive(:send_message!).with(
+                I18n.t("decidim.chatbot.messages.reset_workflows")
+              )
+              subject.send(:exit_workflow)
+            end
+          end
+        end
+
+        describe "#mark_as_responding" do
+          context "when message is acknowledgeable" do
+            before do
+              allow(received_message).to receive(:acknowledgeable?).and_return(true)
+            end
+
+            it "calls mark_as_responding! on adapter" do
+              subject.send(:mark_as_responding)
+              expect(adapter).to have_received(:mark_as_responding!)
+            end
+          end
+
+          context "when message is not acknowledgeable" do
+            before do
+              allow(received_message).to receive(:acknowledgeable?).and_return(false)
+            end
+
+            it "does not call mark_as_responding! on adapter" do
+              subject.send(:mark_as_responding)
+              expect(adapter).not_to have_received(:mark_as_responding!)
+            end
+          end
+        end
+
+        describe "#config" do
+          context "without options" do
+            it "returns setting config" do
+              setting.update!(config: { "key" => "value" })
+              expect(subject.send(:config)["key"]).to eq("value")
+            end
+          end
+
+          context "with options that override setting config" do
+            subject { described_class.new(adapter:, message:, key: "overridden") }
+
+            before do
+              setting.update!(config: { "key" => "original" })
+            end
+
+            it "options take precedence" do
+              expect(subject.send(:config)[:key]).to eq("overridden")
+            end
+          end
+        end
+
+        describe "#current_page" do
+          context "without page in config" do
+            it "returns 1" do
+              expect(subject.send(:current_page)).to eq(1)
+            end
+          end
+
+          context "with page in options" do
+            subject { described_class.new(adapter:, message:, page: 3) }
+
+            it "returns the configured page" do
+              expect(subject.send(:current_page)).to eq(3)
+            end
+          end
+        end
+
+        describe "#per_page" do
+          it "returns 10" do
+            expect(subject.send(:per_page)).to eq(10)
           end
         end
 

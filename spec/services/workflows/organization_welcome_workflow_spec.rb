@@ -14,7 +14,6 @@ module Decidim
         let(:sender) { create(:chatbot_sender, setting:) }
         let(:message) { create(:chatbot_message, setting:, sender:) }
         let(:adapter) { instance_double(Providers::Whatsapp::Adapter) }
-        let(:envelope) { instance_double(Providers::Whatsapp::Envelopes::InteractiveButtons) }
         let(:received_message) do
           instance_double(
             Providers::Whatsapp::MessageNormalizer,
@@ -30,8 +29,6 @@ module Decidim
         before do
           allow(adapter).to receive(:received_message).and_return(received_message)
           allow(adapter).to receive(:mark_as_read!)
-          allow(adapter).to receive(:build_message).and_return(envelope)
-          allow(adapter).to receive(:send!)
           allow(adapter).to receive(:send_message!)
         end
 
@@ -49,81 +46,17 @@ module Decidim
             end
 
             it "sends a welcome message with organization info" do
-              expect(adapter).to receive(:build_message).with(
-                to: "123456789",
-                type: :interactive_buttons,
-                data: hash_including(
-                  header_text: "Test Organization",
-                  buttons: array_including(
-                    hash_including(id: "start")
-                  )
+              expect(adapter).to receive(:send_message!).with(
+                hash_including(
+                  body: a_string_including("Test Organization"),
+                  preview_url: true
                 )
               )
               subject.start
             end
 
-            it "sends the message via adapter" do
-              expect(adapter).to receive(:send!).with(envelope)
-              subject.start
-            end
-
             it "marks the message as read" do
               expect(adapter).to receive(:mark_as_read!)
-              subject.start
-            end
-          end
-
-          context "when user clicks start button" do
-            let(:participatory_space_workflow_instance) { instance_double(ParticipatorySpaceWorkflow) }
-
-            before do
-              allow(received_message).to receive(:user_text?).and_return(false)
-              allow(received_message).to receive(:actionable?).and_return(true)
-              allow(received_message).to receive(:button_id).and_return("start")
-              allow(ParticipatorySpaceWorkflow).to receive(:new).and_return(participatory_space_workflow_instance)
-              allow(participatory_space_workflow_instance).to receive(:start)
-            end
-
-            it "delegates to ParticipatorySpaceWorkflow" do
-              expect(participatory_space_workflow_instance).to receive(:start).with(true)
-              subject.start
-            end
-
-            it "updates sender's current_workflow_class" do
-              subject.start
-              sender.reload
-              expect(sender.current_workflow_class).to eq("Decidim::Chatbot::Workflows::ParticipatorySpaceWorkflow")
-            end
-
-            it "sets parent_workflow_class to current workflow" do
-              subject.start
-              sender.reload
-              expect(sender.parent_workflow_class).to eq("Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow")
-            end
-          end
-
-          context "when user clicks end button" do
-            before do
-              allow(received_message).to receive(:user_text?).and_return(false)
-              allow(received_message).to receive(:actionable?).and_return(true)
-              allow(received_message).to receive(:button_id).and_return("end")
-              sender.update!(
-                current_workflow_class: "SomeWorkflow",
-                parent_workflow_class: "ParentWorkflow"
-              )
-            end
-
-            it "resets all workflows" do
-              subject.start
-              sender.reload
-              expect(sender.current_workflow_class).to be_nil
-              expect(sender.parent_workflow_class).to be_nil
-            end
-
-            it "sends a reset confirmation message" do
-              expect(adapter).to receive(:send_message!).with(
-                I18n.t("decidim.chatbot.messages.reset_workflows")
-              )
               subject.start
             end
           end
@@ -135,30 +68,32 @@ module Decidim
             allow(received_message).to receive(:actionable?).and_return(false)
           end
 
-          context "when parent_workflow is nil" do
-            it "includes only the participate button" do
-              expect(adapter).to receive(:build_message) do |args|
-                buttons = args[:data][:buttons]
-                expect(buttons.length).to eq(1)
-                expect(buttons.first[:id]).to eq("start")
-              end.and_return(envelope)
-              subject.start
+          it "includes organization name in bold" do
+            expect(adapter).to receive(:send_message!) do |args|
+              expect(args[:body]).to include("*Test Organization*")
             end
+            subject.start
           end
 
-          context "when parent_workflow exists" do
-            before do
-              sender.update!(parent_workflow_class: "Decidim::Chatbot::Workflows::BaseWorkflow")
+          it "includes the organization description" do
+            expect(adapter).to receive(:send_message!) do |args|
+              expect(args[:body]).to include("Test Description")
             end
+            subject.start
+          end
 
-            it "includes both participate and end buttons" do
-              expect(adapter).to receive(:build_message) do |args|
-                buttons = args[:data][:buttons]
-                expect(buttons.length).to eq(2)
-                expect(buttons.map { |b| b[:id] }).to contain_exactly("start", "end")
-              end.and_return(envelope)
-              subject.start
+          it "includes the root URL" do
+            expect(adapter).to receive(:send_message!) do |args|
+              expect(args[:body]).to include(organization.host)
             end
+            subject.start
+          end
+
+          it "sets preview_url to true" do
+            expect(adapter).to receive(:send_message!) do |args|
+              expect(args[:preview_url]).to be true
+            end
+            subject.start
           end
         end
 
@@ -175,12 +110,11 @@ module Decidim
           end
 
           it "strips HTML tags from description" do
-            expect(adapter).to receive(:build_message) do |args|
-              body_text = args[:data][:body_text]
-              expect(body_text).not_to include("<p>")
-              expect(body_text).not_to include("<strong>")
-              expect(body_text).to include("Description with HTML")
-            end.and_return(envelope)
+            expect(adapter).to receive(:send_message!) do |args|
+              expect(args[:body]).not_to include("<p>")
+              expect(args[:body]).not_to include("<strong>")
+              expect(args[:body]).to include("Description with HTML")
+            end
             subject.start
           end
         end
@@ -194,10 +128,10 @@ module Decidim
           context "when custom_text is present in config" do
             let(:setting_config) { { "custom_text" => "Welcome to our custom chatbot!" } }
 
-            it "uses custom_text as body_text" do
-              expect(adapter).to receive(:build_message) do |args|
-                expect(args[:data][:body_text]).to eq("Welcome to our custom chatbot!")
-              end.and_return(envelope)
+            it "uses custom_text in body" do
+              expect(adapter).to receive(:send_message!) do |args|
+                expect(args[:body]).to include("Welcome to our custom chatbot!")
+              end
               subject.start
             end
           end
@@ -206,60 +140,21 @@ module Decidim
             let(:setting_config) { { "custom_text" => "" } }
 
             it "falls back to organization description" do
-              expect(adapter).to receive(:build_message) do |args|
-                expect(args[:data][:body_text]).to include("Test Description")
-              end.and_return(envelope)
+              expect(adapter).to receive(:send_message!) do |args|
+                expect(args[:body]).to include("Test Description")
+              end
               subject.start
             end
           end
-        end
 
-        describe "delegate_workflow in config" do
-          before do
-            allow(received_message).to receive(:user_text?).and_return(false)
-            allow(received_message).to receive(:actionable?).and_return(true)
-            allow(received_message).to receive(:button_id).and_return("start")
-          end
+          context "when custom_text is blank" do
+            let(:setting_config) { { "custom_text" => "   " } }
 
-          context "when delegate_workflow is configured with valid workflow" do
-            let(:setting_config) { { "delegate_workflow" => "single_participatory_space_workflow" } }
-
-            it "delegates to the configured workflow" do
-              ps_instance = instance_double(ParticipatorySpaceWorkflow)
-              allow(ParticipatorySpaceWorkflow).to receive(:new).and_return(ps_instance)
-              allow(ps_instance).to receive(:start)
-
+            it "falls back to organization description" do
+              expect(adapter).to receive(:send_message!) do |args|
+                expect(args[:body]).to include("Test Description")
+              end
               subject.start
-              sender.reload
-              expect(sender.current_workflow_class).to eq("Decidim::Chatbot::Workflows::ParticipatorySpaceWorkflow")
-            end
-          end
-
-          context "when delegate_workflow is empty" do
-            let(:setting_config) { { "delegate_workflow" => "" } }
-
-            it "falls back to ParticipatorySpaceWorkflow" do
-              ps_instance = instance_double(ParticipatorySpaceWorkflow)
-              allow(ParticipatorySpaceWorkflow).to receive(:new).and_return(ps_instance)
-              allow(ps_instance).to receive(:start)
-
-              subject.start
-              sender.reload
-              expect(sender.current_workflow_class).to eq("Decidim::Chatbot::Workflows::ParticipatorySpaceWorkflow")
-            end
-          end
-
-          context "when delegate_workflow is not set" do
-            let(:setting_config) { {} }
-
-            it "falls back to ParticipatorySpaceWorkflow" do
-              ps_instance = instance_double(ParticipatorySpaceWorkflow)
-              allow(ParticipatorySpaceWorkflow).to receive(:new).and_return(ps_instance)
-              allow(ps_instance).to receive(:start)
-
-              subject.start
-              sender.reload
-              expect(sender.current_workflow_class).to eq("Decidim::Chatbot::Workflows::ParticipatorySpaceWorkflow")
             end
           end
         end
