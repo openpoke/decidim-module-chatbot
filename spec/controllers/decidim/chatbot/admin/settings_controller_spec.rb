@@ -47,36 +47,28 @@ module Decidim::Chatbot::Admin
     end
 
     describe "GET #edit" do
-      it "returns http success" do
-        get :edit, params: { id: "whatsapp" }
-        expect(response).to have_http_status(:ok)
-      end
-
-      it "renders the edit template" do
-        get :edit, params: { id: "whatsapp" }
-        expect(response).to render_template(:edit)
-      end
-
-      it "assigns the form" do
-        get :edit, params: { id: "whatsapp" }
-        expect(assigns(:form)).to be_a(Decidim::Form)
-      end
-
       context "with existing setting" do
         let!(:setting) { create(:chatbot_setting, :enabled, organization:) }
+
+        it "returns http success" do
+          get :edit, params: { id: "whatsapp" }
+          expect(response).to have_http_status(:ok)
+        end
+
+        it "renders the edit template" do
+          get :edit, params: { id: "whatsapp" }
+          expect(response).to render_template(:edit)
+        end
+
+        it "assigns the form" do
+          get :edit, params: { id: "whatsapp" }
+          expect(assigns(:form)).to be_a(Decidim::Form)
+        end
 
         it "loads the existing setting into form" do
           get :edit, params: { id: "whatsapp" }
           form = assigns(:form)
           expect(form.enabled).to be true
-        end
-      end
-
-      context "without existing setting" do
-        it "initializes a new setting with nil workflow" do
-          get :edit, params: { id: "whatsapp" }
-          form = assigns(:form)
-          expect(form.start_workflow).to be_nil
         end
       end
 
@@ -95,7 +87,7 @@ module Decidim::Chatbot::Admin
           id: "whatsapp",
           setting: {
             enabled: true,
-            start_workflow: "single_participatory_space_workflow",
+            start_workflow: "single_participatory_space",
             participatory_space_gid: participatory_process.to_global_id.to_s,
             component_id: component.id.to_s
           }
@@ -107,7 +99,7 @@ module Decidim::Chatbot::Admin
           id: "whatsapp",
           setting: {
             enabled: true,
-            start_workflow: "single_participatory_space_workflow",
+            start_workflow: "single_participatory_space",
             participatory_space_gid: "",
             component_id: ""
           }

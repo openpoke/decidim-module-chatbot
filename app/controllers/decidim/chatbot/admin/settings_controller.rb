@@ -67,8 +67,8 @@ module Decidim
 
         def workflow_form_class
           workflow_name = params.dig(:setting, :start_workflow) || params[:workflow] || current_setting.start_workflow
-          manifest = Decidim::Chatbot.start_workflows_registry.find(workflow_name)
-          form(manifest&.form)
+          manifest = Decidim::Chatbot.start_workflows_registry.find(workflow_name) if workflow_name.present?
+          form(manifest&.form || SettingForm)
         end
 
         def setting_for_provider(provider)

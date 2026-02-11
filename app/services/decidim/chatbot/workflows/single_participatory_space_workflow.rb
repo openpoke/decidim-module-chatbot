@@ -35,8 +35,8 @@ module Decidim
           send_message!(
             {
               type: :interactive_buttons,
-              body_text: sanitize(participatory_space.short_description).truncate(200).to_s,
-              footer_text: sanitize(participatory_space.title),
+              body_text: sanitize_text(participatory_space.short_description).truncate(200).to_s,
+              footer_text: sanitize_text(participatory_space.title),
               buttons: build_action_buttons
             }.tap do |data|
               data[:header_image] = participatory_space.attached_uploader(:hero_image).url if participatory_space.hero_image.attached?
@@ -54,8 +54,8 @@ module Decidim
         end
 
         def send_more_info
-          description = sanitize(participatory_space.description).presence || sanitize(participatory_space.short_description)
-          body = "*#{sanitize(participatory_space.title)}*\n\n#{description}\n\n#{participatory_space_url}"
+          description = sanitize_text(participatory_space.description).presence || sanitize_text(participatory_space.short_description)
+          body = "*#{sanitize_text(participatory_space.title)}*\n\n#{description}\n\n#{participatory_space_url}"
           send_message!(
             {
               body: body,

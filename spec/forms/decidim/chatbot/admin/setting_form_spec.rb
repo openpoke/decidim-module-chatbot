@@ -9,7 +9,7 @@ module Decidim::Chatbot::Admin
     let(:organization) { create(:organization) }
 
     let(:enabled) { false }
-    let(:start_workflow) { "single_participatory_space_workflow" }
+    let(:start_workflow) { "single_participatory_space" }
     let(:config) { {} }
 
     let(:params) do
@@ -81,7 +81,7 @@ module Decidim::Chatbot::Admin
     describe "#workflow_manifest" do
       it "returns the manifest for the selected workflow" do
         expect(form.workflow_manifest).to be_present
-        expect(form.workflow_manifest.name).to eq(:single_participatory_space_workflow)
+        expect(form.workflow_manifest.name).to eq(:single_participatory_space)
       end
     end
 

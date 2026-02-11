@@ -42,25 +42,46 @@ module Decidim::Chatbot
       end
     end
 
-    describe "#current_workflow" do
-      context "when current_workflow_class is set" do
+    describe "#workflow_stack" do
+      context "when nil in DB" do
+        let(:sender) { build(:chatbot_sender, setting:, workflow_stack: nil) }
+
+        it "returns an empty array" do
+          expect(sender.workflow_stack).to eq([])
+        end
+      end
+
+      context "when has entries" do
         let(:sender) { build(:chatbot_sender, :with_workflow, setting:) }
 
-        it "returns the workflow class" do
+        it "returns the array" do
+          expect(sender.workflow_stack).to be_an(Array)
+          expect(sender.workflow_stack.length).to eq(1)
+        end
+      end
+    end
+
+    describe "#current_workflow" do
+      context "when stack has an entry" do
+        let(:sender) { build(:chatbot_sender, :with_workflow, setting:) }
+
+        it "returns the workflow class from the last stack entry" do
           expect(sender.current_workflow).to eq(Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow)
         end
       end
 
-      context "when current_workflow_class is nil" do
-        let(:sender) { build(:chatbot_sender, setting:, current_workflow_class: nil) }
+      context "when stack is empty" do
+        let(:sender) { build(:chatbot_sender, setting:, workflow_stack: []) }
 
         it "returns the default workflow from setting" do
           expect(sender.current_workflow).to eq(setting.workflow)
         end
       end
 
-      context "with an invalid workflow class" do
-        let(:sender) { build(:chatbot_sender, setting:, current_workflow_class: "NonExistent::Workflow") }
+      context "with an invalid workflow class in stack" do
+        let(:sender) do
+          build(:chatbot_sender, setting:, workflow_stack: [{ "class" => "NonExistent::Workflow", "options" => {} }])
+        end
 
         it "falls back to the setting workflow" do
           expect(sender.current_workflow).to eq(setting.workflow)
@@ -69,19 +90,186 @@ module Decidim::Chatbot
     end
 
     describe "#parent_workflow" do
-      context "when parent_workflow_class is set" do
+      context "when stack is empty" do
+        let(:sender) { build(:chatbot_sender, setting:, workflow_stack: []) }
+
+        it "returns nil" do
+          expect(sender.parent_workflow).to be_nil
+        end
+      end
+
+      context "when stack has one entry" do
+        let(:sender) { build(:chatbot_sender, :with_workflow, setting:) }
+
+        it "returns nil" do
+          expect(sender.parent_workflow).to be_nil
+        end
+      end
+
+      context "when stack has two entries" do
         let(:sender) { build(:chatbot_sender, :with_parent_workflow, setting:) }
 
-        it "returns the parent workflow class" do
+        it "returns the class from the second-to-last entry" do
           expect(sender.parent_workflow).to eq(Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow)
         end
       end
 
-      context "when parent_workflow_class is nil" do
-        let(:sender) { build(:chatbot_sender, setting:, parent_workflow_class: nil) }
+      context "with an invalid parent class in stack" do
+        let(:sender) do
+          build(:chatbot_sender, setting:, workflow_stack: [
+                  { "class" => "NonExistent::Workflow", "options" => {} },
+                  { "class" => "Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow", "options" => {} }
+                ])
+        end
 
         it "returns nil" do
           expect(sender.parent_workflow).to be_nil
+        end
+      end
+    end
+
+    describe "#current_workflow_options" do
+      context "when stack is empty" do
+        it "returns empty hash" do
+          expect(sender.current_workflow_options).to eq({})
+        end
+      end
+
+      context "when last entry has options" do
+        let(:sender) do
+          build(:chatbot_sender, setting:, workflow_stack: [
+                  { "class" => "Decidim::Chatbot::Workflows::ProposalsWorkflow", "options" => { "component_id" => 42, "page" => 2 } }
+                ])
+        end
+
+        it "returns the options" do
+          expect(sender.current_workflow_options).to eq({ "component_id" => 42, "page" => 2 })
+        end
+      end
+    end
+
+    describe "#parent_workflow_options" do
+      context "when stack has fewer than 2 entries" do
+        it "returns empty hash" do
+          expect(sender.parent_workflow_options).to eq({})
+        end
+      end
+
+      context "when stack has two entries with options" do
+        let(:sender) do
+          build(:chatbot_sender, setting:, workflow_stack: [
+                  { "class" => "Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow", "options" => { "key" => "value" } },
+                  { "class" => "Decidim::Chatbot::Workflows::SingleParticipatorySpaceWorkflow", "options" => {} }
+                ])
+        end
+
+        it "returns options from the second-to-last entry" do
+          expect(sender.parent_workflow_options).to eq({ "key" => "value" })
+        end
+      end
+    end
+
+    describe "#current_workflow_options!" do
+      context "when stack is empty" do
+        let(:sender) { create(:chatbot_sender, setting:, workflow_stack: []) }
+
+        it "initializes stack with setting workflow and options" do
+          sender.current_workflow_options!({ page: 1 })
+          sender.reload
+          expect(sender.workflow_stack.length).to eq(1)
+          expect(sender.workflow_stack.last["class"]).to eq(setting.workflow.name)
+          expect(sender.workflow_stack.last["options"]).to eq({ "page" => 1 })
+        end
+      end
+
+      context "when stack has entries" do
+        let(:sender) do
+          create(:chatbot_sender, setting:, workflow_stack: [
+                   { "class" => "Decidim::Chatbot::Workflows::ProposalsWorkflow", "options" => { "component_id" => 42 } }
+                 ])
+        end
+
+        it "updates options in the last entry and persists" do
+          sender.current_workflow_options!({ "page" => 2 })
+          sender.reload
+          expect(sender.workflow_stack.last["options"]).to eq({ "page" => 2 })
+        end
+      end
+    end
+
+    describe "#push_to_workflow_stack!" do
+      let(:sender) { create(:chatbot_sender, setting:) }
+
+      it "adds entry and persists" do
+        sender.push_to_workflow_stack!(Decidim::Chatbot::Workflows::SingleParticipatorySpaceWorkflow)
+        sender.reload
+        expect(sender.workflow_stack.length).to eq(1)
+        expect(sender.workflow_stack.last["class"]).to eq("Decidim::Chatbot::Workflows::SingleParticipatorySpaceWorkflow")
+      end
+
+      it "preserves existing entries" do
+        sender.push_to_workflow_stack!(Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow)
+        sender.push_to_workflow_stack!(Decidim::Chatbot::Workflows::SingleParticipatorySpaceWorkflow)
+        sender.reload
+        expect(sender.workflow_stack.length).to eq(2)
+      end
+
+      it "includes options when provided" do
+        sender.push_to_workflow_stack!(Decidim::Chatbot::Workflows::ProposalsWorkflow, { component_id: 5 })
+        sender.reload
+        expect(sender.workflow_stack.last["options"]).to eq({ "component_id" => 5 })
+      end
+
+      it "defaults to empty options" do
+        sender.push_to_workflow_stack!(Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow)
+        sender.reload
+        expect(sender.workflow_stack.last["options"]).to eq({})
+      end
+    end
+
+    describe "#pop_from_workflow_stack!" do
+      context "when stack is empty" do
+        let(:sender) { create(:chatbot_sender, setting:, workflow_stack: []) }
+
+        it "returns nil" do
+          expect(sender.pop_from_workflow_stack!).to be_nil
+        end
+      end
+
+      context "when stack has entries" do
+        let(:sender) do
+          create(:chatbot_sender, setting:, workflow_stack: [
+                   { "class" => "Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow", "options" => {} },
+                   { "class" => "Decidim::Chatbot::Workflows::SingleParticipatorySpaceWorkflow", "options" => {} }
+                 ])
+        end
+
+        it "removes the last entry and persists" do
+          sender.pop_from_workflow_stack!
+          sender.reload
+          expect(sender.workflow_stack.length).to eq(1)
+          expect(sender.workflow_stack.last["class"]).to eq("Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow")
+        end
+      end
+    end
+
+    describe "#clear_workflow_stack!" do
+      let(:sender) do
+        create(:chatbot_sender, :with_parent_workflow, setting:)
+      end
+
+      it "clears the stack to empty array and persists" do
+        sender.clear_workflow_stack!
+        sender.reload
+        expect(sender.workflow_stack).to eq([])
+      end
+
+      context "when already empty" do
+        let(:sender) { create(:chatbot_sender, setting:, workflow_stack: []) }
+
+        it "does not raise error" do
+          expect { sender.clear_workflow_stack! }.not_to raise_error
+          expect(sender.workflow_stack).to eq([])
         end
       end
     end

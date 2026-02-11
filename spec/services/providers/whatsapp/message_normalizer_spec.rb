@@ -239,6 +239,83 @@ module Decidim
             end
           end
 
+          describe "with quick reply button message" do
+            let(:json) do
+              {
+                "object" => "whatsapp_business_account",
+                "entry" => [
+                  {
+                    "id" => "818813757760148",
+                    "changes" => [
+                      {
+                        "value" => {
+                          "messaging_product" => "whatsapp",
+                          "metadata" => {
+                            "display_phone_number" => "15551918371",
+                            "phone_number_id" => "873575429163486"
+                          },
+                          "contacts" => [
+                            {
+                              "profile" => { "name" => "Test User" },
+                              "wa_id" => "123456789"
+                            }
+                          ],
+                          "messages" => [
+                            {
+                              "from" => "123456789",
+                              "id" => "wamid.test456",
+                              "timestamp" => "1234567890",
+                              "type" => "button",
+                              "button" => {
+                                "text" => "More info",
+                                "payload" => "more_info"
+                              }
+                            }
+                          ]
+                        },
+                        "field" => "messages"
+                      }
+                    ]
+                  }
+                ]
+              }
+            end
+
+            it "extracts the from number" do
+              expect(subject.from).to eq("123456789")
+            end
+
+            it "extracts the button_id from payload" do
+              expect(subject.button_id).to eq("more_info")
+            end
+
+            it "extracts the body from button text" do
+              expect(subject.body).to eq("More info")
+            end
+
+            it "extracts the type as button" do
+              expect(subject.type).to eq("button")
+            end
+
+            describe "#user_text?" do
+              it "returns false" do
+                expect(subject.user_text?).to be false
+              end
+            end
+
+            describe "#actionable?" do
+              it "returns true" do
+                expect(subject.actionable?).to be true
+              end
+            end
+
+            describe "#acknowledgeable?" do
+              it "returns true" do
+                expect(subject.acknowledgeable?).to be true
+              end
+            end
+          end
+
           describe "with empty payload" do
             let(:json) do
               {

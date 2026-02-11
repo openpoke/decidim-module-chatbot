@@ -33,7 +33,7 @@ module Decidim
         private
 
         def send_cards
-          body = "*#{sanitize(component&.name)}*\n\n#{sanitize(component&.settings&.announcement)}"
+          body = "*#{sanitize_text(component&.name)}*\n\n#{sanitize_text(component&.settings&.announcement)}"
 
           send_message!(
             type: :interactive_carousel,
@@ -42,7 +42,7 @@ module Decidim
               {
                 id: proposal.id,
                 title: I18n.t("decidim.chatbot.workflows.proposals.buttons.view_proposal"),
-                body_text: sanitize(proposal.title).presence || I18n.t("decidim.chatbot.workflows.proposals.buttons.view_proposal"),
+                body_text: sanitize_text(proposal.title).presence || I18n.t("decidim.chatbot.workflows.proposals.buttons.view_proposal"),
                 image_url: proposal.photo&.attached? ? proposal.photo.attached_uploader(:file).url : image_url("media/images/chatbot-card-placeholder.png")
               }
             end
@@ -52,7 +52,7 @@ module Decidim
         def send_proposal_details
           return unless proposal
 
-          body = "*#{sanitize(proposal.title)}*\n\n#{sanitize(proposal.body)}"
+          body = "*#{sanitize_text(proposal.title)}*\n\n#{sanitize_text(proposal.body)}"
           send_message!(
             type: :interactive_buttons,
             body_text: body,
