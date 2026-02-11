@@ -48,9 +48,26 @@ module Decidim
                                              to: "123456789",
                                              type: "text",
                                              text: {
-                                               body: "Hello world"
+                                               body: "Hello world",
+                                               preview_url: false
                                              }
                                            })
+              end
+
+              context "when preview_url is set" do
+                let(:data) { { body: "Hello world", preview_url: true } }
+
+                it "includes preview_url as true" do
+                  expect(subject.body[:text][:preview_url]).to be true
+                end
+              end
+
+              context "when preview_url is not set" do
+                let(:data) { { body: "Hello world" } }
+
+                it "includes preview_url as false" do
+                  expect(subject.body[:text][:preview_url]).to be false
+                end
               end
             end
           end
@@ -170,16 +187,16 @@ module Decidim
                 body_text: "Check out these options",
                 cards: [
                   {
+                    id: 1,
+                    title: "View Card 1",
                     image_url: "https://example.com/image1.jpg",
-                    body_text: "Card 1 description",
-                    url: "https://example.com/1",
-                    url_title: "Visit Card 1"
+                    body_text: "Card 1 description"
                   },
                   {
+                    id: 2,
+                    title: "View Card 2",
                     image_url: "https://example.com/image2.jpg",
-                    body_text: "Card 2 description",
-                    url: "https://example.com/2",
-                    url_title: "Visit Card 2"
+                    body_text: "Card 2 description"
                   }
                 ]
               }
@@ -198,7 +215,7 @@ module Decidim
                 expect(cards.length).to eq(2)
               end
 
-              it "formats cards correctly" do
+              it "formats cards correctly with quick_reply buttons" do
                 cards = subject.body[:interactive][:action][:cards]
                 first_card = cards.first
 
@@ -207,9 +224,15 @@ module Decidim
                 expect(first_card[:header][:type]).to eq("image")
                 expect(first_card[:header][:image][:link]).to eq("https://example.com/image1.jpg")
                 expect(first_card[:body][:text]).to eq("Card 1 description")
-                expect(first_card[:action][:name]).to eq("cta_url")
-                expect(first_card[:action][:parameters][:display_text]).to eq("Visit Card 1")
-                expect(first_card[:action][:parameters][:url]).to eq("https://example.com/1")
+                expect(first_card[:action][:buttons]).to eq([
+                                                              {
+                                                                type: "quick_reply",
+                                                                quick_reply: {
+                                                                  id: 1,
+                                                                  title: "View Card 1"
+                                                                }
+                                                              }
+                                                            ])
               end
 
               it "sets correct card indices" do
@@ -224,17 +247,17 @@ module Decidim
                     body_text: "Check out these options",
                     cards: [
                       {
-                        image_url: "https://example.com/image1.jpg",
-                        url: "https://example.com/1",
-                        url_title: "Visit"
+                        id: 1,
+                        title: "View",
+                        image_url: "https://example.com/image1.jpg"
                       }
                     ]
                   }
                 end
 
-                it "omits the body from the card" do
+                it "includes body with nil text" do
                   card = subject.body[:interactive][:action][:cards].first
-                  expect(card).not_to have_key(:body)
+                  expect(card[:body][:text]).to be_nil
                 end
               end
             end
@@ -252,6 +275,31 @@ module Decidim
                                              messaging_product: "whatsapp",
                                              status: "read",
                                              message_id: "wamid.test123"
+                                           })
+              end
+
+              it "does not include recipient" do
+                expect(subject.body).not_to have_key(:to)
+                expect(subject.body).not_to have_key(:recipient_type)
+              end
+            end
+          end
+
+          describe TypingIndicator do
+            subject { described_class.new(to:, data:) }
+
+            let(:to) { nil }
+            let(:data) { { message_id: "wamid.test456" } }
+
+            describe "#body" do
+              it "returns typing indicator structure" do
+                expect(subject.body).to eq({
+                                             messaging_product: "whatsapp",
+                                             status: "read",
+                                             message_id: "wamid.test456",
+                                             typing_indicator: {
+                                               type: "text"
+                                             }
                                            })
               end
 

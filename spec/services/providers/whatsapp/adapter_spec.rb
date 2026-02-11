@@ -175,6 +175,30 @@ module Decidim
             end
           end
 
+          describe "#mark_as_responding!" do
+            let(:mock_envelope) { instance_double(Envelopes::TypingIndicator) }
+
+            before do
+              allow(subject).to receive(:build_message).and_return(mock_envelope)
+              allow(subject).to receive(:send!)
+            end
+
+            it "builds a typing indicator message" do
+              expect(subject).to receive(:build_message).with(
+                type: :typing_indicator,
+                data: {
+                  message_id: subject.received_message.message_id
+                }
+              )
+              subject.mark_as_responding!
+            end
+
+            it "sends the typing indicator" do
+              expect(subject).to receive(:send!).with(mock_envelope)
+              subject.mark_as_responding!
+            end
+          end
+
           describe "#send!" do
             let(:message) { Envelopes::Text.new(to: "123456", data: { body: "Hello" }) }
             let(:response) { instance_double(Faraday::Response, success?: true, status: 200) }

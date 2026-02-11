@@ -132,9 +132,8 @@ module Decidim
         end
 
         # Prepare a message to be sent to the user, applying necessary sanitization and formatting.
-        # TODO: limit message length depending on the provider's requirements, for example WhatsApp has a 4096 character limit for text messages.
         # Accepts a string or hash with languages
-        def sanitize(text, truncate = 4000)
+        def sanitize_text(text, truncate = 4000)
           strip_tags(translated_attribute(text)).truncate(truncate)
         end
 

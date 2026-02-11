@@ -139,6 +139,7 @@ module Decidim::Chatbot
         setting.update!(enabled: true)
         allow(Decidim::Chatbot::Providers::Whatsapp::Adapter).to receive(:new).and_return(adapter_instance)
         allow(adapter_instance).to receive(:send!)
+        allow(adapter_instance).to receive(:send_message!)
         allow(adapter_instance).to receive(:mark_as_read!)
         allow(Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow).to receive(:new).and_return(workflow_instance)
         allow(workflow_instance).to receive(:start)
@@ -196,7 +197,8 @@ module Decidim::Chatbot
               message_data: nil,
               user_text?: false,
               actionable?: false,
-              acknowledgeable?: false
+              acknowledgeable?: false,
+              json: "{}"
             )
           )
         end
@@ -269,6 +271,97 @@ module Decidim::Chatbot
         it "responds with 200 OK" do
           post :receive, params: { provider:, entry: [] }
           expect(response).to have_http_status(:ok)
+        end
+      end
+    end
+
+    describe "#check_enabled" do
+      context "when setting is disabled" do
+        before do
+          setting.update!(enabled: false)
+          allow(Decidim::Chatbot::Providers::Whatsapp::Adapter).to receive(:new).and_return(
+            instance_double(
+              Decidim::Chatbot::Providers::Whatsapp::Adapter,
+              received_message: instance_double(
+                Decidim::Chatbot::Providers::Whatsapp::MessageNormalizer,
+                from: nil, from_name: nil, from_metadata: nil, from_locale: nil,
+                message_id: nil, chat_id: nil, type: nil, message_data: nil,
+                user_text?: false, actionable?: false, acknowledgeable?: false
+              )
+            ).tap do |a|
+              allow(a).to receive(:send_message!)
+            end
+          )
+        end
+
+        it "returns head :ok without creating sender or message" do
+          post :receive, params: { provider: "whatsapp", entry: [] }
+          expect(response).to have_http_status(:ok)
+          expect(Sender.count).to eq(0)
+        end
+      end
+    end
+
+    describe "#clear_stale_workflows_for_sender" do
+      let(:whatsapp_payload) do
+        JSON.parse(file_fixture("whatsapp_received_user.json").read)
+      end
+
+      let(:adapter_instance) do
+        instance_double(
+          Decidim::Chatbot::Providers::Whatsapp::Adapter,
+          received_message: instance_double(
+            Decidim::Chatbot::Providers::Whatsapp::MessageNormalizer,
+            from: "34685173326",
+            from_name: "Ivan",
+            from_metadata: {},
+            from_locale: nil,
+            message_id: "wamid.HBgLMzQ2ODUxNzMzMjYVAgASGBYzRUIwMThFMjdEQzMwMkQ0REZCQ0M1AA==",
+            chat_id: "818813757760148",
+            type: "text",
+            message_data: { "body" => "hello" },
+            user_text?: true,
+            actionable?: false,
+            acknowledgeable?: true
+          )
+        )
+      end
+
+      let(:workflow_instance) { instance_double(Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow) }
+
+      before do
+        setting.update!(enabled: true)
+        allow(Decidim::Chatbot::Providers::Whatsapp::Adapter).to receive(:new).and_return(adapter_instance)
+        allow(adapter_instance).to receive(:send!)
+        allow(adapter_instance).to receive(:send_message!)
+        allow(adapter_instance).to receive(:mark_as_read!)
+        allow(Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow).to receive(:new).and_return(workflow_instance)
+        allow(workflow_instance).to receive(:start)
+      end
+
+      context "when sender has stale workflows" do
+        let!(:stale_sender) do
+          create(:chatbot_sender, :with_workflow, setting:, from: "34685173326").tap do |s|
+            s.update_column(:updated_at, 1.hour.ago) # rubocop:disable Rails/SkipsModelValidations
+          end
+        end
+
+        it "clears the workflow stack" do
+          post :receive, params: { provider: }.merge(whatsapp_payload)
+          stale_sender.reload
+          expect(stale_sender.workflow_stack).to eq([])
+        end
+      end
+
+      context "when sender was recently active" do
+        let!(:recent_sender) do
+          create(:chatbot_sender, :with_workflow, setting:, from: "34685173326")
+        end
+
+        it "does not clear the workflow stack" do
+          post :receive, params: { provider: }.merge(whatsapp_payload)
+          recent_sender.reload
+          expect(recent_sender.workflow_stack).not_to eq([])
         end
       end
     end

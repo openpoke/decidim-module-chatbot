@@ -105,6 +105,61 @@ module Decidim
       def clear_workflow_stack!
         update!(workflow_stack: [])
       end
+
+      def current_workflow_options
+        workflow_stack.last&.dig("options").presence || {}
+      end
+
+      def parent_workflow_options
+        workflow_stack[-2]&.dig("options").presence || {}
+      end
+
+      def current_workflow_merge!(options)
+        current_workflow_options!(current_workflow_options.merge(options))
+      end
+
+      def current_workflow_options!(options)
+        stack = workflow_stack.dup
+        if stack.empty?
+          # If stack is empty, initialize it with the current workflow
+          stack << {
+            class: setting.workflow.name,
+            options: options
+          }
+        else
+          stack[-1]["options"] = options
+        end
+        update!(workflow_stack: stack)
+      end
+
+      # Override to ensure workflow_stack is always an array
+      def workflow_stack
+        self[:workflow_stack] || []
+      end
+
+      # Start a new workflow by pushing it to the stack
+      def push_to_workflow_stack!(workflow_class, options = {})
+        stack = workflow_stack.dup
+        stack << {
+          class: workflow_class.name,
+          options: options
+        }
+        update!(workflow_stack: stack)
+      end
+
+      # Exit current workflow by popping from the stack
+      def pop_from_workflow_stack!
+        stack = workflow_stack.dup
+        return nil if stack.empty?
+
+        stack.pop
+        update!(workflow_stack: stack)
+      end
+
+      # Reset all workflows (clear the stack)
+      def clear_workflow_stack!
+        update!(workflow_stack: [])
+      end
     end
   end
 end

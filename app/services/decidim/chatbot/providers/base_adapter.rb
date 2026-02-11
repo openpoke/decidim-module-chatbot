@@ -50,7 +50,7 @@ module Decidim
         end
 
         # Send a message to the user
-        def send!(_message_body, **_options)
+        def send!(_message)
           raise NotImplementedError
         end
       end
