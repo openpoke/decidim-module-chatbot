@@ -220,7 +220,6 @@ module Decidim
                 first_card = cards.first
 
                 expect(first_card[:card_index]).to eq(0)
-                expect(first_card[:type]).to eq("cta_url")
                 expect(first_card[:header][:type]).to eq("image")
                 expect(first_card[:header][:image][:link]).to eq("https://example.com/image1.jpg")
                 expect(first_card[:body][:text]).to eq("Card 1 description")

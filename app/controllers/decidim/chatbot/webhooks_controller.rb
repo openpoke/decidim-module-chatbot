@@ -38,11 +38,13 @@ module Decidim
       def check_enabled
         return if setting&.enabled?
 
-        deactivated_message = I18n.t(Chatbot.deactivated_message, default: Chatbot.deactivated_message)
-
-        action = deactivated_message.present? ? "sending deactivated response" : "ignoring incoming message"
-        Rails.logger.info("Chatbot is disabled for provider #{provider} (#{action})")
-        adapter.send_message!(deactivated_message) if deactivated_message.present?
+        if Chatbot.deactivated_message.present?
+          deactivated_message = I18n.t(Chatbot.deactivated_message, default: Chatbot.deactivated_message)
+          Rails.logger.info("Chatbot is disabled for provider #{provider}, sending deactivated response")
+          adapter.send_message!(deactivated_message) if deactivated_message.present?
+        else
+          Rails.logger.info("Chatbot is disabled for provider #{provider}, ignoring incoming message")
+        end
 
         head :ok
       end
@@ -80,7 +82,7 @@ module Decidim
         workflow_chain = sender.full_workflow_stack.pluck("class").compact.map(&:demodulize).join(" -> ").to_s
         Rails.logger.info("Processing webhook for provider #{provider}, organization #{setting.organization.id}, sender #{sender.id}, workflow stack: #{workflow_chain}")
         I18n.with_locale(sender_locale) do
-          sender.current_workflow.new(adapter:, message:, **sender.current_workflow_options).start
+          sender.current_workflow.new(adapter:, message:, **sender.current_workflow_options.symbolize_keys).start
         end
       end
 

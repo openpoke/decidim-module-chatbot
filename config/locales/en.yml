@@ -61,7 +61,7 @@ en:
             exit: Exit & go back
             reset: End conversation
           unprocessable_input: Sorry, I couldn't process that. Please try again with
-            a different message or click "Exit & restart" to start over.
+            a different message or click "End conversation" to start over.
         comments:
           comment_received: Here is your comment, if you want to change it just send a new message. If you're happy with it, click "Submit comment".
           resource_not_found: Unfortunately, the requested resource could not be found.

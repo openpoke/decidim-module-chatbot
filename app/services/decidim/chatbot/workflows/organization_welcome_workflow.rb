@@ -4,6 +4,10 @@ module Decidim
   module Chatbot
     module Workflows
       class OrganizationWelcomeWorkflow < BaseWorkflow
+        def process_action_input
+          process_user_input
+        end
+
         def process_user_input
           send_message!(body:, preview_url: true)
         end

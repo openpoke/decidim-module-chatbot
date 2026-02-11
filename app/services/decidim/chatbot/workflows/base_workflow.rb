@@ -71,7 +71,7 @@ module Decidim
                 title: I18n.t("decidim.chatbot.workflows.base.buttons.exit")
               }
             ].tap do |buttons|
-              buttons.delete_if { |button| button[:id] == "reset" } if parent_workflow.nil? # Don't offer exit button if there's no parent workflow to return to
+              buttons.delete_if { |button| button[:id] == "exit" } if parent_workflow.nil? # Don't offer exit button if there's no parent workflow to return to
             end
           )
         end
@@ -104,7 +104,7 @@ module Decidim
           conf = sender.current_workflow_options || setting.config
 
           # Restart the workflow, which will now be the previous one in the stack (or the start workflow if the stack is empty)
-          sender.current_workflow.new(adapter:, message:, **conf).start(true) if with_welcome
+          sender.current_workflow.new(adapter:, message:, **conf.symbolize_keys).start(true) if with_welcome
         end
 
         # Helper to access the workflow configuration, which is a combination of the setting's config and the options passed when delegating the workflow
