@@ -118,8 +118,8 @@ module Decidim::Chatbot
           Decidim::Chatbot::Providers::Whatsapp::Adapter,
           received_message: instance_double(
             Decidim::Chatbot::Providers::Whatsapp::MessageNormalizer,
-            from: "34685173326",
-            from_name: "Ivan",
+            from: "34123456789",
+            from_name: "John Doe",
             from_metadata: {},
             from_locale: nil,
             message_id: "wamid.HBgLMzQ2ODUxNzMzMjYVAgASGBYzRUIwMThFMjdEQzMwMkQ0REZCQ0M1AA==",
@@ -167,8 +167,8 @@ module Decidim::Chatbot
           post :receive, params: { provider: }.merge(whatsapp_payload)
 
           sender = Sender.last
-          expect(sender.from).to eq("34685173326")
-          expect(sender.name).to eq("Ivan")
+          expect(sender.from).to eq("34123456789")
+          expect(sender.name).to eq("John Doe")
           expect(sender.setting).to eq(setting)
         end
 
@@ -222,7 +222,7 @@ module Decidim::Chatbot
       end
 
       context "with existing sender" do
-        let!(:existing_sender) { create(:chatbot_sender, setting:, from: "34685173326") }
+        let!(:existing_sender) { create(:chatbot_sender, setting:, from: "34123456789") }
 
         it "does not create a new sender" do
           expect do
@@ -239,7 +239,7 @@ module Decidim::Chatbot
       end
 
       context "with existing message (duplicate message_id)" do
-        let!(:existing_sender) { create(:chatbot_sender, setting:, from: "34685173326") }
+        let!(:existing_sender) { create(:chatbot_sender, setting:, from: "34123456789") }
         let!(:existing_message) do
           create(:chatbot_message,
                  setting:,
@@ -276,28 +276,59 @@ module Decidim::Chatbot
     end
 
     describe "#check_enabled" do
-      context "when setting is disabled" do
-        before do
-          setting.update!(enabled: false)
-          allow(Decidim::Chatbot::Providers::Whatsapp::Adapter).to receive(:new).and_return(
-            instance_double(
-              Decidim::Chatbot::Providers::Whatsapp::Adapter,
-              received_message: instance_double(
-                Decidim::Chatbot::Providers::Whatsapp::MessageNormalizer,
-                from: nil, from_name: nil, from_metadata: nil, from_locale: nil,
-                message_id: nil, chat_id: nil, type: nil, message_data: nil,
-                user_text?: false, actionable?: false, acknowledgeable?: false
-              )
-            ).tap do |a|
-              allow(a).to receive(:send_message!)
-            end
+      let(:disabled_adapter) do
+        instance_double(
+          Decidim::Chatbot::Providers::Whatsapp::Adapter,
+          received_message: instance_double(
+            Decidim::Chatbot::Providers::Whatsapp::MessageNormalizer,
+            from: nil, from_name: nil, from_metadata: nil, from_locale: nil,
+            message_id: nil, chat_id: nil, type: nil, message_data: nil,
+            user_text?: false, actionable?: false, acknowledgeable?: false
           )
+        ).tap do |a|
+          allow(a).to receive(:send_message!)
         end
+      end
 
+      before do
+        setting.update!(enabled: false)
+        allow(Decidim::Chatbot::Providers::Whatsapp::Adapter).to receive(:new).and_return(disabled_adapter)
+      end
+
+      context "when setting is disabled" do
         it "returns head :ok without creating sender or message" do
           post :receive, params: { provider: "whatsapp", entry: [] }
           expect(response).to have_http_status(:ok)
           expect(Sender.count).to eq(0)
+        end
+      end
+
+      context "when deactivated_message is configured" do
+        before do
+          allow(Decidim::Chatbot).to receive(:deactivated_message).and_return("decidim.chatbot.messages.deactivated")
+        end
+
+        it "sends the deactivated message via adapter" do
+          expect(disabled_adapter).to receive(:send_message!).with(
+            I18n.t("decidim.chatbot.messages.deactivated")
+          )
+          post :receive, params: { provider: "whatsapp", entry: [] }
+        end
+      end
+
+      context "when deactivated_message is nil" do
+        before do
+          allow(Decidim::Chatbot).to receive(:deactivated_message).and_return(nil)
+        end
+
+        it "does not send any message" do
+          expect(disabled_adapter).not_to receive(:send_message!)
+          post :receive, params: { provider: "whatsapp", entry: [] }
+        end
+
+        it "returns head :ok" do
+          post :receive, params: { provider: "whatsapp", entry: [] }
+          expect(response).to have_http_status(:ok)
         end
       end
     end
@@ -350,6 +381,13 @@ module Decidim::Chatbot
           post :receive, params: { provider: }.merge(whatsapp_payload)
           stale_sender.reload
           expect(stale_sender.workflow_stack).to eq([])
+        end
+
+        it "sends stale_cleared message" do
+          expect(adapter_instance).to receive(:send_message!).with(
+            I18n.t("decidim.chatbot.messages.stale_cleared")
+          )
+          post :receive, params: { provider: }.merge(whatsapp_payload)
         end
       end
 

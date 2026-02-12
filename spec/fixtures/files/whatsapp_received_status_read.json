@@ -8,7 +8,7 @@
                     "value": {
                         "messaging_product": "whatsapp",
                         "metadata": {
-                            "display_phone_number": "15551918371",
+                            "display_phone_number": "15551111111",
                             "phone_number_id": "873575429163486"
                         },
                         "statuses": [
@@ -16,7 +16,7 @@
                                 "id": "wamid.HBgLMzQ2ODUxNzMzMjYVAgARGBJEODkyQzMyRDdGNkYzNEUwMUMA",
                                 "status": "read",
                                 "timestamp": "1767976702",
-                                "recipient_id": "34685173326",
+                                "recipient_id": "34123456789",
                                 "pricing": {
                                     "billable": false,
                                     "pricing_model": "PMP",

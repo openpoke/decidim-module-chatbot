@@ -5,9 +5,10 @@ module Decidim
     module Workflows
       class SingleParticipatorySpaceWorkflow < BaseWorkflow
         def process_user_input
-          return adapter.send_message!(I18n.t("decidim.chatbot.workflows.single_participatory_space.no_spaces")) if participatory_space.nil?
+          return send_message!(I18n.t("decidim.chatbot.workflows.single_participatory_space.no_spaces")) if participatory_space.nil?
 
           send_instructions_if_configured
+          mark_as_responding
           send_space_welcome
         end
 
@@ -17,8 +18,8 @@ module Decidim
             send_more_info
           when "participate"
             delegate_to_proposals_workflow
-          when "exit"
-            exit_workflow
+          else
+            send_space_welcome # Re-send welcome message with action buttons if unrecognized action, to guide the user
           end
         end
 
@@ -35,11 +36,11 @@ module Decidim
           send_message!(
             {
               type: :interactive_buttons,
-              body_text: sanitize_text(participatory_space.short_description).truncate(200).to_s,
-              footer_text: sanitize_text(participatory_space.title),
+              body_text: sanitize_text(participatory_space.short_description).to_s,
+              footer_text: sanitize_text(participatory_space.title, 60),
               buttons: build_action_buttons
             }.tap do |data|
-              data[:header_image] = participatory_space.attached_uploader(:hero_image).url if participatory_space.hero_image.attached?
+              data[:header_image] = resource_url(participatory_space&.hero_image)
             end
           )
         end
@@ -49,13 +50,15 @@ module Decidim
             { id: "more_info", title: I18n.t("decidim.chatbot.workflows.single_participatory_space.buttons.more_info") },
             { id: "participate", title: I18n.t("decidim.chatbot.workflows.single_participatory_space.buttons.participate") }
           ].tap do |buttons|
-            buttons << { id: "exit", title: I18n.t("decidim.chatbot.workflows.single_participatory_space.buttons.exit") } if parent_workflow.present?
+            buttons << { id: "exit", title: I18n.t("decidim.chatbot.workflows.base.buttons.exit") } if parent_workflow.present?
           end
         end
 
         def send_more_info
-          description = sanitize_text(participatory_space.description).presence || sanitize_text(participatory_space.short_description)
-          body = "*#{sanitize_text(participatory_space.title)}*\n\n#{description}\n\n#{participatory_space_url}"
+          description = sanitize_text(participatory_space.description,
+                                      3000).presence || sanitize_text(participatory_space.short_description,
+                                                                      3000).presence || I18n.t("decidim.chatbot.workflows.single_participatory_space.no_description")
+          body = "*#{sanitize_text(participatory_space.title, 100)}*\n\n#{description}\n\n#{resource_url(participatory_space)}"
           send_message!(
             {
               body: body,
@@ -70,10 +73,6 @@ module Decidim
           else
             send_message!(I18n.t("decidim.chatbot.workflows.single_participatory_space.not_ready_yet"))
           end
-        end
-
-        def participatory_space_url
-          Decidim::ResourceLocatorPresenter.new(participatory_space).url
         end
 
         def participatory_space

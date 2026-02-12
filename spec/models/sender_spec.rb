@@ -169,6 +169,79 @@ module Decidim::Chatbot
       end
     end
 
+    describe "#current_workflow_merge!" do
+      let(:sender) do
+        create(:chatbot_sender, setting:, workflow_stack: [
+                 { "class" => "Decidim::Chatbot::Workflows::ProposalsWorkflow", "options" => { "component_id" => 42 } }
+               ])
+      end
+
+      it "merges new options into existing ones" do
+        sender.current_workflow_merge!(page: 2)
+        sender.reload
+        expect(sender.current_workflow_options).to eq({ "component_id" => 42, "page" => 2 })
+      end
+
+      it "overwrites existing keys" do
+        sender.current_workflow_merge!(component_id: 99)
+        sender.reload
+        expect(sender.current_workflow_options["component_id"]).to eq(99)
+      end
+    end
+
+    describe "#full_workflow_stack" do
+      context "when stack is empty and no parent workflow" do
+        let(:sender) { build(:chatbot_sender, setting:, workflow_stack: []) }
+
+        it "returns an empty array" do
+          expect(sender.full_workflow_stack).to eq([])
+        end
+      end
+
+      context "when stack already starts with the root workflow" do
+        let(:sender) do
+          build(:chatbot_sender, setting:, workflow_stack: [
+                  { "class" => setting.workflow.name, "options" => {} },
+                  { "class" => "Decidim::Chatbot::Workflows::SingleParticipatorySpaceWorkflow", "options" => {} }
+                ])
+        end
+
+        it "returns the stack unchanged" do
+          expect(sender.full_workflow_stack.length).to eq(2)
+          expect(sender.full_workflow_stack.first["class"]).to eq(setting.workflow.name)
+        end
+      end
+
+      context "when stack does not start with root workflow but has parent" do
+        let(:sender) do
+          build(:chatbot_sender, setting:, workflow_stack: [
+                  { "class" => "Decidim::Chatbot::Workflows::SingleParticipatorySpaceWorkflow", "options" => {} },
+                  { "class" => "Decidim::Chatbot::Workflows::ProposalsWorkflow", "options" => {} }
+                ])
+        end
+
+        it "prepends the root workflow to the stack" do
+          full_stack = sender.full_workflow_stack
+          expect(full_stack.length).to eq(3)
+          expect(full_stack.first["class"]).to eq(setting.workflow.name)
+        end
+      end
+
+      context "when stack has a single non-root entry" do
+        let(:sender) do
+          build(:chatbot_sender, setting:, workflow_stack: [
+                  { "class" => "Decidim::Chatbot::Workflows::SingleParticipatorySpaceWorkflow", "options" => {} }
+                ])
+        end
+
+        it "prepends the root workflow (parent_workflow falls back to setting workflow)" do
+          full_stack = sender.full_workflow_stack
+          expect(full_stack.length).to eq(2)
+          expect(full_stack.first["class"]).to eq(setting.workflow.name)
+        end
+      end
+    end
+
     describe "#current_workflow_options!" do
       context "when stack is empty" do
         let(:sender) { create(:chatbot_sender, setting:, workflow_stack: []) }
@@ -270,6 +343,77 @@ module Decidim::Chatbot
         it "does not raise error" do
           expect { sender.clear_workflow_stack! }.not_to raise_error
           expect(sender.workflow_stack).to eq([])
+        end
+      end
+    end
+
+    describe "#user" do
+      let(:sender) { create(:chatbot_sender, setting:, name: "John Doe") }
+
+      context "when decidim_user is already associated" do
+        let(:user) { create(:user, organization:) }
+        let(:sender) { create(:chatbot_sender, setting:, decidim_user: user, name: "John Doe") }
+
+        it "returns the associated user" do
+          expect(sender.user).to eq(user)
+        end
+      end
+
+      context "when no decidim_user but user exists with matching extended_data" do
+        let!(:existing_user) do
+          create(:user, organization:, extended_data: { "chatbot_sender_id" => sender.id })
+        end
+
+        it "finds and returns that user" do
+          expect(sender.user).to eq(existing_user)
+        end
+      end
+
+      context "when no user exists" do
+        it "creates a new Decidim::User" do
+          expect { sender.user }.to change(Decidim::User, :count).by(1)
+        end
+
+        it "sets correct attributes on the new user" do
+          user = sender.user
+          expect(user.name).to eq("John Doe")
+          expect(user.organization).to eq(organization)
+          expect(user.tos_agreement).to be true
+          expect(user.managed).to be true
+          expect(user.extended_data["chatbot_sender_id"]).to eq(sender.id)
+        end
+
+        it "updates the sender's decidim_user association" do
+          user = sender.user
+          sender.reload
+          expect(sender.decidim_user).to eq(user)
+        end
+      end
+
+      context "when sender name contains special characters" do
+        let(:sender) { create(:chatbot_sender, setting:, name: "John <Doe> [Test]") }
+
+        it "cleans special characters from the user name" do
+          user = sender.user
+          expect(user.name).to eq("John Doe Test")
+        end
+      end
+
+      context "when sender name is all special characters" do
+        let(:sender) { create(:chatbot_sender, setting:, name: "<>[]()") }
+
+        it "falls back to provider + id format" do
+          user = sender.user
+          expect(user.name).to eq("#{setting.provider.titleize} #{sender.id}")
+        end
+      end
+
+      context "when called twice" do
+        it "returns the same user without creating duplicates" do
+          first_call = sender.user
+          second_call = sender.user
+          expect(first_call).to eq(second_call)
+          expect(Decidim::User.where(extended_data: { chatbot_sender_id: sender.id }.to_json).count).to be <= 1
         end
       end
     end

@@ -119,6 +119,24 @@ module Decidim
           end
         end
 
+        describe "#process_action_input" do
+          before do
+            allow(received_message).to receive(:user_text?).and_return(false)
+            allow(received_message).to receive(:actionable?).and_return(true)
+            allow(received_message).to receive(:button_id).and_return("some_old_button")
+          end
+
+          it "re-sends the welcome message (delegates to process_user_input)" do
+            expect(adapter).to receive(:send_message!).with(
+              hash_including(
+                body: a_string_including("Test Organization"),
+                preview_url: true
+              )
+            )
+            subject.start
+          end
+        end
+
         describe "custom_text in config" do
           before do
             allow(received_message).to receive(:user_text?).and_return(true)

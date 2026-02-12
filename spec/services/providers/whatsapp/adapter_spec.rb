@@ -89,7 +89,7 @@ module Decidim
             end
 
             it "extracts the correct from number" do
-              expect(subject.received_message.from).to eq("34685173326")
+              expect(subject.received_message.from).to eq("34123456789")
             end
 
             it "extracts the correct message body" do
@@ -152,7 +152,8 @@ module Decidim
           end
 
           describe "#mark_as_read!" do
-            let(:mock_envelope) { instance_double(Envelopes::ReadReceipt) }
+            let(:mock_body) { { messaging_product: "whatsapp", status: "read", message_id: "test-msg-id" } }
+            let(:mock_envelope) { instance_double(Envelopes::ReadReceipt, body: mock_body) }
 
             before do
               allow(subject).to receive(:build_message).and_return(mock_envelope)
@@ -169,14 +170,15 @@ module Decidim
               subject.mark_as_read!
             end
 
-            it "sends the read receipt" do
-              expect(subject).to receive(:send!).with(mock_envelope)
+            it "sends the read receipt body" do
+              expect(subject).to receive(:send!).with(mock_body)
               subject.mark_as_read!
             end
           end
 
           describe "#mark_as_responding!" do
-            let(:mock_envelope) { instance_double(Envelopes::TypingIndicator) }
+            let(:mock_body) { { messaging_product: "whatsapp", recipient_type: "individual" } }
+            let(:mock_envelope) { instance_double(Envelopes::TypingIndicator, body: mock_body) }
 
             before do
               allow(subject).to receive(:build_message).and_return(mock_envelope)
@@ -193,14 +195,14 @@ module Decidim
               subject.mark_as_responding!
             end
 
-            it "sends the typing indicator" do
-              expect(subject).to receive(:send!).with(mock_envelope)
+            it "sends the typing indicator body" do
+              expect(subject).to receive(:send!).with(mock_body)
               subject.mark_as_responding!
             end
           end
 
           describe "#send!" do
-            let(:message) { Envelopes::Text.new(to: "123456", data: { body: "Hello" }) }
+            let(:message_body) { { messaging_product: "whatsapp", to: "123456", type: "text", text: { body: "Hello" } } }
             let(:response) { instance_double(Faraday::Response, success?: true, status: 200) }
 
             before do
@@ -211,7 +213,7 @@ module Decidim
               expect(Faraday).to receive(:post).with(
                 "#{graph_api_url}873575429163486/messages?access_token=#{access_token}"
               )
-              subject.send!(message)
+              subject.send!(message_body)
             end
 
             it "sends JSON content type" do
@@ -220,10 +222,10 @@ module Decidim
                 allow(req).to receive(:headers=)
                 allow(req).to receive(:body=)
                 block.call(req)
-                expect(req).to have_received(:body=).with(message.body.to_json)
+                expect(req).to have_received(:body=).with(message_body.to_json)
                 response
               end
-              subject.send!(message)
+              subject.send!(message_body)
             end
 
             context "when API returns error" do
@@ -235,7 +237,7 @@ module Decidim
 
               it "logs the error" do
                 expect(Rails.logger).to receive(:error).with(/Error sending Whatsapp message/)
-                subject.send!(message)
+                subject.send!(message_body)
               end
             end
 
@@ -246,7 +248,7 @@ module Decidim
 
               it "logs the error and re-raises" do
                 expect(Rails.logger).to receive(:error).with(/Faraday error sending Whatsapp message/)
-                expect { subject.send!(message) }.to raise_error(Faraday::ConnectionFailed)
+                expect { subject.send!(message_body) }.to raise_error(Faraday::ConnectionFailed)
               end
             end
           end

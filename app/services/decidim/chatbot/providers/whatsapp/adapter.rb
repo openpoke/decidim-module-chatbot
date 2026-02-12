@@ -32,7 +32,7 @@ module Decidim
                 message_id: received_message.message_id
               }
             )
-            send!(read_receipt)
+            send!(read_receipt.body)
           end
 
           def mark_as_responding!
@@ -42,16 +42,16 @@ module Decidim
                 message_id: received_message.message_id
               }
             )
-            send!(typing_indicator)
+            send!(typing_indicator.body)
           end
 
-          def send!(message)
-            Rails.logger.debug { "Sending Whatsapp message: #{message.body.inspect}" }
+          def send!(message_body)
+            Rails.logger.debug { "Sending Whatsapp message: #{message_body.inspect}" }
             url = "#{Decidim::Chatbot.whatsapp_config[:graph_api_url]}#{received_message.phone_number_id}/messages"
             Faraday
               .post("#{url}?access_token=#{Decidim::Chatbot.whatsapp_config[:access_token]}") do |req|
                 req.headers["Content-Type"] = "application/json"
-                req.body = message.body.to_json
+                req.body = message_body.to_json
               end # rubocop:disable Style/MultilineBlockChain
               .tap do |response|
                 next if response.success?

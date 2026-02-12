@@ -4,6 +4,10 @@ module Decidim
   module Chatbot
     module Workflows
       class OrganizationWelcomeWorkflow < BaseWorkflow
+        def process_action_input
+          process_user_input
+        end
+
         def process_user_input
           send_message!(body:, preview_url: true)
         end
@@ -11,7 +15,7 @@ module Decidim
         private
 
         def body
-          "*#{translated_attribute(organization.name)}*\n\n#{welcome_body_text}\n\n#{Decidim::Core::Engine.routes.url_helpers.root_url(host: organization.host)}"
+          "*#{translated_attribute(organization.name)}*\n\n#{welcome_body_text}\n\n#{resource_url(organization)}"
         end
 
         def welcome_body_text

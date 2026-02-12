@@ -39,6 +39,7 @@ module Decidim
         before do
           allow(adapter).to receive(:received_message).and_return(received_message)
           allow(adapter).to receive(:mark_as_read!)
+          allow(adapter).to receive(:mark_as_responding!)
           allow(adapter).to receive(:send_message!)
         end
 
@@ -158,10 +159,8 @@ module Decidim
               expect(sender.workflow_stack).to eq([])
             end
 
-            it "sends a reset confirmation message" do
-              expect(adapter).to receive(:send_message!).with(
-                I18n.t("decidim.chatbot.messages.reset_workflows")
-              )
+            it "restarts the default workflow with welcome message" do
+              expect(adapter).to receive(:send_message!)
               subject.start
             end
           end
@@ -336,9 +335,9 @@ module Decidim
               participatory_process.publish!
             end
 
-            it "does not include header_image" do
+            it "has a falsy header_image" do
               expect(adapter).to receive(:send_message!) do |args|
-                expect(args).not_to have_key(:header_image)
+                expect(args[:header_image]).to be_falsy
               end
               subject.start
             end

@@ -4,7 +4,7 @@
 <div class="row column">
   <%= form.select :participatory_space_gid,
                   grouped_options_for_select(grouped_spaces, @form.participatory_space_gid),
-                  { label: t("decidim.chatbot.admin.settings.single_participatory_space_form.participatory_space") } %>
+                  { prompt: "", label: t("decidim.chatbot.admin.settings.single_participatory_space_form.participatory_space") } %>
 </div>
 
 <div class="row column" id="components_wrapper" style="<%= components.empty? ? "display:none;" : "" %>">

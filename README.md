@@ -168,9 +168,8 @@ end
 # In an initializer or lib/decidim/chatbot/engine.rb
 Decidim::Chatbot.start_workflows_registry.register(:my_custom) do |manifest|
   manifest.workflow_class = "Decidim::Chatbot::Workflows::MyCustomWorkflow"
-  manifest.settings_attributes = {
-    custom_option: { type: :text, required: false }
-  }
+  manifest.settings_partial = "decidim/chatbot/admin/settings/workflows/my_custom"
+  manifest.form_class = "Decidim::Chatbot::Admin::MyCustomSettingsForm"
 end
 ```
 

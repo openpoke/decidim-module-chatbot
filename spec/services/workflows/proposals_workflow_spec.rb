@@ -57,7 +57,7 @@ module Decidim
                 hash_including(
                   type: :interactive_buttons,
                   body_text: I18n.t("decidim.chatbot.workflows.proposals.no_proposals"),
-                  buttons: [{ id: "exit", title: I18n.t("decidim.chatbot.workflows.proposals.buttons.exit") }]
+                  buttons: [{ id: "exit", title: I18n.t("decidim.chatbot.workflows.base.buttons.exit") }]
                 )
               )
               subject.start
@@ -130,15 +130,16 @@ module Decidim
 
             # With 21 proposals and per_page=10: remaining = 21 - (10*1) = 11 > 10
             # Main flow: mark_as_responding, send_cards (10 cards), send_continuation (11 remaining)
-            it "sends carousel then continuation with remaining count" do
+            it "sends carousel then continuation with remaining count and delay" do
               expect(adapter).to receive(:send_message!).with(hash_including(type: :interactive_carousel)).ordered
               expect(adapter).to receive(:send_message!).with(
                 hash_including(
                   type: :interactive_buttons,
+                  delay: 3,
                   body_text: I18n.t("decidim.chatbot.workflows.proposals.remaining_proposals", count: 11),
                   buttons: [
                     { id: "more", title: I18n.t("decidim.chatbot.workflows.proposals.buttons.more") },
-                    { id: "exit", title: I18n.t("decidim.chatbot.workflows.proposals.buttons.exit") }
+                    { id: "exit", title: I18n.t("decidim.chatbot.workflows.base.buttons.exit") }
                   ]
                 )
               ).ordered
@@ -242,6 +243,22 @@ module Decidim
             end
           end
 
+          context "when proposal not found (invalid button_id)" do
+            before do
+              allow(received_message).to receive(:button_id).and_return("99999999")
+            end
+
+            it "sends unprocessable_input message" do
+              expect(adapter).to receive(:send_message!).with(
+                hash_including(
+                  type: :interactive_buttons,
+                  body_text: I18n.t("decidim.chatbot.workflows.base.unprocessable_input")
+                )
+              )
+              subject.start
+            end
+          end
+
           context "when a proposal ID is clicked" do
             let(:clicked_proposal) { proposals.first }
 
@@ -285,11 +302,12 @@ module Decidim
               subject.start
             end
 
-            it "pushes CommentsWorkflow to the stack" do
+            it "pushes CommentsWorkflow to the stack with resource_gid and back_button" do
               subject.start
               sender.reload
               expect(sender.workflow_stack.last["class"]).to eq("Decidim::Chatbot::Workflows::CommentsWorkflow")
-              expect(sender.workflow_stack.last["options"]["proposal_id"]).to eq(clicked_proposal.id.to_s)
+              expect(sender.workflow_stack.last["options"]["resource_gid"]).to eq(clicked_proposal.to_global_id.to_s)
+              expect(sender.workflow_stack.last["options"]["back_button"]).to be_present
             end
           end
         end

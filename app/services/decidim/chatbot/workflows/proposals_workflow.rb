@@ -9,7 +9,6 @@ module Decidim
 
           mark_as_responding
           send_cards
-          sleep(1) # Sleep for a short time to ensure the user receives the first message before the continuation
           remaining_proposals_count <= per_page ? send_ending : send_continuation
           sender.current_workflow_merge!(page: current_page + 1, random_seed:)
         end
@@ -18,12 +17,14 @@ module Decidim
           case received_message.button_id
           when "more"
             process_user_input
-          when "exit"
-            exit_workflow
           else
             mark_as_responding
-            if comment_on_id
-              delegate_workflow(CommentsWorkflow, proposal_id: comment_on_id)
+            if commentable_id
+              delegate_workflow(
+                Decidim::Chatbot::Workflows::CommentsWorkflow,
+                resource_gid: commentable_gid.to_s,
+                back_button: { id: "more", title: I18n.t("decidim.chatbot.workflows.proposals.buttons.more") }
+              )
             else
               send_proposal_details
             end
@@ -33,8 +34,7 @@ module Decidim
         private
 
         def send_cards
-          body = "*#{sanitize_text(component&.name)}*\n\n#{sanitize_text(component&.settings&.announcement)}"
-
+          body = "*#{sanitize_text(component&.name, 200)}*\n\n#{sanitize_text(component&.settings&.announcement, 800)}"
           send_message!(
             type: :interactive_carousel,
             body_text: body,
@@ -42,22 +42,22 @@ module Decidim
               {
                 id: proposal.id,
                 title: I18n.t("decidim.chatbot.workflows.proposals.buttons.view_proposal"),
-                body_text: sanitize_text(proposal.title).presence || I18n.t("decidim.chatbot.workflows.proposals.buttons.view_proposal"),
-                image_url: proposal.photo&.attached? ? proposal.photo.attached_uploader(:file).url : image_url("media/images/chatbot-card-placeholder.png")
+                body_text: sanitize_text(proposal.title, 60).presence || I18n.t("decidim.chatbot.workflows.proposals.buttons.view_proposal"),
+                image_url: resource_url(proposal.photo, fallback_image: true)
               }
             end
           )
         end
 
         def send_proposal_details
-          return unless proposal
+          return process_unprocessable_input unless proposal
 
-          body = "*#{sanitize_text(proposal.title)}*\n\n#{sanitize_text(proposal.body)}"
+          body = "*#{sanitize_text(proposal.title, 100)}*\n\n#{sanitize_text(proposal.body, 800)}\n\n#{resource_url(proposal)}"
           send_message!(
             type: :interactive_buttons,
             body_text: body,
-            header_image: proposal.photo&.attached? && proposal.photo.attached_uploader(:file).url,
-            footer_text: proposal.creator_author&.presenter&.name,
+            header_image: resource_url(proposal.photo),
+            footer_text: sanitize_text(proposal.creator_author&.presenter&.name, 60),
             buttons: [
               {
                 id: "comment-#{proposal.id}",
@@ -71,6 +71,7 @@ module Decidim
           body = I18n.t("decidim.chatbot.workflows.proposals.remaining_proposals", count: remaining_proposals_count)
           send_message!(
             type: :interactive_buttons,
+            delay: 3,
             body_text: body,
             buttons: [
               {
@@ -79,7 +80,7 @@ module Decidim
               },
               {
                 id: "exit",
-                title: I18n.t("decidim.chatbot.workflows.proposals.buttons.exit")
+                title: I18n.t("decidim.chatbot.workflows.base.buttons.exit")
               }
             ]
           )
@@ -88,11 +89,12 @@ module Decidim
         def send_ending
           send_message!(
             type: :interactive_buttons,
+            delay: 3,
             body_text: I18n.t("decidim.chatbot.workflows.proposals.#{proposals.empty? ? "no_proposals" : "no_more_proposals"}"),
             buttons: [
               {
                 id: "exit",
-                title: I18n.t("decidim.chatbot.workflows.proposals.buttons.exit")
+                title: I18n.t("decidim.chatbot.workflows.base.buttons.exit")
               }
             ]
           )
@@ -106,8 +108,12 @@ module Decidim
           @proposals ||= Decidim::Proposals::Proposal.where(component:).published.only_amendables
         end
 
-        def comment_on_id
-          @comment_on_id ||= received_message.button_id.to_s.start_with?("comment-") && received_message.button_id.to_s.sub("comment-", "")
+        def commentable_id
+          @commentable_id ||= received_message.button_id.to_s.start_with?("comment-") && received_message.button_id.to_s.sub("comment-", "")
+        end
+
+        def commentable_gid
+          @commentable_gid ||= proposals.find_by(id: commentable_id)&.to_global_id
         end
 
         def proposal
@@ -126,7 +132,7 @@ module Decidim
         # Returns: A random float number between -1 and 1 to be used as a
         # random seed at the database.
         def random_seed
-          @random_seed ||= options[:random_seed].presence || ((rand * 2) - 1).to_f
+          @random_seed ||= options["random_seed"].presence || ((rand * 2) - 1).to_f
         end
       end
     end

@@ -25,7 +25,6 @@ module Decidim
               data[:cards].map.with_index do |card, index|
                 {
                   card_index: index,
-                  type: "cta_url",
                   header: {
                     type: "image",
                     image: {
