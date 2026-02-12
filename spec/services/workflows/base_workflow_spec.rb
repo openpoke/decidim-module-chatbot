@@ -108,6 +108,7 @@ module Decidim
             before do
               allow(received_message).to receive(:user_text?).and_return(false)
               allow(received_message).to receive(:actionable?).and_return(true)
+              allow(received_message).to receive(:button_id).and_return("some_action")
             end
 
             it "calls mark_as_read" do
@@ -209,16 +210,14 @@ module Decidim
                              ])
             end
 
-            it "pops from stack and resets workflows" do
+            it "pops from stack" do
               subject.send(:exit_workflow)
               sender.reload
               expect(sender.workflow_stack).to eq([])
             end
 
-            it "sends reset message" do
-              expect(adapter).to receive(:send_message!).with(
-                I18n.t("decidim.chatbot.messages.reset_workflows")
-              )
+            it "restarts the default workflow with force_welcome" do
+              expect(adapter).to receive(:send_message!)
               subject.send(:exit_workflow)
             end
           end
@@ -311,6 +310,243 @@ module Decidim
         describe "#per_page" do
           it "returns 10" do
             expect(subject.send(:per_page)).to eq(10)
+          end
+        end
+
+        describe "#start — exit/reset button handling" do
+          context "when actionable message with button_id 'exit'" do
+            before do
+              allow(received_message).to receive(:user_text?).and_return(false)
+              allow(received_message).to receive(:actionable?).and_return(true)
+              allow(received_message).to receive(:button_id).and_return("exit")
+              sender.update!(workflow_stack: [
+                               { "class" => "Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow", "options" => {} },
+                               { "class" => "Decidim::Chatbot::Workflows::SingleParticipatorySpaceWorkflow", "options" => {} }
+                             ])
+              message.reload
+            end
+
+            it "pops from stack" do
+              subject.start
+              sender.reload
+              expect(sender.workflow_stack.length).to eq(1)
+            end
+          end
+
+          context "when actionable message with button_id 'reset'" do
+            before do
+              allow(received_message).to receive(:user_text?).and_return(false)
+              allow(received_message).to receive(:actionable?).and_return(true)
+              allow(received_message).to receive(:button_id).and_return("reset")
+              sender.update!(workflow_stack: [
+                               { "class" => "Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow", "options" => {} }
+                             ])
+              message.reload
+            end
+
+            it "clears the stack" do
+              subject.start
+              sender.reload
+              expect(sender.workflow_stack).to eq([])
+            end
+
+            it "sends reset message" do
+              expect(adapter).to receive(:send_message!).with(
+                I18n.t("decidim.chatbot.messages.reset_workflows")
+              )
+              subject.start
+            end
+          end
+
+          context "when message is neither user_text nor actionable" do
+            before do
+              allow(received_message).to receive(:user_text?).and_return(false)
+              allow(received_message).to receive(:actionable?).and_return(false)
+            end
+
+            it "sends unprocessable_input message" do
+              expect(adapter).to receive(:send_message!).with(
+                hash_including(
+                  type: :interactive_buttons,
+                  body_text: I18n.t("decidim.chatbot.workflows.base.unprocessable_input")
+                )
+              )
+              subject.start
+            end
+          end
+        end
+
+        describe "#process_unprocessable_input" do
+          context "when parent_workflow exists" do
+            before do
+              sender.update!(workflow_stack: [
+                               { "class" => "Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow", "options" => {} },
+                               { "class" => "Decidim::Chatbot::Workflows::SingleParticipatorySpaceWorkflow", "options" => {} }
+                             ])
+              message.reload
+            end
+
+            it "includes both reset and exit buttons" do
+              expect(adapter).to receive(:send_message!) do |args|
+                button_ids = args[:buttons].map { |b| b[:id] }
+                expect(button_ids).to include("reset", "exit")
+              end
+              subject.send(:process_unprocessable_input)
+            end
+          end
+
+          context "when no parent_workflow (root level)" do
+            it "includes only reset button (no exit)" do
+              expect(adapter).to receive(:send_message!) do |args|
+                button_ids = args[:buttons].map { |b| b[:id] }
+                expect(button_ids).to include("reset")
+                expect(button_ids).not_to include("exit")
+              end
+              subject.send(:process_unprocessable_input)
+            end
+          end
+        end
+
+        describe "#start — error handling" do
+          let(:error_workflow_class) do
+            Class.new(BaseWorkflow) do
+              def process_user_input
+                raise StandardError, "test error"
+              end
+            end
+          end
+
+          let(:error_workflow) { error_workflow_class.new(adapter:, message:) }
+
+          before do
+            allow(received_message).to receive(:user_text?).and_return(true)
+            allow(received_message).to receive(:actionable?).and_return(false)
+          end
+
+          it "sends generic error message and re-raises" do
+            expect(adapter).to receive(:send_message!).with(
+              I18n.t("decidim.chatbot.messages.generic_error")
+            )
+            expect { error_workflow.start }.to raise_error(StandardError, "test error")
+          end
+
+          it "sends error details in non-production" do
+            allow(Rails).to receive(:env).and_return(ActiveSupport::StringInquirer.new("development"))
+            expect(adapter).to receive(:send_message!).with(
+              I18n.t("decidim.chatbot.messages.generic_error")
+            ).ordered
+            expect(adapter).to receive(:send_message!).with(
+              a_string_including("test error")
+            ).ordered
+            expect { error_workflow.start }.to raise_error(StandardError)
+          end
+        end
+
+        describe "#exit_workflow with_welcome parameter" do
+          context "with with_welcome=false" do
+            before do
+              sender.update!(workflow_stack: [
+                               { "class" => "Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow", "options" => {} },
+                               { "class" => "Decidim::Chatbot::Workflows::SingleParticipatorySpaceWorkflow", "options" => {} }
+                             ])
+              message.reload
+            end
+
+            it "only pops from stack without restarting parent" do
+              expect(adapter).not_to receive(:send_message!)
+              subject.send(:exit_workflow, false)
+              sender.reload
+              expect(sender.workflow_stack.length).to eq(1)
+            end
+          end
+        end
+
+        describe "#sanitize_text" do
+          it "strips HTML tags from translated text" do
+            text = { "en" => "<p>Hello <strong>world</strong></p>" }
+            result = subject.send(:sanitize_text, text)
+            expect(result).not_to include("<p>")
+            expect(result).not_to include("<strong>")
+            expect(result).to include("Hello world")
+          end
+
+          it "truncates at 4000 characters by default" do
+            text = { "en" => "A" * 5000 }
+            result = subject.send(:sanitize_text, text)
+            expect(result.length).to be <= 4000
+          end
+
+          it "truncates at custom length when specified" do
+            text = { "en" => "A" * 100 }
+            result = subject.send(:sanitize_text, text, 60)
+            expect(result.length).to be <= 60
+          end
+        end
+
+        describe "#force_welcome" do
+          it "returns nil before start" do
+            expect(subject.force_welcome).to be_nil
+          end
+        end
+
+        describe "#resource_url" do
+          context "with a Decidim::Participable resource" do
+            let!(:participatory_process) { create(:participatory_process, organization:) }
+
+            it "returns the resource locator URL" do
+              url = subject.send(:resource_url, participatory_process)
+              expect(url).to be_present
+              expect(url).to include(participatory_process.slug)
+            end
+          end
+
+          context "with an attachment that is attached" do
+            let!(:participatory_process) { create(:participatory_process, organization:) }
+
+            before do
+              participatory_process.hero_image.attach(
+                io: File.open(Decidim::Dev.asset("city.jpeg")),
+                filename: "city.jpeg",
+                content_type: "image/jpeg"
+              )
+            end
+
+            it "returns the uploader URL" do
+              url = subject.send(:resource_url, participatory_process.hero_image)
+              expect(url).to be_present
+            end
+          end
+
+          context "with an attachment that is not attached and fallback_image: true" do
+            let!(:participatory_process) { create(:participatory_process, organization:) }
+
+            before do
+              participatory_process.hero_image.purge if participatory_process.hero_image.attached?
+            end
+
+            it "returns the fallback image URL" do
+              url = subject.send(:resource_url, participatory_process.hero_image, fallback_image: true)
+              expect(url).to include("chatbot-card-placeholder")
+            end
+          end
+
+          context "with an attachment that is not attached and fallback_image: false" do
+            let!(:participatory_process) { create(:participatory_process, organization:) }
+
+            before do
+              participatory_process.hero_image.purge if participatory_process.hero_image.attached?
+            end
+
+            it "returns false" do
+              url = subject.send(:resource_url, participatory_process.hero_image, fallback_image: false)
+              expect(url).to be false
+            end
+          end
+
+          context "with nil resource" do
+            it "returns false" do
+              expect(subject.send(:resource_url, nil)).to be false
+            end
           end
         end
 

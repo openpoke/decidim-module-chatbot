@@ -105,7 +105,6 @@ module Decidim
       def clear_workflow_stack!
         update!(workflow_stack: [])
       end
-
     end
   end
 end

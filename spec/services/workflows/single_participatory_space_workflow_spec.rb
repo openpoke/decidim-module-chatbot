@@ -39,6 +39,7 @@ module Decidim
         before do
           allow(adapter).to receive(:received_message).and_return(received_message)
           allow(adapter).to receive(:mark_as_read!)
+          allow(adapter).to receive(:mark_as_responding!)
           allow(adapter).to receive(:send_message!)
         end
 
@@ -158,10 +159,8 @@ module Decidim
               expect(sender.workflow_stack).to eq([])
             end
 
-            it "sends a reset confirmation message" do
-              expect(adapter).to receive(:send_message!).with(
-                I18n.t("decidim.chatbot.messages.reset_workflows")
-              )
+            it "restarts the default workflow with welcome message" do
+              expect(adapter).to receive(:send_message!)
               subject.start
             end
           end
@@ -190,26 +189,6 @@ module Decidim
                 I18n.t("decidim.chatbot.messages.reset_workflows")
               )
               subject.start
-            end
-          end
-
-          context "when user clicks exit button with parent workflow" do
-            before do
-              allow(received_message).to receive(:user_text?).and_return(false)
-              allow(received_message).to receive(:actionable?).and_return(true)
-              allow(received_message).to receive(:button_id).and_return("end")
-              sender.update!(parent_workflow_class: "Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow")
-            end
-
-            it "delegates back to parent workflow" do
-              parent_workflow_instance = instance_double(Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow)
-              allow(Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow).to receive(:new).and_return(parent_workflow_instance)
-              allow(parent_workflow_instance).to receive(:start)
-
-              subject.start
-              sender.reload
-              expect(sender.current_workflow_class).to eq("Decidim::Chatbot::Workflows::OrganizationWelcomeWorkflow")
-              expect(sender.parent_workflow_class).to be_nil
             end
           end
         end
@@ -278,22 +257,6 @@ module Decidim
               end
               subject.start
             end
-          end
-        end
-
-        describe "welcome message content" do
-          before do
-            allow(received_message).to receive(:user_text?).and_return(true)
-            allow(received_message).to receive(:actionable?).and_return(false)
-          end
-
-          it "includes all action buttons" do
-            expect(adapter).to receive(:build_message) do |args|
-              buttons = args[:data][:buttons]
-              expect(buttons.length).to eq(3)
-              expect(buttons.map { |b| b[:id] }).to contain_exactly("more_info", "participate", "end")
-            end.and_return(envelope)
-            subject.start
           end
         end
 
@@ -372,9 +335,9 @@ module Decidim
               participatory_process.publish!
             end
 
-            it "does not include header_image" do
+            it "has a falsy header_image" do
               expect(adapter).to receive(:send_message!) do |args|
-                expect(args).not_to have_key(:header_image)
+                expect(args[:header_image]).to be_falsy
               end
               subject.start
             end

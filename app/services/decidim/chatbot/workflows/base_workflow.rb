@@ -71,7 +71,7 @@ module Decidim
                 title: I18n.t("decidim.chatbot.workflows.base.buttons.exit")
               }
             ].tap do |buttons|
-              buttons.delete_if { |button| button[:id] == "exit" } if parent_workflow.nil? # Don't offer exit button if there's no parent workflow to return to
+              buttons.delete_if { |button| button[:id] == "exit" } if parent_workflow.nil?
             end
           )
         end
@@ -146,7 +146,7 @@ module Decidim
 
           case resource
           when Decidim::Organization
-            Decidim::Core::Engine.routes.url_helpers.organization_url(resource, host: "https://#{organization.host}")
+            "https://#{resource.host}"
           when Decidim::Participable, Decidim::Resourceable
             Decidim::ResourceLocatorPresenter.new(resource).url
           when Decidim::Attachment

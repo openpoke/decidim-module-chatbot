@@ -30,7 +30,7 @@ module Decidim
         private
 
         def send_instructions
-          send_message!(I18n.t("decidim.chatbot.workflows.comments.instructions", title: "*#{sanitize(resource.title)}*"))
+          send_message!(I18n.t("decidim.chatbot.workflows.comments.instructions", title: "*#{sanitize_text(resource.title)}*"))
         end
 
         def send_ending
@@ -50,7 +50,7 @@ module Decidim
           body = "*#{I18n.t("decidim.chatbot.workflows.comments.comment_received")}*\n\n#{received_message.body}"
           send_message!(
             type: :interactive_buttons,
-            header_text: sanitize(resource.title, 60),
+            header_text: sanitize_text(resource.title, 60),
             body_text: body,
             buttons: [
               {
@@ -84,7 +84,7 @@ module Decidim
           body = "*#{I18n.t("decidim.chatbot.workflows.comments.comment_created")}*\n\n#{resource_url(resource)}#comments"
           send_message!(
             type: :interactive_buttons,
-            header_text: sanitize(resource.title, 60),
+            header_text: sanitize_text(resource.title, 60),
             body_text: body,
             buttons: [
               {
@@ -103,6 +103,8 @@ module Decidim
 
         def resource
           @resource ||= GlobalID::Locator.locate(options[:resource_gid])
+        rescue ActiveRecord::RecordNotFound
+          nil
         end
       end
     end

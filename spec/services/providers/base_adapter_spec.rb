@@ -47,13 +47,12 @@ module Decidim
         end
 
         describe "#send_message!" do
-          let(:mock_message) { double("message") }
+          let(:mock_message) { double("message", body: { to: "123456", text: { body: "Hello world" } }) }
           let(:received_message) { double("received_message", from: "123456") }
 
           before do
             allow(subject).to receive(:received_message).and_return(received_message)
             allow(subject).to receive(:build_message).and_return(mock_message)
-            allow(subject).to receive(:send!)
           end
 
           it "builds a text message with the provided text" do
@@ -65,9 +64,38 @@ module Decidim
             subject.send_message!("Hello world")
           end
 
-          it "sends the message" do
-            expect(subject).to receive(:send!).with(mock_message)
+          it "enqueues SendMessageJob" do
+            expect(Decidim::Chatbot::SendMessageJob).to receive(:set).with(wait: 0).and_call_original
             subject.send_message!("Hello world")
+          end
+
+          it "passes adapter class name and params to the job" do
+            job_double = double("job")
+            allow(Decidim::Chatbot::SendMessageJob).to receive(:set).and_return(job_double)
+            expect(job_double).to receive(:perform_later).with(
+              anything,
+              "Decidim::Chatbot::Providers::BaseAdapter",
+              params.as_json
+            )
+            subject.send_message!("Hello world")
+          end
+
+          context "with custom delay" do
+            it "enqueues job with specified delay" do
+              expect(Decidim::Chatbot::SendMessageJob).to receive(:set).with(wait: 5).and_call_original
+              subject.send_message!(body: "test", delay: 5)
+            end
+          end
+
+          context "with hash input" do
+            it "extracts type, to, and delay from data" do
+              expect(subject).to receive(:build_message).with(
+                to: "custom_to",
+                data: { body_text: "test" },
+                type: :interactive_buttons
+              )
+              subject.send_message!(type: :interactive_buttons, to: "custom_to", body_text: "test")
+            end
           end
         end
 

@@ -34,7 +34,7 @@ module Decidim
         private
 
         def send_cards
-          body = "*#{sanitize(component&.name)}*\n\n#{sanitize(component&.settings&.announcement)}"
+          body = "*#{sanitize_text(component&.name)}*\n\n#{sanitize_text(component&.settings&.announcement)}"
           send_message!(
             type: :interactive_carousel,
             body_text: body,
@@ -42,7 +42,7 @@ module Decidim
               {
                 id: proposal.id,
                 title: I18n.t("decidim.chatbot.workflows.proposals.buttons.view_proposal"),
-                body_text: sanitize(proposal.title).presence || I18n.t("decidim.chatbot.workflows.proposals.buttons.view_proposal"),
+                body_text: sanitize_text(proposal.title).presence || I18n.t("decidim.chatbot.workflows.proposals.buttons.view_proposal"),
                 image_url: resource_url(proposal.photo, fallback_image: true)
               }
             end
@@ -52,7 +52,7 @@ module Decidim
         def send_proposal_details
           return process_unprocessable_input unless proposal
 
-          body = "*#{sanitize(proposal.title)}*\n\n#{sanitize(proposal.body)}\n\n#{resource_url(proposal)}"
+          body = "*#{sanitize_text(proposal.title)}*\n\n#{sanitize_text(proposal.body)}\n\n#{resource_url(proposal)}"
           send_message!(
             type: :interactive_buttons,
             body_text: body,
