@@ -101,7 +101,7 @@ module Decidim
         def exit_workflow(with_welcome = true) # rubocop:disable Style/OptionalBooleanParameter
           # Pop current workflow from stack
           sender.pop_from_workflow_stack!
-          conf = sender.current_workflow_options || setting.config
+          conf = sender.current_workflow_options
 
           # Restart the workflow, which will now be the previous one in the stack (or the start workflow if the stack is empty)
           sender.current_workflow.new(adapter:, message:, **conf.symbolize_keys).start(true) if with_welcome

@@ -70,16 +70,14 @@ module Decidim
 
       # Incorporates the current workflow stack with the parent workflow to provide a full view of the workflow history
       def full_workflow_stack
-        @full_workflow_stack ||= begin
-          stack = workflow_stack.dup
-          if parent_workflow && (stack.empty? || stack.first["class"] != workflow.name)
-            stack.unshift({
-                            "class" => workflow.name,
-                            "options" => {}
-                          })
-          end
-          stack
+        stack = workflow_stack.dup
+        if parent_workflow && (stack.empty? || stack.first["class"] != workflow.name)
+          stack.unshift({
+                          "class" => workflow.name,
+                          "options" => {}
+                        })
         end
+        stack
       end
 
       # Start a new workflow by pushing it to the stack

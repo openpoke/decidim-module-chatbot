@@ -275,6 +275,20 @@ module Decidim
         end
 
         describe "edge cases" do
+          context "with very long comment text" do
+            before do
+              allow(received_message).to receive(:user_text?).and_return(true)
+              allow(received_message).to receive(:actionable?).and_return(false)
+              allow(received_message).to receive(:body).and_return("A" * 5000)
+            end
+
+            it "truncates the stored comment to 4000 characters" do
+              subject.start
+              sender.reload
+              expect(sender.current_workflow_options["comment"].length).to eq(4000)
+            end
+          end
+
           context "with long proposal title in header" do
             let!(:proposal) do
               create(:proposal,

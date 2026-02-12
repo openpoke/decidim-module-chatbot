@@ -10,7 +10,7 @@ module Decidim
           if force_welcome
             send_instructions
           else
-            sender.current_workflow_merge!(comment: received_message.body)
+            sender.current_workflow_merge!(comment: received_message.body.to_s.truncate(4000))
             send_comment_confirmation
           end
         end
