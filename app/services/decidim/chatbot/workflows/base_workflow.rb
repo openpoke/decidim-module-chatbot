@@ -133,7 +133,7 @@ module Decidim
 
         # Prepare a message to be sent to the user, applying necessary sanitization and formatting.
         # Accepts a string or hash with languages
-        def sanitize_text(text, truncate = 4000)
+        def sanitize_text(text, truncate = 1024)
           strip_tags(translated_attribute(text)).truncate(truncate)
         end
 

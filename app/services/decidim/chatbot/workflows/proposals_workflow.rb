@@ -34,7 +34,7 @@ module Decidim
         private
 
         def send_cards
-          body = "*#{sanitize_text(component&.name)}*\n\n#{sanitize_text(component&.settings&.announcement)}"
+          body = "*#{sanitize_text(component&.name, 200)}*\n\n#{sanitize_text(component&.settings&.announcement, 800)}"
           send_message!(
             type: :interactive_carousel,
             body_text: body,
@@ -42,7 +42,7 @@ module Decidim
               {
                 id: proposal.id,
                 title: I18n.t("decidim.chatbot.workflows.proposals.buttons.view_proposal"),
-                body_text: sanitize_text(proposal.title).presence || I18n.t("decidim.chatbot.workflows.proposals.buttons.view_proposal"),
+                body_text: sanitize_text(proposal.title, 60).presence || I18n.t("decidim.chatbot.workflows.proposals.buttons.view_proposal"),
                 image_url: resource_url(proposal.photo, fallback_image: true)
               }
             end
@@ -52,12 +52,12 @@ module Decidim
         def send_proposal_details
           return process_unprocessable_input unless proposal
 
-          body = "*#{sanitize_text(proposal.title)}*\n\n#{sanitize_text(proposal.body)}\n\n#{resource_url(proposal)}"
+          body = "*#{sanitize_text(proposal.title, 100)}*\n\n#{sanitize_text(proposal.body, 800)}\n\n#{resource_url(proposal)}"
           send_message!(
             type: :interactive_buttons,
             body_text: body,
             header_image: resource_url(proposal.photo),
-            footer_text: proposal.creator_author&.presenter&.name,
+            footer_text: sanitize_text(proposal.creator_author&.presenter&.name, 60),
             buttons: [
               {
                 id: "comment-#{proposal.id}",
@@ -89,6 +89,7 @@ module Decidim
         def send_ending
           send_message!(
             type: :interactive_buttons,
+            delay: 3,
             body_text: I18n.t("decidim.chatbot.workflows.proposals.#{proposals.empty? ? "no_proposals" : "no_more_proposals"}"),
             buttons: [
               {

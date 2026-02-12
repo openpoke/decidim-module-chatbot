@@ -36,8 +36,8 @@ module Decidim
           send_message!(
             {
               type: :interactive_buttons,
-              body_text: sanitize_text(participatory_space.short_description).truncate(200).to_s,
-              footer_text: sanitize_text(participatory_space.title),
+              body_text: sanitize_text(participatory_space.short_description).to_s,
+              footer_text: sanitize_text(participatory_space.title, 60),
               buttons: build_action_buttons
             }.tap do |data|
               data[:header_image] = resource_url(participatory_space&.hero_image)
@@ -55,8 +55,10 @@ module Decidim
         end
 
         def send_more_info
-          description = sanitize_text(participatory_space.description).presence || sanitize_text(participatory_space.short_description)
-          body = "*#{sanitize_text(participatory_space.title)}*\n\n#{description}\n\n#{resource_url(participatory_space)}"
+          description = sanitize_text(participatory_space.description,
+                                      3000).presence || sanitize_text(participatory_space.short_description,
+                                                                      3000).presence || I18n.t("decidim.chatbot.workflows.single_participatory_space.no_description")
+          body = "*#{sanitize_text(participatory_space.title, 100)}*\n\n#{description}\n\n#{resource_url(participatory_space)}"
           send_message!(
             {
               body: body,

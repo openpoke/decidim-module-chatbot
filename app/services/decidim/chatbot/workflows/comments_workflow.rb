@@ -47,7 +47,7 @@ module Decidim
         end
 
         def send_comment_confirmation
-          body = "*#{I18n.t("decidim.chatbot.workflows.comments.comment_received")}*\n\n#{received_message.body}"
+          body = sanitize_text("*#{I18n.t("decidim.chatbot.workflows.comments.comment_received")}*\n\n#{received_message.body}")
           send_message!(
             type: :interactive_buttons,
             header_text: sanitize_text(resource.title, 60),
