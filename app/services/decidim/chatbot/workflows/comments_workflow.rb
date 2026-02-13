@@ -47,7 +47,7 @@ module Decidim
         end
 
         def send_comment_confirmation
-          body = sanitize_text("*#{I18n.t("decidim.chatbot.workflows.comments.comment_received")}*\n\n#{received_message.body}")
+          body = sanitize_text("*#{I18n.t("decidim.chatbot.workflows.comments.comment_received")}*\n\n#{received_message.body.truncate(comments_max_length)}")
           send_message!(
             type: :interactive_buttons,
             header_text: sanitize_text(resource.title, 60),
@@ -72,8 +72,7 @@ module Decidim
         def create_comment
           resource.comments.create!(
             body: {
-              sender.locale =>
-              "#{comment_body}\n\n#{I18n.t("decidim.chatbot.workflows.comments.signature", provider: setting.provider.titleize)}"
+              sender.locale => comment_body
             },
             author: sender.user,
             commentable: resource
@@ -98,13 +97,29 @@ module Decidim
         end
 
         def comment_body
-          sender.current_workflow_options["comment"]
+          original = sender.current_workflow_options["comment"].to_s.truncate(comments_max_length)
+          "#{original}#{signature}"
         end
 
         def resource
           @resource ||= GlobalID::Locator.locate(options[:resource_gid])
         rescue ActiveRecord::RecordNotFound
           nil
+        end
+
+        def signature
+          "\n\n#{I18n.t("decidim.chatbot.workflows.comments.signature", provider: setting.provider.titleize)}"
+        end
+
+        # note that this is copied from the CommentFormCell, but we want to make sure that the same limits are applied when users comment through the chatbot
+        def comments_max_length
+          hard_max_length = 1000 - signature.length
+          return hard_max_length unless resource.respond_to?(:component)
+
+          resource.component.organization.comments_max_length if resource.component.organization.comments_max_length.positive?
+          return organization.comments_max_length if organization.comments_max_length.to_i.positive?
+
+          hard_max_length
         end
       end
     end

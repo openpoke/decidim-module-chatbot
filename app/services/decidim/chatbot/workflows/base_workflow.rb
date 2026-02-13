@@ -134,7 +134,16 @@ module Decidim
         # Prepare a message to be sent to the user, applying necessary sanitization and formatting.
         # Accepts a string or hash with languages
         def sanitize_text(text, truncate = 1024)
-          strip_tags(translated_attribute(text)).truncate(truncate)
+          translated = translated_attribute(text)
+          # Convert HTML line breaks and block elements to newlines before stripping tags
+          sanitized = translated.to_s
+                                .gsub(%r{<br\s*/?>}i, "\n") # <br>, <br/>, <br /> -> newline
+                                .gsub(%r{<h[1-6][^>]*>(.*?)</h[1-6]>}im, "*\\1*\n\n") # <h*>title</h*> -> *title* with newlines
+                                .gsub(%r{</p>}i, "\n\n") # </p> -> double newline for paragraphs
+                                .gsub(/<p[^>]*>/i, "") # Remove opening <p> tags
+                                .gsub(%r{</div>}i, "\n") # </div> -> newline
+                                .gsub(/<div[^>]*>/i, "") # Remove opening <div> tags
+          strip_tags(sanitized).strip.gsub(/\n{3,}/, "\n\n").truncate(truncate)
         end
 
         def image_url(path)
