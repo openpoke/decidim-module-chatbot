@@ -30,7 +30,7 @@ module Decidim
         private
 
         def send_instructions
-          send_message!(I18n.t("decidim.chatbot.workflows.comments.instructions", title: "*#{sanitize_text(resource.title)}*"))
+          send_message!(I18n.t("decidim.chatbot.workflows.comments.instructions", title: "*#{sanitize_text(resource.title, 100)}*"))
         end
 
         def send_ending
@@ -47,11 +47,11 @@ module Decidim
         end
 
         def send_comment_confirmation
-          body = sanitize_text("*#{I18n.t("decidim.chatbot.workflows.comments.comment_received")}*\n\n#{received_message.body}")
+          body = "*#{I18n.t("decidim.chatbot.workflows.comments.comment_received")}*\n\n#{received_message.body.truncate(comments_max_length)}"
           send_message!(
             type: :interactive_buttons,
             header_text: sanitize_text(resource.title, 60),
-            body_text: body,
+            body_text: sanitize_text(body, 1024),
             buttons: [
               {
                 id: "submit",
@@ -72,8 +72,7 @@ module Decidim
         def create_comment
           resource.comments.create!(
             body: {
-              sender.locale =>
-              "#{comment_body}\n\n#{I18n.t("decidim.chatbot.workflows.comments.signature", provider: setting.provider.titleize)}"
+              sender.locale => comment_body
             },
             author: sender.user,
             commentable: resource
@@ -85,7 +84,7 @@ module Decidim
           send_message!(
             type: :interactive_buttons,
             header_text: sanitize_text(resource.title, 60),
-            body_text: body,
+            body_text: sanitize_text(body, 1024),
             buttons: [
               {
                 id: "reset",
@@ -98,13 +97,36 @@ module Decidim
         end
 
         def comment_body
-          sender.current_workflow_options["comment"]
+          original = sender.current_workflow_options["comment"].to_s.truncate(comments_max_length)
+          "#{original}#{signature}"
         end
 
         def resource
           @resource ||= GlobalID::Locator.locate(options[:resource_gid])
         rescue ActiveRecord::RecordNotFound
           nil
+        end
+
+        def signature
+          "\n\n#{I18n.t("decidim.chatbot.workflows.comments.signature", provider: setting.provider.titleize)}"
+        end
+
+        # note that this is copied from the CommentFormCell, but we want to make sure that the same limits are applied when users comment through the chatbot
+        def comments_max_length
+          hard_max_length = 1000
+
+          length = if resource.respond_to?(:component)
+                     if resource.component.settings.comments_max_length.to_i.positive?
+                       resource.component.settings.comments_max_length
+                     elsif organization.comments_max_length.to_i.positive?
+                       organization.comments_max_length
+                     else
+                       hard_max_length
+                     end
+                   else
+                     hard_max_length
+                   end
+          length - signature.length
         end
       end
     end

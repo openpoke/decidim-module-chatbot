@@ -66,7 +66,7 @@ module Decidim
 
           context "when there are proposals but fewer than per_page" do
             let!(:proposals) do
-              create_list(:proposal, 3, component: proposals_component, published_at: Time.current)
+              create_list(:proposal, 3, :accepted, component: proposals_component, published_at: Time.current)
             end
 
             before do
@@ -89,7 +89,7 @@ module Decidim
 
           context "when there are exactly per_page proposals" do
             let!(:proposals) do
-              create_list(:proposal, 10, component: proposals_component, published_at: Time.current)
+              create_list(:proposal, 10, :evaluating, component: proposals_component, published_at: Time.current)
             end
 
             before do
@@ -120,7 +120,10 @@ module Decidim
           context "when there are more than per_page proposals" do
             let!(:proposals) do
               # Need > 2*per_page proposals so remaining_proposals_count > per_page triggers send_continuation
-              create_list(:proposal, 21, component: proposals_component, published_at: Time.current)
+              create_list(:proposal, 21, :accepted, component: proposals_component, published_at: Time.current)
+            end
+            let!(:rejected_proposals) do
+              create_list(:proposal, 5, :rejected, component: proposals_component, published_at: Time.current)
             end
 
             before do
@@ -150,10 +153,10 @@ module Decidim
 
         describe "carousel card format" do
           let!(:proposal) do
-            create(:proposal, component: proposals_component, title: { en: "My Proposal Title" }, published_at: Time.current)
+            create(:proposal, :accepted, component: proposals_component, title: { en: "My Proposal Title" }, published_at: Time.current)
           end
           # Need at least per_page proposals to avoid negative remaining guard
-          let!(:extra_proposals) { create_list(:proposal, 9, component: proposals_component, published_at: Time.current) }
+          let!(:extra_proposals) { create_list(:proposal, 9, :accepted, component: proposals_component, published_at: Time.current) }
 
           before do
             allow(received_message).to receive(:user_text?).and_return(true)
@@ -187,7 +190,7 @@ module Decidim
         end
 
         describe "body text" do
-          let!(:proposals) { create_list(:proposal, 10, component: proposals_component, published_at: Time.current) }
+          let!(:proposals) { create_list(:proposal, 10, :accepted, component: proposals_component, published_at: Time.current) }
 
           before do
             allow(received_message).to receive(:user_text?).and_return(true)
@@ -205,7 +208,7 @@ module Decidim
         end
 
         describe "#process_action_input" do
-          let!(:proposals) { create_list(:proposal, 12, component: proposals_component, published_at: Time.current) }
+          let!(:proposals) { create_list(:proposal, 12, :accepted, component: proposals_component, published_at: Time.current) }
 
           before do
             allow(received_message).to receive(:user_text?).and_return(false)

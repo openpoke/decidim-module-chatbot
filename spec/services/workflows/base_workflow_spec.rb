@@ -470,6 +470,36 @@ module Decidim
             expect(result).to include("Hello world")
           end
 
+          it "preserves line breaks from br tags" do
+            text = { "en" => "Line 1<br>Line 2<br/>Line 3<br />Line 4" }
+            result = subject.send(:sanitize_text, text)
+            expect(result).to eq("Line 1\nLine 2\nLine 3\nLine 4")
+          end
+
+          it "converts paragraph tags to double newlines" do
+            text = { "en" => "<p>First paragraph</p><p>Second paragraph</p>" }
+            result = subject.send(:sanitize_text, text)
+            expect(result).to eq("First paragraph\n\nSecond paragraph")
+          end
+
+          it "converts div tags to newlines" do
+            text = { "en" => "<div>First div</div><div>Second div</div>" }
+            result = subject.send(:sanitize_text, text)
+            expect(result).to eq("First div\nSecond div")
+          end
+
+          it "converts heading tags to bold text with double newlines" do
+            text = { "en" => "<h1>Main Title</h1><p>Content here</p><h2>Subtitle</h2><p>More content</p>" }
+            result = subject.send(:sanitize_text, text)
+            expect(result).to eq("*Main Title*\n\nContent here\n\n*Subtitle*\n\nMore content")
+          end
+
+          it "cleans up excessive consecutive newlines" do
+            text = { "en" => "<p>Para 1</p><br><br><br><p>Para 2</p>" }
+            result = subject.send(:sanitize_text, text)
+            expect(result).to eq("Para 1\n\nPara 2")
+          end
+
           it "truncates at 4000 characters by default" do
             text = { "en" => "A" * 5000 }
             result = subject.send(:sanitize_text, text)

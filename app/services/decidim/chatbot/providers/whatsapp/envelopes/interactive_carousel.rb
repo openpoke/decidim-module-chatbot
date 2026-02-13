@@ -24,6 +24,7 @@ module Decidim
             def cards
               data[:cards].map.with_index do |card, index|
                 {
+                  type: "cta_url", # This is necessary, even if we're not using the URL feature
                   card_index: index,
                   header: {
                     type: "image",
