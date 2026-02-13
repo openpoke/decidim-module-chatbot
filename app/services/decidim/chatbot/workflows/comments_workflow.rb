@@ -30,7 +30,7 @@ module Decidim
         private
 
         def send_instructions
-          send_message!(I18n.t("decidim.chatbot.workflows.comments.instructions", title: "*#{sanitize_text(resource.title)}*"))
+          send_message!(I18n.t("decidim.chatbot.workflows.comments.instructions", title: "*#{sanitize_text(resource.title, 100)}*"))
         end
 
         def send_ending
@@ -47,11 +47,11 @@ module Decidim
         end
 
         def send_comment_confirmation
-          body = sanitize_text("*#{I18n.t("decidim.chatbot.workflows.comments.comment_received")}*\n\n#{received_message.body.truncate(comments_max_length)}")
+          body = "*#{I18n.t("decidim.chatbot.workflows.comments.comment_received")}*\n\n#{received_message.body.truncate(comments_max_length)}"
           send_message!(
             type: :interactive_buttons,
             header_text: sanitize_text(resource.title, 60),
-            body_text: body,
+            body_text: sanitize_text(body, 1024),
             buttons: [
               {
                 id: "submit",
@@ -84,7 +84,7 @@ module Decidim
           send_message!(
             type: :interactive_buttons,
             header_text: sanitize_text(resource.title, 60),
-            body_text: body,
+            body_text: sanitize_text(body, 1024),
             buttons: [
               {
                 id: "reset",
@@ -125,7 +125,7 @@ module Decidim
                      end
                    else
                      hard_max_length
-                  end
+                   end
           length - signature.length
         end
       end
