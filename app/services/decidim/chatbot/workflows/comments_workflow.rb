@@ -113,13 +113,20 @@ module Decidim
 
         # note that this is copied from the CommentFormCell, but we want to make sure that the same limits are applied when users comment through the chatbot
         def comments_max_length
-          hard_max_length = 1000 - signature.length
-          return hard_max_length unless resource.respond_to?(:component)
+          hard_max_length = 1000
 
-          resource.component.organization.comments_max_length if resource.component.organization.comments_max_length.positive?
-          return organization.comments_max_length if organization.comments_max_length.to_i.positive?
-
-          hard_max_length
+          length = if resource.respond_to?(:component)
+                     if resource.component.settings.comments_max_length.to_i.positive?
+                       resource.component.settings.comments_max_length
+                     elsif organization.comments_max_length.to_i.positive?
+                       organization.comments_max_length
+                     else
+                       hard_max_length
+                     end
+                   else
+                     hard_max_length
+                  end
+          length - signature.length
         end
       end
     end
