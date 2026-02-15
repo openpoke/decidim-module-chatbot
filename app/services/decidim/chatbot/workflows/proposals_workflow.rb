@@ -71,7 +71,7 @@ module Decidim
           body = I18n.t("decidim.chatbot.workflows.proposals.remaining_proposals", count: remaining_proposals_count)
           send_message!(
             type: :interactive_buttons,
-            delay: 3,
+            delay: 6,
             body_text: body,
             buttons: [
               {
@@ -89,7 +89,7 @@ module Decidim
         def send_ending
           send_message!(
             type: :interactive_buttons,
-            delay: 3,
+            delay: 6,
             body_text: I18n.t("decidim.chatbot.workflows.proposals.#{proposals.empty? ? "no_proposals" : "no_more_proposals"}"),
             buttons: [
               {
