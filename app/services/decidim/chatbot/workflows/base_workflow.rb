@@ -151,26 +151,29 @@ module Decidim
         end
 
         def resource_url(resource, fallback_image: false)
-          fallback_image_url = fallback_image && image_url("media/images/chatbot-card-placeholder.png")
-
           case resource
           when Decidim::Organization
             "https://#{resource.host}"
           when Decidim::Participable, Decidim::Resourceable
             Decidim::ResourceLocatorPresenter.new(resource).url
-          when Decidim::Attachment
-            sanitize_image(resource.attached_uploader(:file))
-          when ActiveStorage::Attached
-            sanitize_image(resource.record.attached_uploader(resource.name))
           else
-            fallback_image_url
+            resource_image_url(resource, fallback_image: fallback_image)
           end
         end
 
-        def sanitize_image(uploader)
-          return uploader.url if uploader.attached? && uploader&.model&.content_type&.in?(%w(image/jpeg image/png))
+        def resource_image_url(resource, fallback_image: false)
+          uploader = if resource.respond_to?(:attached_uploader)
+                       resource.attached_uploader(:file)
+                     elsif resource.respond_to?(:record) && resource.record.respond_to?(:attached_uploader)
+                       resource.record.attached_uploader(resource.name)
+                     end
 
-          fallback_image_url
+          fallback_image_url = fallback_image && image_url("media/images/chatbot-card-placeholder.png")
+
+          return fallback_image_url unless uploader && uploader.attached?
+          return fallback_image_url unless uploader.model.content_type.in?(%w(image/jpeg image/png))
+
+          uploader.url
         end
       end
     end
