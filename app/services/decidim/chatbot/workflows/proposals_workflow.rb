@@ -105,7 +105,7 @@ module Decidim
         end
 
         def proposals
-          @proposals ||= Decidim::Proposals::Proposal.where(component:).published.except_rejected.only_amendables
+          @proposals ||= Decidim::Proposals::Proposal.where(component:).published.only_amendables
         end
 
         def commentable_id
