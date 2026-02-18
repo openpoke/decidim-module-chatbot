@@ -159,12 +159,18 @@ module Decidim
           when Decidim::Participable, Decidim::Resourceable
             Decidim::ResourceLocatorPresenter.new(resource).url
           when Decidim::Attachment
-            resource.attached? ? resource.attached_uploader(:file).url : fallback_image_url
+            sanitize_image(resource.attached_uploader(:file))
           when ActiveStorage::Attached
-            resource.attached? ? resource.record.attached_uploader(resource.name).url : fallback_image_url
+            sanitize_image(resource.record.attached_uploader(resource.name))
           else
             fallback_image_url
           end
+        end
+
+        def sanitize_image(uploader)
+          return uploader.url if uploader.attached? && uploader&.model&.content_type&.in?(%w(image/jpeg image/png))
+
+          fallback_image_url
         end
       end
     end
