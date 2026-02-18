@@ -167,7 +167,7 @@ module Decidim
 
           case resource
           when Decidim::Attachment
-            uploader = resource.attached_uploader(:file).url
+            uploader = resource.attached_uploader(:file)
             content_type = resource.file.content_type
           when ActiveStorage::Attached
             uploader = resource.record.attached_uploader(resource.name)
