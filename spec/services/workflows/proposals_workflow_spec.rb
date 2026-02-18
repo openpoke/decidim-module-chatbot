@@ -135,7 +135,7 @@ module Decidim
               allow(received_message).to receive(:actionable?).and_return(false)
             end
 
-            # With 11 proposals and per_page=10: remaining = 11 - (10*1) = 1 > 10
+            # With 11 proposals and per_page=10: remaining = 11 - (10*1) = 1, which triggers send_continuation
             # Main flow: mark_as_responding, send_cards (10 cards), send_continuation (1 remaining)
             it "sends carousel then continuation with remaining count and delay" do
               expect(subject.send(:proposals).count).to eq(11)
