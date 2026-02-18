@@ -64,6 +64,16 @@ module Decidim
             end
           end
 
+          context "when there are proposals without state" do
+            let!(:proposals) do
+              create_list(:proposal, 3, component: proposals_component, published_at: Time.current)
+            end
+
+            it "includes proposals without state in the results" do
+              expect(subject.send(:proposals).count).to eq(3)
+            end
+          end
+
           context "when there are proposals but fewer than per_page" do
             let!(:proposals) do
               create_list(:proposal, 3, :accepted, component: proposals_component, published_at: Time.current)
@@ -74,15 +84,9 @@ module Decidim
               allow(received_message).to receive(:actionable?).and_return(false)
             end
 
-            # With 3 proposals and per_page=10, remaining_proposals_count = 3 - (10*1) = -7 (negative)
-            # So the guard condition triggers send_ending directly (no carousel sent)
-            it "sends ending with no_more_proposals text" do
-              expect(adapter).to receive(:send_message!).with(
-                hash_including(
-                  type: :interactive_buttons,
-                  body_text: I18n.t("decidim.chatbot.workflows.proposals.no_more_proposals")
-                )
-              )
+            it "sends carousel cards then ending" do
+              expect(adapter).to receive(:send_message!).with(hash_including(type: :interactive_carousel)).ordered
+              expect(adapter).to receive(:send_message!).with(hash_including(type: :interactive_buttons)).ordered
               subject.start
             end
           end
@@ -97,8 +101,6 @@ module Decidim
               allow(received_message).to receive(:actionable?).and_return(false)
             end
 
-            # With 10 proposals and per_page=10: remaining = 10 - (10*1) = 0, not negative
-            # So it enters the main flow: mark_as_responding, send_cards, send_ending
             it "sends carousel cards then ending" do
               expect(adapter).to receive(:send_message!).with(hash_including(type: :interactive_carousel)).ordered
               expect(adapter).to receive(:send_message!).with(hash_including(type: :interactive_buttons)).ordered
@@ -119,8 +121,10 @@ module Decidim
 
           context "when there are more than per_page proposals" do
             let!(:proposals) do
-              # Need > 2*per_page proposals so remaining_proposals_count > per_page triggers send_continuation
-              create_list(:proposal, 21, :accepted, component: proposals_component, published_at: Time.current)
+              create_list(:proposal, 5, :accepted, component: proposals_component, published_at: Time.current)
+            end
+            let!(:other_proposals) do
+              create_list(:proposal, 6, component: proposals_component, published_at: Time.current)
             end
             let!(:rejected_proposals) do
               create_list(:proposal, 5, :rejected, component: proposals_component, published_at: Time.current)
@@ -131,15 +135,16 @@ module Decidim
               allow(received_message).to receive(:actionable?).and_return(false)
             end
 
-            # With 21 proposals and per_page=10: remaining = 21 - (10*1) = 11 > 10
-            # Main flow: mark_as_responding, send_cards (10 cards), send_continuation (11 remaining)
+            # With 11 proposals and per_page=10: remaining = 11 - (10*1) = 1 > 10
+            # Main flow: mark_as_responding, send_cards (10 cards), send_continuation (1 remaining)
             it "sends carousel then continuation with remaining count and delay" do
+              expect(subject.send(:proposals).count).to eq(11)
               expect(adapter).to receive(:send_message!).with(hash_including(type: :interactive_carousel)).ordered
               expect(adapter).to receive(:send_message!).with(
                 hash_including(
                   type: :interactive_buttons,
-                  delay: 3,
-                  body_text: I18n.t("decidim.chatbot.workflows.proposals.remaining_proposals", count: 11),
+                  delay: 6,
+                  body_text: I18n.t("decidim.chatbot.workflows.proposals.remaining_proposals", count: 1),
                   buttons: [
                     { id: "more", title: I18n.t("decidim.chatbot.workflows.proposals.buttons.more") },
                     { id: "exit", title: I18n.t("decidim.chatbot.workflows.base.buttons.exit") }
@@ -151,12 +156,31 @@ module Decidim
           end
         end
 
+        context "when there are multiple pages of proposals and user clicks 'more'" do
+          let!(:proposals) do
+            create_list(:proposal, 15, :accepted, component: proposals_component, published_at: Time.current)
+          end
+
+          before do
+            allow(received_message).to receive(:user_text?).and_return(false)
+            allow(received_message).to receive(:actionable?).and_return(true)
+            allow(received_message).to receive(:button_id).and_return("more")
+            sender.current_workflow_options!("page" => 1)
+          end
+
+          it "sends next page of proposals and updates page in current_workflow_options" do
+            expect(adapter).to receive(:send_message!).with(hash_including(type: :interactive_carousel)).ordered
+            expect(adapter).to receive(:send_message!).with(hash_including(type: :interactive_buttons)).ordered
+            subject.start
+            sender.reload
+            expect(sender.current_workflow_options["page"]).to eq(2)
+          end
+        end
+
         describe "carousel card format" do
           let!(:proposal) do
             create(:proposal, :accepted, component: proposals_component, title: { en: "My Proposal Title" }, published_at: Time.current)
           end
-          # Need at least per_page proposals to avoid negative remaining guard
-          let!(:extra_proposals) { create_list(:proposal, 9, :accepted, component: proposals_component, published_at: Time.current) }
 
           before do
             allow(received_message).to receive(:user_text?).and_return(true)
