@@ -126,7 +126,7 @@ module Decidim
         end
 
         def remaining_proposals_count
-          proposals.count - (per_page * current_page)
+          proposals.count - (per_page * (current_page - 1))
         end
 
         # Returns: A random float number between -1 and 1 to be used as a
