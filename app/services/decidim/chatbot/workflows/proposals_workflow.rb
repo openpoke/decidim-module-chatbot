@@ -103,10 +103,23 @@ module Decidim
         def component
           @component ||= Decidim::Component.find_by(id: config[:component_id])
         end
-
+        
         def proposals
-          @proposals ||= Decidim::Proposals::Proposal.where(component:).published.except_rejected.only_amendables
+          base = Decidim::Proposals::Proposal
+                  .where(decidim_component_id: component.id)
+                  .published
+                  .only_amendables
+
+          base.where(proposal_state: none_rejected)
+              .or(base.where(proposal_state: nil))
         end
+
+        def none_rejected
+          Decidim::Proposals::ProposalState
+            .where(decidim_component_id: component.id)
+            .where.not(token: "rejected")
+        end
+
 
         def commentable_id
           @commentable_id ||= received_message.button_id.to_s.start_with?("comment-") && received_message.button_id.to_s.sub("comment-", "")
