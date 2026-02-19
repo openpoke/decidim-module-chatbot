@@ -87,6 +87,25 @@ module Decidim
             end
           end
 
+
+ 
+          context "when there are proposols without states" do
+            let!(:proposals) do
+              create_list(:proposal, 7, :evaluating, component: proposals_component, published_at: Time.current)
+            end
+            let!(:proposals_without_states) do
+              create_list(:proposal, 3, component: proposals_component, published_at: Time.current)
+            end
+            let!(:proposals_rejected) do
+              create_list(:proposal, 5, :rejected, component: proposals_component, published_at: Time.current)
+            end
+            it "only the none rejected proposals will be return" do
+              expect(subject.send(:proposals).count).to eq(10)
+            end
+          end
+
+
+
           context "when there are exactly per_page proposals" do
             let!(:proposals) do
               create_list(:proposal, 10, :evaluating, component: proposals_component, published_at: Time.current)
