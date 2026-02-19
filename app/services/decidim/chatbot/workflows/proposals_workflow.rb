@@ -105,8 +105,15 @@ module Decidim
         end
 
         def proposals
-          @proposals ||= Decidim::Proposals::Proposal.where(component:).published.except_rejected.only_amendables
+          proposals_seach= Decidim::Proposals::Proposal.where(decidim_component_id: component.id).published.only_amendables
+          proposals_seach.where(proposal_state: none_rejected).or(proposals_seach.where(proposal_state: nil))
+
         end
+
+        def none_rejected
+          Decidim::Proposals::ProposalState.where.not(decidim_component_id: component.id, token: "rejected")
+        end
+
 
         def commentable_id
           @commentable_id ||= received_message.button_id.to_s.start_with?("comment-") && received_message.button_id.to_s.sub("comment-", "")
