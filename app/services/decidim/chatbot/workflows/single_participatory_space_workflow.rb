@@ -36,12 +36,11 @@ module Decidim
           send_message!(
             {
               type: :interactive_buttons,
+              header_image: resource_url(participatory_space&.hero_image),
               body_text: sanitize_text(participatory_space.short_description).to_s,
               footer_text: sanitize_text(participatory_space.title, 60),
               buttons: build_action_buttons
-            }.tap do |data|
-              data[:header_image] = resource_url(participatory_space&.hero_image)
-            end
+            }
           )
         end
 
