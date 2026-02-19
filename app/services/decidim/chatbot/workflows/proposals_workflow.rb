@@ -105,7 +105,15 @@ module Decidim
         end
 
         def proposals
-          @proposals ||= Decidim::Proposals::Proposal.where(component:).published.except_rejected.only_amendables
+          @proposals ||= Decidim::Proposals::Proposal
+                         .where(component: component)
+                         .published
+                         .only_amendables
+                         .left_joins(:proposal_state)
+                         .where(
+                           "decidim_proposals_proposal_states.token != 'rejected' " \
+                           "OR decidim_proposals_proposal_states.token IS NULL"
+                         )
         end
 
         def commentable_id

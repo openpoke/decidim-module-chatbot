@@ -87,6 +87,21 @@ module Decidim
             end
           end
 
+          def proposals
+            @proposals ||= begin
+              base = Decidim::Proposals::Proposal
+                     .where(decidim_component_id: component.id)
+                     .published
+                     .only_amendables
+
+              base.left_joins(:proposal_state)
+                  .where(
+                    "decidim_proposals_proposal_states.token != 'rejected' " \
+                    "OR decidim_proposals_proposal_states.token IS NULL"
+                  )
+            end
+          end
+
           context "when there are exactly per_page proposals" do
             let!(:proposals) do
               create_list(:proposal, 10, :evaluating, component: proposals_component, published_at: Time.current)
