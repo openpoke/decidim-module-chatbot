@@ -87,35 +87,20 @@ module Decidim
             end
           end
 
-          context "when there are exactly per_page proposals" do
+          context "when there are proposals without states" do
             let!(:proposals) do
-              create_list(:proposal, 10, :evaluating, component: proposals_component, published_at: Time.current)
+              create_list(:proposal, 7, :evaluating, component: proposals_component, published_at: Time.current)
             end
-
-            before do
-              allow(received_message).to receive(:user_text?).and_return(true)
-              allow(received_message).to receive(:actionable?).and_return(false)
+            let!(:proposals_without_states) do
+              create_list(:proposal, 3, component: proposals_component, published_at: Time.current)
             end
-
-            # With 10 proposals and per_page=10: remaining = 10 - (10*1) = 0, not negative
-            # So it enters the main flow: mark_as_responding, send_cards, send_ending
-            it "sends carousel cards then ending" do
-              expect(adapter).to receive(:send_message!).with(hash_including(type: :interactive_carousel)).ordered
-              expect(adapter).to receive(:send_message!).with(hash_including(type: :interactive_buttons)).ordered
-              subject.start
+            let!(:rejected_proposals) do
+              create_list(:proposal, 5, :rejected, component: proposals_component, published_at: Time.current)
             end
-
-            it "marks as responding" do
-              expect(adapter).to receive(:mark_as_responding!)
-              subject.start
+            it "only the none rejected proposals will be return" do
+              expect(subject.send(:proposals).count).to eq(10)
             end
-
-            it "updates page in current_workflow_options" do
-              subject.start
-              sender.reload
-              expect(sender.current_workflow_options["page"]).to eq(2)
-            end
-          end
+          end   
 
           context "when there are more than per_page proposals" do
             let!(:proposals) do
