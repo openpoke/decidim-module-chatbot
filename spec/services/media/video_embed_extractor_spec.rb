@@ -111,6 +111,23 @@ module Decidim
                 expect(extractor.thumbnail_url).to eq("https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg")
               end
             end
+
+            context "with a youtube-nocookie.com embed URL" do
+              let(:html) do
+                '<iframe src="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?autoplay=1"></iframe>'
+              end
+
+              it "extracts and normalizes the YouTube URL" do
+                extractor = described_class.new(html)
+                expect(extractor.url).to eq("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+                expect(extractor.valid?).to be true
+              end
+
+              it "extracts the thumbnail URL" do
+                extractor = described_class.new(html)
+                expect(extractor.thumbnail_url).to eq("https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg")
+              end
+            end
           end
 
           context "when html contains a Vimeo iframe" do
