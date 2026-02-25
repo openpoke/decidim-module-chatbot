@@ -298,14 +298,39 @@ module Decidim
               subject.start
             end
 
-            it "sends proposal details with comment button" do
-              expect(adapter).to receive(:send_message!).with(
-                hash_including(
-                  type: :interactive_buttons,
-                  buttons: [hash_including(id: "comment-#{clicked_proposal.id}")]
+            context "when comments are enabled in the component" do
+              before do
+                proposals_component.update!(settings: { comments_enabled: true })
+              end
+
+              it "sends proposal details with comment button" do
+                expect(adapter).to receive(:send_message!).with(
+                  hash_including(
+                    type: :interactive_buttons,
+                    buttons: [hash_including(id: "comment-#{clicked_proposal.id}")]
+                  )
                 )
-              )
-              subject.start
+                subject.start
+              end
+            end
+
+            context "when comments are disabled in the component" do
+              before do
+                proposals_component.update!(settings: { comments_enabled: false })
+              end
+
+              it "sends proposal details as text message without buttons" do
+                expect(adapter).to receive(:send_message!).with(
+                  hash_including(
+                    body: anything,
+                    preview_url: true
+                  )
+                ) do |args|
+                  # Make sure it's not an interactive_buttons message
+                  expect(args).not_to include(:type)
+                end
+                subject.start
+              end
             end
 
             context "when proposal body contains a YouTube iframe" do
@@ -322,6 +347,7 @@ module Decidim
 
               before do
                 clicked_proposal.update!(body: body_with_youtube)
+                proposals_component.update!(settings: { comments_enabled: true })
               end
 
               it "sends interactive_buttons message with video URL in body text" do
@@ -368,6 +394,7 @@ module Decidim
 
               before do
                 clicked_proposal.update!(body: body_with_vimeo)
+                proposals_component.update!(settings: { comments_enabled: true })
               end
 
               it "sends interactive_buttons message with video URL in body text" do
@@ -407,6 +434,7 @@ module Decidim
 
               before do
                 clicked_proposal.update!(body: body_without_video)
+                proposals_component.update!(settings: { comments_enabled: true })
               end
 
               it "sends interactive_buttons message without video URL" do
