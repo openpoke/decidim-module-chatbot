@@ -16,12 +16,14 @@ module Decidim
           let(:verify_token) { "test-verify-token" }
           let(:access_token) { "test-access-token" }
           let(:graph_api_url) { "https://graph.facebook.com/v24.0/" }
+          let(:phone_number_id) { "873575429163486" }
 
           before do
             allow(Decidim::Chatbot).to receive(:whatsapp_config).and_return({
                                                                               verify_token:,
                                                                               access_token:,
-                                                                              graph_api_url:
+                                                                              graph_api_url:,
+                                                                              phone_number_id:
                                                                             })
           end
 
@@ -211,7 +213,7 @@ module Decidim
 
             it "posts to the WhatsApp API" do
               expect(Faraday).to receive(:post).with(
-                "#{graph_api_url}873575429163486/messages?access_token=#{access_token}"
+                "#{graph_api_url}#{phone_number_id}/messages?access_token=#{access_token}"
               )
               subject.send!(message_body)
             end
