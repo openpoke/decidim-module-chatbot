@@ -89,7 +89,7 @@ module Decidim
 
           # Calculate fixed overhead
           title_overhead = sanitize_text(proposal.title, 100).length + 6 # "*title*\n\n"
-          video_overhead = video.valid? ? video.url.length + 6 : 0 # "🎥 url\n\n" (emoji is 2 bytes)
+          video_overhead = video.valid? ? video.url.length + 4 : 0 # "🎥 url\n\n"
           proposal_url_overhead = resource_url(proposal).length + 2 # "\n\nurl"
 
           # Reserve space for newlines and formatting
