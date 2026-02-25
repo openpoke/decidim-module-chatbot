@@ -59,7 +59,7 @@ module Decidim
           # Pre-calculate title and URL to avoid redundant method calls
           title_text = sanitize_text(proposal.title, 100)
           proposal_url = resource_url(proposal)
-          
+
           # Calculate available space for body text and sanitize accordingly
           body_text = sanitize_text(proposal.body, calculate_max_body_length(video, title_text, proposal_url))
 
@@ -68,8 +68,8 @@ module Decidim
           body += "🎥 #{video.url}\n\n" if video.valid?
           body += "#{body_text}\n\n#{proposal_url}"
 
-          # Use video thumbnail as header image if available, otherwise use proposal photo
-          header_image = video.thumbnail_url.presence || resource_url(proposal.photo)
+          # Use video thumbnail as header image if available, otherwise use proposal photo with fallback
+          header_image = video.thumbnail_url.presence || resource_url(proposal.photo, fallback_image: true)
 
           send_message!(
             type: :interactive_buttons,

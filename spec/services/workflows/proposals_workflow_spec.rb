@@ -340,7 +340,7 @@ module Decidim
                 expect(adapter).to receive(:send_message!).with(
                   hash_including(
                     type: :interactive_buttons,
-                    header_image: "https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg"
+                    header_image: "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg"
                   )
                 )
                 subject.start

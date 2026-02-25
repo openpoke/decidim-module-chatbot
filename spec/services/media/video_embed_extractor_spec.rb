@@ -57,7 +57,7 @@ module Decidim
 
               it "extracts the YouTube thumbnail URL" do
                 extractor = described_class.new(html)
-                expect(extractor.thumbnail_url).to eq("https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg")
+                expect(extractor.thumbnail_url).to eq("https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg")
               end
             end
 
@@ -74,7 +74,7 @@ module Decidim
 
               it "extracts the thumbnail URL" do
                 extractor = described_class.new(html)
-                expect(extractor.thumbnail_url).to eq("https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg")
+                expect(extractor.thumbnail_url).to eq("https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg")
               end
             end
 
@@ -91,7 +91,7 @@ module Decidim
 
               it "extracts the thumbnail URL" do
                 extractor = described_class.new(html)
-                expect(extractor.thumbnail_url).to eq("https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg")
+                expect(extractor.thumbnail_url).to eq("https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg")
               end
             end
 
@@ -108,7 +108,7 @@ module Decidim
 
               it "extracts the thumbnail URL" do
                 extractor = described_class.new(html)
-                expect(extractor.thumbnail_url).to eq("https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg")
+                expect(extractor.thumbnail_url).to eq("https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg")
               end
             end
 
@@ -125,7 +125,7 @@ module Decidim
 
               it "extracts the thumbnail URL" do
                 extractor = described_class.new(html)
-                expect(extractor.thumbnail_url).to eq("https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg")
+                expect(extractor.thumbnail_url).to eq("https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg")
               end
             end
           end
@@ -190,7 +190,7 @@ module Decidim
               extractor = described_class.new(html)
               expect(extractor.url).to eq("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
               expect(extractor.valid?).to be true
-              expect(extractor.thumbnail_url).to eq("https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg")
+              expect(extractor.thumbnail_url).to eq("https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg")
             end
           end
 
@@ -212,7 +212,7 @@ module Decidim
               extractor = described_class.new(html)
               expect(extractor.url).to eq("https://www.youtube.com/watch?v=test123")
               expect(extractor.valid?).to be true
-              expect(extractor.thumbnail_url).to eq("https://img.youtube.com/vi/test123/maxresdefault.jpg")
+              expect(extractor.thumbnail_url).to eq("https://img.youtube.com/vi/test123/hqdefault.jpg")
             end
           end
 

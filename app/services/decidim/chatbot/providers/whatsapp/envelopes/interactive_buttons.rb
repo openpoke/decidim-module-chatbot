@@ -26,9 +26,9 @@ module Decidim
                   body: {
                     text: data[:body_text]
                   },
-                  footer: {}.tap do |footer|
-                    footer[:text] = data[:footer_text]
-                  end,
+                  footer: {
+                    text: data[:footer_text]
+                  },
                   action: {
                     buttons: data[:buttons].map do |button|
                       { type: "reply", reply: { id: button[:id], title: button[:title] } }
