@@ -38,6 +38,11 @@ module Decidim
             end
           end
 
+          def valid_number_id?
+            configured_phone_number_id = Decidim::Chatbot.whatsapp_config[:phone_number_id]
+            configured_phone_number_id.present? && phone_number_id.to_s == configured_phone_number_id.to_s
+          end
+
           def user_text?
             from.present? && type == "text"
           end

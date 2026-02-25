@@ -16,7 +16,8 @@ module Decidim::Chatbot
       allow(Decidim::Chatbot).to receive(:whatsapp_config).and_return({
                                                                         verify_token:,
                                                                         access_token: "test-access-token",
-                                                                        graph_api_url: "https://graph.facebook.com/v24.0/"
+                                                                        graph_api_url: "https://graph.facebook.com/v24.0/",
+                                                                        phone_number_id: "873575429163486"
                                                                       })
     end
 
@@ -128,7 +129,8 @@ module Decidim::Chatbot
             message_data: { "body" => "this is a message" },
             user_text?: true,
             actionable?: false,
-            acknowledgeable?: true
+            acknowledgeable?: true,
+            valid_number_id?: true
           )
         )
       end
@@ -198,6 +200,7 @@ module Decidim::Chatbot
               user_text?: false,
               actionable?: false,
               acknowledgeable?: false,
+              valid_number_id?: true,
               json: "{}"
             )
           )
@@ -254,6 +257,53 @@ module Decidim::Chatbot
         end
       end
 
+      context "with invalid phone_number_id" do
+        let(:adapter_instance) do
+          instance_double(
+            Decidim::Chatbot::Providers::Whatsapp::Adapter,
+            received_message: instance_double(
+              Decidim::Chatbot::Providers::Whatsapp::MessageNormalizer,
+              from: "34123456789",
+              from_name: "John Doe",
+              from_metadata: {},
+              from_locale: nil,
+              message_id: "wamid.HBgLMzQ2ODUxNzMzMjYVAgASGBYzRUIwMThFMjdEQzMwMkQ0REZCQ0M1AA==",
+              chat_id: "818813757760148",
+              type: "text",
+              message_data: { "body" => "this is a message" },
+              user_text?: true,
+              actionable?: false,
+              acknowledgeable?: false,
+              valid_number_id?: false,
+              json: whatsapp_payload.to_json
+            )
+          )
+        end
+
+        it "does not create a sender" do
+          expect do
+            post :receive, params: { provider: }.merge(whatsapp_payload)
+          end.not_to change(Sender, :count)
+        end
+
+        it "does not create a message" do
+          expect do
+            post :receive, params: { provider: }.merge(whatsapp_payload)
+          end.not_to change(Message, :count)
+        end
+
+        it "still responds with 200 OK" do
+          post :receive, params: { provider: }.merge(whatsapp_payload)
+          expect(response).to have_http_status(:ok)
+        end
+
+        it "logs a warning about invalid sender number ID" do
+          allow(Rails.logger).to receive(:warn)
+          post :receive, params: { provider: }.merge(whatsapp_payload)
+          expect(Rails.logger).to have_received(:warn).with(/invalid sender number ID/i)
+        end
+      end
+
       context "when workflow raises an error" do
         before do
           allow(workflow_instance).to receive(:start).and_raise(StandardError.new("Test error"))
@@ -283,7 +333,8 @@ module Decidim::Chatbot
             Decidim::Chatbot::Providers::Whatsapp::MessageNormalizer,
             from: nil, from_name: nil, from_metadata: nil, from_locale: nil,
             message_id: nil, chat_id: nil, type: nil, message_data: nil,
-            user_text?: false, actionable?: false, acknowledgeable?: false
+            user_text?: false, actionable?: false, acknowledgeable?: false,
+            valid_number_id?: true
           )
         ).tap do |a|
           allow(a).to receive(:send_message!)
@@ -353,7 +404,8 @@ module Decidim::Chatbot
             message_data: { "body" => "hello" },
             user_text?: true,
             actionable?: false,
-            acknowledgeable?: true
+            acknowledgeable?: true,
+            valid_number_id?: true
           )
         )
       end

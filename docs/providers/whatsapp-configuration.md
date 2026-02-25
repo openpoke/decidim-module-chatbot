@@ -68,7 +68,7 @@ In your WhatsApp app dashboard, navigate to **WhatsApp** → **Getting Started**
 ### Phone Number ID
 - Located in the **Getting Started** section
 - Format: a numeric ID (e.g., `1234567890`)
-- Decidim automatically retrieves this ID from WhatsApp webhook payloads; you do not need to configure it manually.
+- **Required**: You must configure this value in your environment variables to ensure messages are only processed for your WhatsApp Business Account
 
 ### Access Token
 1. Go to **WhatsApp** → **API Setup**
@@ -115,6 +115,7 @@ Add the following to your `.env` file or server environment:
 # WhatsApp Provider Configuration
 WHATSAPP_VERIFY_TOKEN=<your-secure-token-from-step-6>
 WHATSAPP_ACCESS_TOKEN=<your-access-token-from-step-6>
+WHATSAPP_PHONE_NUMBER_ID=<your-phone-number-id-from-step-6>
 # Optional: override default Meta Graph API URL if needed
 WHATSAPP_GRAPH_API_URL=<optional-custom-graph-api-url>
 ```

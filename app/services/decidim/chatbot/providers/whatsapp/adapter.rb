@@ -47,7 +47,7 @@ module Decidim
 
           def send!(message_body)
             Rails.logger.debug { "Sending Whatsapp message: #{message_body.inspect}" }
-            url = "#{Decidim::Chatbot.whatsapp_config[:graph_api_url]}#{received_message.phone_number_id}/messages"
+            url = "#{Decidim::Chatbot.whatsapp_config[:graph_api_url]}#{Decidim::Chatbot.whatsapp_config[:phone_number_id]}/messages"
             Faraday
               .post("#{url}?access_token=#{Decidim::Chatbot.whatsapp_config[:access_token]}") do |req|
                 req.headers["Content-Type"] = "application/json"
