@@ -75,9 +75,10 @@ module Decidim
         end
 
         # Returns YouTube thumbnail URL
-        # Uses maxresdefault for best quality, falls back to hqdefault
         def youtube_thumbnail_url
-          "https://img.youtube.com/vi/#{video_id}/maxresdefault.jpg"
+          # hqdefault (480×360) is guaranteed to exist for every published video.
+          # maxresdefault (1280×720) is only generated for HD uploads and 404s otherwise.
+          "https://img.youtube.com/vi/#{video_id}/hqdefault.jpg"
         end
 
         # Returns Vimeo thumbnail URL using oEmbed API pattern
