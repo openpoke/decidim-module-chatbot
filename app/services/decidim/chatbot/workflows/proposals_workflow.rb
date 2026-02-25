@@ -5,11 +5,11 @@ module Decidim
     module Workflows
       class ProposalsWorkflow < BaseWorkflow
         def process_user_input
-          return send_ending if current_proposals.empty? || remaining_proposals_count.negative?
+          return send_ending if current_proposals.empty? || (remaining_proposals_count + per_page).negative?
 
           mark_as_responding
           send_cards
-          remaining_proposals_count <= per_page ? send_ending : send_continuation
+          remaining_proposals_count <= 0 ? send_ending : send_continuation
           sender.current_workflow_merge!(page: current_page + 1, random_seed:)
         end
 
@@ -105,7 +105,14 @@ module Decidim
         end
 
         def proposals
-          @proposals ||= Decidim::Proposals::Proposal.where(component:).published.except_rejected.only_amendables
+          @proposals ||= begin
+            proposal_search = Decidim::Proposals::Proposal.where(component:).published.only_amendables
+            proposal_search.where.not(proposal_state: rejected_states).or(proposal_search.where(proposal_state: nil))
+          end
+        end
+
+        def rejected_states
+          @rejected_states ||= Decidim::Proposals::ProposalState.where(component:, token: :rejected).select(:id)
         end
 
         def commentable_id

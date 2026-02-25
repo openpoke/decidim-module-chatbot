@@ -21,7 +21,6 @@ module Decidim
           if received_message.button_id == "submit"
             mark_as_responding
             create_comment
-            send_comment_created_message
           else
             exit_workflow
           end
@@ -70,13 +69,25 @@ module Decidim
         end
 
         def create_comment
-          resource.comments.create!(
-            body: {
-              sender.locale => comment_body
-            },
-            author: sender.user,
-            commentable: resource
+          form = Decidim::Comments::CommentForm.from_params(
+            body: comment_body,
+            commentable: resource,
+            alignment: 0
+          ).with_context(
+            current_component: resource.component,
+            current_organization: organization,
+            current_user: sender.user
           )
+          Decidim::Comments::CreateComment.call(form) do
+            on(:ok) do
+              send_comment_created_message
+            end
+
+            on(:invalid) do
+              Rails.logger.error("Failed to create comment through chatbot on resource #{resource.inspect}: #{form.errors.full_messages.join(", ")}")
+              send_comment_error_message
+            end
+          end
         end
 
         def send_comment_created_message
@@ -85,6 +96,21 @@ module Decidim
             type: :interactive_buttons,
             header_text: sanitize_text(resource.title, 60),
             body_text: sanitize_text(body, 1024),
+            buttons: [
+              {
+                id: "reset",
+                title: I18n.t("decidim.chatbot.workflows.base.buttons.reset")
+              }
+            ].tap do |buttons|
+              buttons.unshift(options[:back_button]) if options[:back_button].present?
+            end
+          )
+        end
+
+        def send_comment_error_message
+          send_message!(
+            type: :interactive_buttons,
+            body_text: I18n.t("decidim.chatbot.workflows.comments.comment_creation_failed"),
             buttons: [
               {
                 id: "reset",
