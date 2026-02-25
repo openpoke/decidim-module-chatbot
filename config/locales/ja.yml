@@ -61,6 +61,7 @@ ja:
           resource_not_found: Unfortunately, the requested resource could not be found. Please choose another one or exit and restart.
           instructions: Thanks for your interest in commenting "%{title}"! Please write your comment below and send it to me. You will have the chance to review and edit your comment before submitting it.
           comment_created: "Your comment has been published successfully! You can view it here:"
+          comment_creation_failed: "Unfortunately, your comment could not be published. Please try again or contact support."
           signature: "\n\nSent via %{provider}"
           buttons:
             submit: Publish comment
