@@ -161,20 +161,20 @@ module Decidim
           end
         end
 
-        def resource_image_url(resource, fallback_image: false)
+        def resource_image_url(resource, fallback_image: false) # rubocop:disable Metrics/CyclomaticComplexity
           fallback_image_url = fallback_image && image_url("media/images/chatbot-card-placeholder.png")
           return fallback_image_url unless resource.try(:attached?)
 
           case resource
           when Decidim::Attachment
             uploader = resource.attached_uploader(:file)
-            content_type = resource.file.content_type
+            content_type = resource.file&.content_type
           when ActiveStorage::Attached
             uploader = resource.record.attached_uploader(resource.name)
-            content_type = resource.record.send(resource.name).content_type
+            content_type = resource.blob&.content_type
           end
 
-          return fallback_image_url unless uploader && content_type.in?(%w(image/jpeg image/png))
+          return fallback_image_url unless uploader && content_type&.in?(%w(image/jpeg image/png))
 
           uploader.url
         end

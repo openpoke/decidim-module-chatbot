@@ -199,6 +199,13 @@ module Decidim
               )
               subject.start
             end
+
+            it "includes the resource URL with #comments anchor" do
+              expect(adapter).to receive(:send_message!) do |args|
+                expect(args[:body_text]).to match(/http.*#comments/)
+              end
+              subject.start
+            end
           end
 
           context "when 'submit' with back_button option" do
@@ -307,6 +314,32 @@ module Decidim
                 expect(args[:header_text].length).to be <= 60
               end
               subject.start
+            end
+          end
+
+          context "with signature in comment" do
+            before do
+              allow(received_message).to receive(:user_text?).and_return(false)
+              allow(received_message).to receive(:actionable?).and_return(true)
+              allow(received_message).to receive(:button_id).and_return("submit")
+              sender.update!(workflow_stack: [
+                               {
+                                 "class" => "Decidim::Chatbot::Workflows::CommentsWorkflow",
+                                 "options" => {
+                                   "resource_gid" => proposal.to_global_id.to_s,
+                                   "comment" => "My comment text"
+                                 }
+                               }
+                             ])
+              message.reload
+            end
+
+            it "includes the signature with provider name" do
+              subject.start
+              comment = Decidim::Comments::Comment.last
+              signature = I18n.t("decidim.chatbot.workflows.comments.signature", provider: setting.provider.titleize)
+              expect(comment.body[sender.locale]).to include("My comment text")
+              expect(comment.body[sender.locale]).to include(signature)
             end
           end
         end
