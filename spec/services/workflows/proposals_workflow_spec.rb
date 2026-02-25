@@ -307,6 +307,136 @@ module Decidim
               )
               subject.start
             end
+
+            context "when proposal body contains a YouTube iframe" do
+              let(:body_with_youtube) do
+                {
+                  en: <<-HTML
+                    <h2>My Proposal</h2>
+                    <p>Check out this video:</p>
+                    <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" width="560" height="315"></iframe>
+                    <p>More details about the proposal.</p>
+                  HTML
+                }
+              end
+
+              before do
+                clicked_proposal.update!(body: body_with_youtube)
+              end
+
+              it "sends interactive_buttons message with video URL in body text" do
+                expect(adapter).to receive(:send_message!).with(
+                  hash_including(
+                    type: :interactive_buttons,
+                    buttons: [hash_including(id: "comment-#{clicked_proposal.id}")]
+                  )
+                ) do |args|
+                  expect(args[:body_text]).to include("🎥 https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+                end
+                subject.start
+              end
+
+              it "uses video thumbnail as header_image" do
+                expect(adapter).to receive(:send_message!).with(
+                  hash_including(
+                    type: :interactive_buttons,
+                    header_image: "https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg"
+                  )
+                )
+                subject.start
+              end
+
+              it "respects the 1024 character body limit" do
+                expect(adapter).to receive(:send_message!) do |args|
+                  expect(args[:body_text].length).to be <= 1024
+                end
+                subject.start
+              end
+            end
+
+            context "when proposal body contains a Vimeo iframe" do
+              let(:body_with_vimeo) do
+                {
+                  en: <<-HTML
+                    <h2>My Proposal</h2>
+                    <p>Check out this Vimeo video:</p>
+                    <iframe src="https://player.vimeo.com/video/123456789" width="640" height="360"></iframe>
+                    <p>More details.</p>
+                  HTML
+                }
+              end
+
+              before do
+                clicked_proposal.update!(body: body_with_vimeo)
+              end
+
+              it "sends interactive_buttons message with video URL in body text" do
+                expect(adapter).to receive(:send_message!).with(
+                  hash_including(
+                    type: :interactive_buttons,
+                    buttons: [hash_including(id: "comment-#{clicked_proposal.id}")]
+                  )
+                ) do |args|
+                  expect(args[:body_text]).to include("🎥 https://vimeo.com/123456789")
+                end
+                subject.start
+              end
+
+              it "falls back to proposal photo for header_image (Vimeo has no thumbnail)" do
+                expect(adapter).to receive(:send_message!) do |args|
+                  expect(args[:header_image]).to be_present
+                  expect(args[:header_image]).not_to include("vimeo")
+                end
+                subject.start
+              end
+            end
+
+            context "when proposal body contains no video iframe" do
+              let(:body_without_video) do
+                {
+                  en: <<-HTML
+                    <h2>My Proposal</h2>
+                    <p>This is a text-only proposal with no video.</p>
+                    <ul>
+                      <li>Point one</li>
+                      <li>Point two</li>
+                    </ul>
+                  HTML
+                }
+              end
+
+              before do
+                clicked_proposal.update!(body: body_without_video)
+              end
+
+              it "sends interactive_buttons message without video URL" do
+                expect(adapter).to receive(:send_message!).with(
+                  hash_including(
+                    type: :interactive_buttons,
+                    buttons: [hash_including(id: "comment-#{clicked_proposal.id}")]
+                  )
+                ) do |args|
+                  expect(args[:body_text]).not_to include("🎥")
+                  expect(args[:body_text]).not_to include("youtube.com")
+                  expect(args[:body_text]).not_to include("vimeo.com")
+                end
+                subject.start
+              end
+
+              it "uses proposal photo for header_image" do
+                expect(adapter).to receive(:send_message!) do |args|
+                  expect(args[:header_image]).to be_present
+                end
+                subject.start
+              end
+
+              it "respects the 1024 character body limit" do
+                expect(adapter).to receive(:send_message!) do |args|
+                  expect(args[:body_text].length).to be <= 1024
+                end
+                subject.start
+              end
+            end
           end
 
           context "when a comment button is clicked" do
