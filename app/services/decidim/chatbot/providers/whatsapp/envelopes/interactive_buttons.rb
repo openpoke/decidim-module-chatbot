@@ -36,7 +36,7 @@ module Decidim
                   }
                 }.tap do |interactive|
                   interactive.delete(:header) if interactive[:header].blank?
-                  interactive.delete(:footer) if interactive[:footer].blank?
+                  interactive.delete(:footer) if data[:footer_text].blank?
                 end
               )
             end
