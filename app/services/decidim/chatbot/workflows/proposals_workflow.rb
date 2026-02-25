@@ -147,8 +147,8 @@ module Decidim
           @component ||= Decidim::Component.find_by(id: config[:component_id])
         end
 
-        def component_comentable?
-          @component_comentable ||= component&.settings&.comments_enabled?
+        def component_commentable?
+          @component_commentable ||= component&.settings&.comments_enabled?
         end
 
         def proposals
