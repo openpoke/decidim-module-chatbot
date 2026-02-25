@@ -39,11 +39,12 @@ module Decidim
             type: :interactive_carousel,
             body_text: body,
             cards: current_proposals.map do |proposal|
+              video = Decidim::Chatbot::Media::VideoEmbedExtractor.new(translated_attribute(proposal.body))
               {
                 id: proposal.id,
                 title: I18n.t("decidim.chatbot.workflows.proposals.buttons.view_proposal"),
                 body_text: sanitize_text(proposal.title, 60).presence || I18n.t("decidim.chatbot.workflows.proposals.buttons.view_proposal"),
-                image_url: resource_url(proposal.photo, fallback_image: true)
+                image_url: video.thumbnail_url.presence || resource_url(proposal.photo, fallback_image: true)
               }
             end
           )
@@ -52,11 +53,28 @@ module Decidim
         def send_proposal_details
           return process_unprocessable_input unless proposal
 
-          body = "*#{sanitize_text(proposal.title, 100)}*\n\n#{sanitize_text(proposal.body, 800)}\n\n#{resource_url(proposal)}"
+          # Check if proposal body contains a video iframe
+          video = Decidim::Chatbot::Media::VideoEmbedExtractor.new(translated_attribute(proposal.body))
+
+          # Pre-calculate title and URL to avoid redundant method calls
+          title_text = sanitize_text(proposal.title, 100)
+          proposal_url = resource_url(proposal)
+
+          # Calculate available space for body text and sanitize accordingly
+          body_text = sanitize_text(proposal.body, calculate_max_body_length(video, title_text, proposal_url))
+
+          # Build body text with video URL if present
+          body = "*#{title_text}*\n\n"
+          body += "🎥 #{video.url}\n\n" if video.valid?
+          body += "#{body_text}\n\n#{proposal_url}"
+
+          # Use video thumbnail as header image if available, otherwise use proposal photo with fallback
+          header_image = video.thumbnail_url.presence || resource_url(proposal.photo, fallback_image: true)
+
           send_message!(
             type: :interactive_buttons,
             body_text: body,
-            header_image: resource_url(proposal.photo),
+            header_image:,
             footer_text: sanitize_text(proposal.creator_author&.presenter&.name, 60),
             buttons: [
               {
@@ -65,6 +83,27 @@ module Decidim
               }
             ]
           )
+        end
+
+        # Calculate maximum body length dynamically to stay within 1024 char limit
+        # @param video [VideoEmbedExtractor] The video extractor instance
+        # @param title_text [String] The sanitized title text
+        # @param proposal_url [String] The proposal URL
+        # @return [Integer] Maximum allowed length for body text
+        def calculate_max_body_length(video, title_text, proposal_url)
+          # WhatsApp body text limit is 1024 characters
+          total_limit = 1024
+
+          # Calculate fixed overhead using pre-calculated values
+          title_overhead = title_text.length + 4 # "*title*\n\n"
+          video_overhead = video.valid? ? video.url.length + 4 : 0 # "🎥 url\n\n"
+          proposal_url_overhead = proposal_url.length + 2 # "\n\nurl"
+
+          # Reserve space for newlines and formatting
+          reserved_space = title_overhead + video_overhead + proposal_url_overhead
+
+          # Return available space for body text, with minimum of 100 chars
+          [total_limit - reserved_space, 100].max
         end
 
         def send_continuation
