@@ -7,7 +7,7 @@ module Decidim
       # Supports YouTube and Vimeo embeds
       class VideoEmbedExtractor
         # Regex patterns to match iframe src attributes for supported video platforms
-        YOUTUBE_PATTERN = %r{<iframe[^>]+src=["\']https?://(?:www\.)?(?:youtube\.com/embed/|youtu\.be|youtube-nocookie\.com/embed/)([a-zA-Z0-9_-]+)(?:[?&][^"\']*)?["\'][^>]*>}i
+        YOUTUBE_PATTERN = %r{<iframe[^>]+src=["\']https?://(?:www\.)?(?:youtube\.com/embed/|youtu\.be/|youtube-nocookie\.com/embed/)([a-zA-Z0-9_-]+)(?:[?&][^"\']*)?["\'][^>]*>}i
         VIMEO_PATTERN = %r{<iframe[^>]+src=["\']https?://(?:www\.)?player\.vimeo\.com/video/(\d+)(?:[?&][^"\']*)?["\'][^>]*>}i
 
         # Extracts a video URL from HTML content
