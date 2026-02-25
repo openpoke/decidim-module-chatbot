@@ -9,7 +9,7 @@ module Decidim
 
           mark_as_responding
           send_cards
-          remaining_proposals_count.negative? ? send_ending : send_continuation
+          remaining_proposals_count <= 0 ? send_ending : send_continuation
           sender.current_workflow_merge!(page: current_page + 1, random_seed:)
         end
 

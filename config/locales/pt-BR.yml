@@ -61,6 +61,7 @@ pt-BR:
           resource_not_found: Infelizmente, o recurso solicitado não pôde ser encontrado. Por favor, escolha outro ou saia e reinicie.
           instructions: Obrigado por seu interesse em comentar "%{title}"! Por favor, escreva seu comentário abaixo e envie-o para mim. Você terá a chance de revisar e editar seu comentário antes de enviá-lo.
           comment_created: "Seu comentário foi publicado com sucesso! Você pode vê-lo aqui:"
+          comment_creation_failed: "Infelizmente, seu comentário não pôde ser publicado. Por favor, tente novamente ou entre em contato com o suporte."
           signature: "\n\nEnviado via %{provider}"
           buttons:
             submit: Publicar comentário
