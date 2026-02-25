@@ -10,9 +10,8 @@ module Decidim
         YOUTUBE_PATTERN = %r{<iframe[^>]+src=["\']https?://(?:www\.)?(?:youtube\.com/embed/|youtu\.be/|youtube-nocookie\.com/embed/)([a-zA-Z0-9_-]+)(?:[?&][^"\']*)?["\'][^>]*>}i
         VIMEO_PATTERN = %r{<iframe[^>]+src=["\']https?://(?:www\.)?player\.vimeo\.com/video/(\d+)(?:[?&][^"\']*)?["\'][^>]*>}i
 
-        # Extracts a video URL from HTML content
-        # @param html [String] The HTML string to parse
-        # @return [Hash] A hash with :video_url key containing the extracted URL or nil
+        # Initializes a new extractor with the given HTML content
+        # @param html [String] The HTML string to parse for embedded videos
         def initialize(html)
           @html = html
         end
