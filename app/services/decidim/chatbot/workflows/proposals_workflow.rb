@@ -20,11 +20,17 @@ module Decidim
           else
             mark_as_responding
             if commentable_id
-              delegate_workflow(
-                Decidim::Chatbot::Workflows::CommentsWorkflow,
-                resource_gid: commentable_gid.to_s,
-                back_button: { id: "more", title: I18n.t("decidim.chatbot.workflows.proposals.buttons.more") }
-              )
+              if component_commentable?
+                delegate_workflow(
+                  Decidim::Chatbot::Workflows::CommentsWorkflow,
+                  resource_gid: commentable_gid.to_s,
+                  back_button: { id: "more", title: I18n.t("decidim.chatbot.workflows.proposals.buttons.more") }
+                )
+              else
+                send_message!(
+                  body: I18n.t("decidim.chatbot.workflows.proposals.comments_disabled")
+                )
+              end
             else
               send_proposal_details
             end
@@ -71,7 +77,7 @@ module Decidim
           # Use video thumbnail as header image if available, otherwise use proposal photo with fallback
           header_image = video.thumbnail_url.presence || resource_url(proposal.photo, fallback_image: true)
 
-          if component_comentable?
+          if component_commentable?
             send_message!(
               type: :interactive_buttons,
               body_text: body,
