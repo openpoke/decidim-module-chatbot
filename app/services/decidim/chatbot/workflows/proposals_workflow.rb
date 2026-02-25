@@ -56,11 +56,14 @@ module Decidim
           # Check if proposal body contains a video iframe
           video = Decidim::Chatbot::Media::VideoEmbedExtractor.new(translated_attribute(proposal.body))
 
-          # Build body text with video URL if present
+          # Pre-calculate title and URL to avoid redundant method calls
           title_text = sanitize_text(proposal.title, 100)
-          body_text = sanitize_text(proposal.body, calculate_max_body_length(video))
           proposal_url = resource_url(proposal)
+          
+          # Calculate available space for body text and sanitize accordingly
+          body_text = sanitize_text(proposal.body, calculate_max_body_length(video, title_text, proposal_url))
 
+          # Build body text with video URL if present
           body = "*#{title_text}*\n\n"
           body += "🎥 #{video.url}\n\n" if video.valid?
           body += "#{body_text}\n\n#{proposal_url}"
@@ -83,14 +86,18 @@ module Decidim
         end
 
         # Calculate maximum body length dynamically to stay within 1024 char limit
-        def calculate_max_body_length(video)
+        # @param video [VideoEmbedExtractor] The video extractor instance
+        # @param title_text [String] The sanitized title text
+        # @param proposal_url [String] The proposal URL
+        # @return [Integer] Maximum allowed length for body text
+        def calculate_max_body_length(video, title_text, proposal_url)
           # WhatsApp body text limit is 1024 characters
           total_limit = 1024
 
-          # Calculate fixed overhead
-          title_overhead = sanitize_text(proposal.title, 100).length + 4 # "*title*\n\n"
+          # Calculate fixed overhead using pre-calculated values
+          title_overhead = title_text.length + 4 # "*title*\n\n"
           video_overhead = video.valid? ? video.url.length + 4 : 0 # "🎥 url\n\n"
-          proposal_url_overhead = resource_url(proposal).length + 2 # "\n\nurl"
+          proposal_url_overhead = proposal_url.length + 2 # "\n\nurl"
 
           # Reserve space for newlines and formatting
           reserved_space = title_overhead + video_overhead + proposal_url_overhead
