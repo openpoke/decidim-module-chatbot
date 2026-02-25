@@ -73,7 +73,7 @@ en:
           comment_creation_failed: Unfortunately, your comment could not be published.
             Please try again or contact support.
           comment_received: Here is your comment, if you want to change it just send
-            a new message. If you're happy with it, click "Submit comment".
+            a new message. If you're happy with it, click "Publish comment".
           instructions: Thanks for your interest in commenting "%{title}"! Please
             write your comment below and send it to me. You will have the chance to
             review and edit your comment before submitting it.
