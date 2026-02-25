@@ -54,9 +54,55 @@ module Decidim
               end
             end
 
+            describe "#valid_number_id?" do
+              context "when phone_number_id matches configured value" do
+                before do
+                  allow(Decidim::Chatbot).to receive(:whatsapp_config).and_return(
+                    { phone_number_id: "873575429163486" }
+                  )
+                end
+
+                it "returns true" do
+                  expect(subject.valid_number_id?).to be true
+                end
+              end
+
+              context "when phone_number_id does not match configured value" do
+                before do
+                  allow(Decidim::Chatbot).to receive(:whatsapp_config).and_return(
+                    { phone_number_id: "different_id" }
+                  )
+                end
+
+                it "returns false" do
+                  expect(subject.valid_number_id?).to be false
+                end
+              end
+            end
+
             describe "#acknowledgeable?" do
-              it "returns true" do
-                expect(subject.acknowledgeable?).to be true
+              context "when phone_number_id matches" do
+                before do
+                  allow(Decidim::Chatbot).to receive(:whatsapp_config).and_return(
+                    { phone_number_id: "873575429163486" }
+                  )
+                end
+
+                it "returns true" do
+                  expect(subject.acknowledgeable?).to be true
+                end
+              end
+
+              context "when phone_number_id does not match" do
+                before do
+                  allow(Decidim::Chatbot).to receive(:whatsapp_config).and_return(
+                    { phone_number_id: "different_id" }
+                  )
+                end
+
+                it "returns false" do
+                  expect(subject.acknowledgeable?).to be false
+                end
               end
             end
 
@@ -279,6 +325,12 @@ module Decidim
                   }
                 ]
               }
+            end
+
+            before do
+              allow(Decidim::Chatbot).to receive(:whatsapp_config).and_return(
+                { phone_number_id: "873575429163486" }
+              )
             end
 
             it "extracts the from number" do

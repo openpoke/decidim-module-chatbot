@@ -68,6 +68,8 @@ module Decidim
       def log_unprocessable_message
         reason = if received_message.message_id.blank?
                    "missing message ID"
+                 elsif !received_message.valid_number_id?
+                   "invalid sender number ID, check provider-specific requirements and configuration"
                  elsif sender.nil?
                    "sender not found or created"
                  elsif message.nil?
@@ -114,7 +116,7 @@ module Decidim
       end
 
       def sender
-        return nil if received_message.from.blank?
+        return nil unless received_message.acknowledgeable?
 
         @sender ||= setting.senders.find_or_create_by(from: received_message.from) do |sender|
           sender.name = received_message.from_name
@@ -124,7 +126,7 @@ module Decidim
       end
 
       def message
-        return nil if received_message.message_id.blank?
+        return nil unless received_message.acknowledgeable?
 
         @message ||= setting.messages.find_or_create_by(message_id: received_message.message_id) do |message|
           message.chat_id = received_message.chat_id

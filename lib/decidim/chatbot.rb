@@ -16,7 +16,8 @@ module Decidim
       {
         verify_token: Decidim::Env.new("WHATSAPP_VERIFY_TOKEN").value,
         access_token: Decidim::Env.new("WHATSAPP_ACCESS_TOKEN").value,
-        graph_api_url: Decidim::Env.new("WHATSAPP_GRAPH_API_URL", "https://graph.facebook.com/v24.0/").value
+        graph_api_url: Decidim::Env.new("WHATSAPP_GRAPH_API_URL", "https://graph.facebook.com/v24.0/").value,
+        phone_number_id: Decidim::Env.new("WHATSAPP_PHONE_NUMBER_ID").value
       }
     end
 

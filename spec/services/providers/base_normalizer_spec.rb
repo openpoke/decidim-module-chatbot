@@ -65,11 +65,18 @@ module Decidim
           end
         end
 
+        describe "#valid_number_id?" do
+          it "returns true by default" do
+            expect(subject.valid_number_id?).to be true
+          end
+        end
+
         describe "#acknowledgeable?" do
-          context "when from and message_id are present" do
+          context "when from, message_id are present and valid_number_id is true" do
             before do
               subject.from = "123456"
               subject.message_id = "msg-123"
+              allow(subject).to receive(:valid_number_id?).and_return(true)
             end
 
             it "returns true" do
@@ -92,6 +99,18 @@ module Decidim
             before do
               subject.from = "123456"
               subject.message_id = nil
+            end
+
+            it "returns false" do
+              expect(subject.acknowledgeable?).to be false
+            end
+          end
+
+          context "when valid_number_id? returns false" do
+            before do
+              subject.from = "123456"
+              subject.message_id = "msg-123"
+              allow(subject).to receive(:valid_number_id?).and_return(false)
             end
 
             it "returns false" do
