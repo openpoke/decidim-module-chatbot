@@ -20,11 +20,17 @@ module Decidim
           else
             mark_as_responding
             if commentable_id
-              delegate_workflow(
-                Decidim::Chatbot::Workflows::CommentsWorkflow,
-                resource_gid: commentable_gid.to_s,
-                back_button: { id: "more", title: I18n.t("decidim.chatbot.workflows.proposals.buttons.more") }
-              )
+              if component_commentable?
+                delegate_workflow(
+                  Decidim::Chatbot::Workflows::CommentsWorkflow,
+                  resource_gid: commentable_gid.to_s,
+                  back_button: { id: "more", title: I18n.t("decidim.chatbot.workflows.proposals.buttons.more") }
+                )
+              else
+                send_message!(
+                  body: I18n.t("decidim.chatbot.workflows.proposals.comments_disabled")
+                )
+              end
             else
               send_proposal_details
             end
@@ -71,18 +77,22 @@ module Decidim
           # Use video thumbnail as header image if available, otherwise use proposal photo with fallback
           header_image = video.thumbnail_url.presence || resource_url(proposal.photo, fallback_image: true)
 
-          send_message!(
-            type: :interactive_buttons,
-            body_text: body,
-            header_image:,
-            footer_text: sanitize_text(proposal.creator_author&.presenter&.name, 60),
-            buttons: [
-              {
-                id: "comment-#{proposal.id}",
-                title: I18n.t("decidim.chatbot.workflows.proposals.buttons.comment")
-              }
-            ]
-          )
+          if component_commentable?
+            send_message!(
+              type: :interactive_buttons,
+              body_text: body,
+              header_image:,
+              footer_text: sanitize_text(proposal.creator_author&.presenter&.name, 60),
+              buttons: [
+                {
+                  id: "comment-#{proposal.id}",
+                  title: I18n.t("decidim.chatbot.workflows.proposals.buttons.comment")
+                }
+              ]
+            )
+          else
+            send_message!(body:, preview_url: true)
+          end
         end
 
         # Calculate maximum body length dynamically to stay within 1024 char limit
@@ -141,6 +151,10 @@ module Decidim
 
         def component
           @component ||= Decidim::Component.find_by(id: config[:component_id])
+        end
+
+        def component_commentable?
+          @component_commentable ||= component&.settings&.comments_enabled?
         end
 
         def proposals
