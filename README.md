@@ -46,7 +46,44 @@ bin/rails decidim:upgrade
 ### Architecture & workflows
 
 #### Implementation Diagram
-![Architecture diagram](docs/architecture.svg)
+
+```mermaid
+flowchart TD
+    User["End User
+    WhatsApp Client"]
+    WA["WhatsApp Business API
+    (Meta)"]
+
+    subgraph subGraph0["External Provider"]
+        WA
+    end
+
+    subgraph subGraph1["Decidim Chatbot Module"]
+        WC["Webhooks Controller
+        (Rails Engine)"]
+        PA["Provider Adapter Layer"]
+        WAA["WhatsApp Adapter"]
+        WF["Workflow Engine"]
+    end
+
+    subgraph subGraph2["Decidim Core"]
+        DB[("PostgreSQL")]
+        DC["Decidim Core APIs"]
+    end
+
+    User -->|message| WA
+    WA -->|webhook| WC
+    WC --> PA
+    PA --> WAA
+    WAA --> WF
+    WF --> DC
+    WF --> WAA
+    WC --> DB
+    WAA --> DB
+    WF --> DB
+    WAA -->|send reply| WA
+    WA -->|deliver reply| User
+```
 
 #### Final User Interaction Flow (End-to-End)
 ![Sequence diagram](docs/sequence.svg)
