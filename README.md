@@ -86,7 +86,31 @@ flowchart TD
 ```
 
 #### Final User Interaction Flow (End-to-End)
-![Sequence diagram](docs/sequence.svg)
+
+```mermaid
+sequenceDiagram
+    participant U as User (WhatsApp)
+    participant W as WhatsApp Business API
+    participant C as Decidim WebhooksController
+    participant A as WhatsApp Adapter
+    participant WF as Workflow Engine
+    participant DB as Decidim Database
+    participant D as Decidim Core
+
+    U->>W: Send message
+    W->>C: Webhook POST (incoming event)
+    C->>A: Validate & normalize payload
+    A->>DB: Upsert sender
+    A->>DB: Store inbound message
+    A->>WF: Dispatch message
+    WF->>DB: Load workflow state
+    WF->>D: Query participatory data
+    D-->>WF: Domain response
+    WF->>A: Reply payload
+    A->>DB: Store outbound message
+    A->>W: Send message
+    W-->>U: Deliver reply
+```
 
 #### Workflows
 
