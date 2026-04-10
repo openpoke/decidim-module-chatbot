@@ -621,6 +621,23 @@ module Decidim
           end
         end
 
+        describe "#attachment_image_metadata" do
+          it "uses blob byte_size for Decidim::Attachment file metadata" do
+            blob = instance_double("ActiveStorage::Blob", content_type: "image/jpeg", byte_size: 1234)
+            attachment_file = double("ActiveStorage::Attached::One", blob: blob)
+            uploader = instance_double("Decidim::ApplicationUploader")
+            attachment = Decidim::Attachment.allocate
+
+            allow(attachment).to receive(:attached_uploader).with(:file).and_return(uploader)
+            allow(attachment).to receive(:file).and_return(attachment_file)
+            allow(attachment).to receive(:file_size).and_return(nil)
+
+            metadata = subject.send(:attachment_image_metadata, attachment)
+
+            expect(metadata).to eq([uploader, "image/jpeg", 1234])
+          end
+        end
+
         describe "#mark_as_read" do
           context "when message is acknowledgeable" do
             before do

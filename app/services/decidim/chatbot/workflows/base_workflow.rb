@@ -175,12 +175,27 @@ module Decidim
         def attachment_image_metadata(resource)
           case resource
           when Decidim::Attachment
-            [resource.attached_uploader(:file), resource.file&.content_type, resource.file&.size || resource.file_size]
+            decidim_attachment_image_metadata(resource)
           when ActiveStorage::Attached
-            [resource.record.attached_uploader(resource.name), resource.blob&.content_type, resource.blob&.byte_size]
+            active_storage_attachment_image_metadata(resource)
           else
             [nil, nil, nil]
           end
+        end
+
+        def decidim_attachment_image_metadata(resource)
+          attachment_file = resource.file
+          attachment_blob = attachment_file.blob if attachment_file.respond_to?(:blob)
+          content_type = attachment_blob&.content_type || attachment_file&.content_type
+          file_size = attachment_blob&.byte_size
+          file_size ||= attachment_file.size if attachment_file.respond_to?(:size)
+          file_size ||= resource.file_size
+
+          [resource.attached_uploader(:file), content_type, file_size]
+        end
+
+        def active_storage_attachment_image_metadata(resource)
+          [resource.record.attached_uploader(resource.name), resource.blob&.content_type, resource.blob&.byte_size]
         end
 
         def resolve_image_url_from_metadata(uploader, content_type, file_size, fallback_image_url)
