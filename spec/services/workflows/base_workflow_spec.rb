@@ -549,7 +549,7 @@ module Decidim
             end
 
             context "when uploader exposes a preferred variant" do
-              let(:uploader) { instance_double("Decidim::ApplicationUploader") }
+              let(:uploader) { double("Decidim::ApplicationUploader") }
               let(:variant_file) { instance_double("CarrierWave::SanitizedFile", size: 1024) }
               let(:variant_uploader) { instance_double("CarrierWave::Uploader", file: variant_file) }
 
