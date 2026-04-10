@@ -46,10 +46,71 @@ bin/rails decidim:upgrade
 ### Architecture & workflows
 
 #### Implementation Diagram
-![Architecture diagram](docs/architecture.svg)
+
+```mermaid
+flowchart TD
+    User["End User
+    WhatsApp Client"]
+    WA["WhatsApp Business API
+    (Meta)"]
+
+    subgraph subGraph0["External Provider"]
+        WA
+    end
+
+    subgraph subGraph1["Decidim Chatbot Module"]
+        WC["Webhooks Controller
+        (Rails Engine)"]
+        PA["Provider Adapter Layer"]
+        WAA["WhatsApp Adapter"]
+        WF["Workflow Engine"]
+    end
+
+    subgraph subGraph2["Decidim Core"]
+        DB[("PostgreSQL")]
+        DC["Decidim Core APIs"]
+    end
+
+    User -->|message| WA
+    WA -->|webhook| WC
+    WC --> PA
+    PA --> WAA
+    WAA --> WF
+    WF --> DC
+    WF --> WAA
+    WC --> DB
+    WAA --> DB
+    WF --> DB
+    WAA -->|send reply| WA
+    WA -->|deliver reply| User
+```
 
 #### Final User Interaction Flow (End-to-End)
-![Sequence diagram](docs/sequence.svg)
+
+```mermaid
+sequenceDiagram
+    participant U as User (WhatsApp)
+    participant W as WhatsApp Business API
+    participant C as Decidim WebhooksController
+    participant A as WhatsApp Adapter
+    participant WF as Workflow Engine
+    participant DB as Decidim Database
+    participant D as Decidim Core
+
+    U->>W: Send message
+    W->>C: Webhook POST (incoming event)
+    C->>A: Validate & normalize payload
+    A->>DB: Upsert sender
+    A->>DB: Store inbound message
+    A->>WF: Dispatch message
+    WF->>DB: Load workflow state
+    WF->>D: Query participatory data
+    D-->>WF: Domain response
+    WF->>A: Reply payload
+    A->>DB: Store outbound message
+    A->>W: Send message
+    W-->>U: Deliver reply
+```
 
 #### Workflows
 
