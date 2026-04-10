@@ -164,25 +164,26 @@ module Decidim
           end
         end
 
-        def resource_image_url(resource, fallback_image: false) # rubocop:disable Metrics/CyclomaticComplexity
+        def resource_image_url(resource, fallback_image: false)
           fallback_image_url = fallback_image && image_url("media/images/chatbot-card-placeholder.png")
           return fallback_image_url unless resource.try(:attached?)
 
-          uploader = nil
-          content_type = nil
-          file_size = nil
+          uploader, content_type, file_size = attachment_image_metadata(resource)
+          resolve_image_url_from_metadata(uploader, content_type, file_size, fallback_image_url)
+        end
 
+        def attachment_image_metadata(resource)
           case resource
           when Decidim::Attachment
-            uploader = resource.attached_uploader(:file)
-            content_type = resource.file&.content_type
-            file_size = resource.file&.size || resource.file_size
+            [resource.attached_uploader(:file), resource.file&.content_type, resource.file&.size || resource.file_size]
           when ActiveStorage::Attached
-            uploader = resource.record.attached_uploader(resource.name)
-            content_type = resource.blob&.content_type
-            file_size = resource.blob&.byte_size
+            [resource.record.attached_uploader(resource.name), resource.blob&.content_type, resource.blob&.byte_size]
+          else
+            [nil, nil, nil]
           end
+        end
 
+        def resolve_image_url_from_metadata(uploader, content_type, file_size, fallback_image_url)
           return fallback_image_url unless uploader && content_type&.in?(%w(image/jpeg image/png))
 
           variant_url = preferred_variant_image_url(uploader)
@@ -198,8 +199,22 @@ module Decidim
 
           variant_key = preferred_variant_key(uploader.variants.keys)
           return unless variant_key
+          return unless variant_size_within_limit?(uploader, variant_key)
 
           absolute_url(uploader.url(variant: variant_key, host: "https://#{organization.host}"))
+        end
+
+        def variant_size_within_limit?(uploader, variant_key)
+          variant_size = fetch_variant_size(uploader, variant_key)
+          variant_size.present? && variant_size <= WHATSAPP_MAX_IMAGE_BYTES
+        end
+
+        def fetch_variant_size(uploader, variant_key)
+          return uploader.versions[variant_key]&.file&.size if uploader.respond_to?(:versions)
+
+          return uploader.variant(variant_key)&.blob&.byte_size if uploader.respond_to?(:variant)
+
+          nil
         end
 
         def preferred_variant_key(available_keys)

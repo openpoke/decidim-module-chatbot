@@ -550,10 +550,13 @@ module Decidim
 
             context "when uploader exposes a preferred variant" do
               let(:uploader) { instance_double("Decidim::ApplicationUploader") }
+              let(:variant_file) { instance_double("CarrierWave::SanitizedFile", size: 1024) }
+              let(:variant_uploader) { instance_double("CarrierWave::Uploader", file: variant_file) }
 
               before do
                 allow(participatory_process).to receive(:attached_uploader).with("hero_image").and_return(uploader)
                 allow(uploader).to receive(:variants).and_return({ thumbnail: { resize_to_fit: [nil, 237] } })
+                allow(uploader).to receive(:versions).and_return({ thumbnail: variant_uploader })
                 allow(uploader).to receive(:url).with(variant: :thumbnail, host: "https://#{organization.host}").and_return("https://example.org/thumbnail.jpg")
               end
 
