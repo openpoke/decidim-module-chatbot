@@ -7,6 +7,9 @@ module Decidim
         include Decidim::TranslatableAttributes
         include Decidim::SanitizeHelper
 
+        WHATSAPP_MAX_IMAGE_BYTES = 5 * 1024 * 1024
+        PREFERRED_IMAGE_VARIANTS = [:thumbnail, :thumb, :small, :default, :big, :profile].freeze
+
         def initialize(adapter:, message:, **options)
           @adapter = adapter
           @message = message
@@ -165,18 +168,50 @@ module Decidim
           fallback_image_url = fallback_image && image_url("media/images/chatbot-card-placeholder.png")
           return fallback_image_url unless resource.try(:attached?)
 
+          uploader = nil
+          content_type = nil
+          file_size = nil
+
           case resource
           when Decidim::Attachment
             uploader = resource.attached_uploader(:file)
             content_type = resource.file&.content_type
+            file_size = resource.file&.size || resource.file_size
           when ActiveStorage::Attached
             uploader = resource.record.attached_uploader(resource.name)
             content_type = resource.blob&.content_type
+            file_size = resource.blob&.byte_size
           end
 
           return fallback_image_url unless uploader && content_type&.in?(%w(image/jpeg image/png))
 
-          uploader.url
+          variant_url = preferred_variant_image_url(uploader)
+          return variant_url if variant_url.present?
+
+          return fallback_image_url if file_size.to_i.zero? || file_size.to_i > WHATSAPP_MAX_IMAGE_BYTES
+
+          absolute_url(uploader.url)
+        end
+
+        def preferred_variant_image_url(uploader)
+          return unless uploader.respond_to?(:variants)
+
+          variant_key = preferred_variant_key(uploader.variants.keys)
+          return unless variant_key
+
+          absolute_url(uploader.url(variant: variant_key, host: "https://#{organization.host}"))
+        end
+
+        def preferred_variant_key(available_keys)
+          keys = available_keys.map(&:to_sym)
+          PREFERRED_IMAGE_VARIANTS.find { |key| keys.include?(key) }
+        end
+
+        def absolute_url(url)
+          return if url.blank?
+          return url if url.match?(%r{\Ahttps?://}i)
+
+          "https://#{organization.host}#{url}"
         end
       end
     end
