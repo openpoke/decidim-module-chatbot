@@ -54,7 +54,7 @@ es:
         base:
           buttons:
             exit: Salir y volver
-            reset: Finalizar conversación
+            reset: Terminar chat
           unprocessable_input: Lo siento, no pude procesar eso. Inténtalo de nuevo con un mensaje diferente o usa "Salir y volver" o "Finalizar conversación" para empezar de nuevo.
         comments:
           buttons:
