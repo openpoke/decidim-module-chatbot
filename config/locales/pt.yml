@@ -7,83 +7,84 @@ pt:
           chatbot: Chatbot
         settings:
           edit:
-            title: Chatbot configuration
+            title: Configuração do chatbot
           form:
-            cancel: Cancel
-            configuration_for: Configuration for %{workflow}
-            current_workflow: Current workflow (%{provider})
-            enabled: Enabled
-            loading: Loading...
-            no_extra_settings: No additional configuration needed for this workflow.
-            save: Save settings
+            cancel: Cancelar
+            configuration_for: Configuração para %{workflow}
+            current_workflow: Fluxo atual (%{provider})
+            enabled: Ativado
+            loading: A carregar...
+            no_extra_settings: Não é necessária configuração adicional para este fluxo.
+            save: Guardar configurações
           index:
-            configure: Configure
-            title: Chatbot Settings
+            configure: Configurar
+            title: Definições do chatbot
           organization_welcome_form:
-            custom_text: Initial message (defaults to organization's short description)
-            delegate_workflow: Choose the workflow to handle the "Participate" button
+            custom_text: Mensagem inicial (por predefinição, a descrição curta da organização)
+            delegate_workflow: Escolha o fluxo que irá tratar o botão "Participar"
             errors:
-              invalid_delegate_workflow: The selected workflow is not valid or not configured.
-            no_workflows_available: No workflows available
+              invalid_delegate_workflow: O fluxo selecionado não é válido ou não está configurado.
+            no_workflows_available: Não há fluxos disponíveis
           single_participatory_space_form:
-            component: Choose the component
+            component: Escolha o componente
             errors:
-              component_id_blank: Component is required
-              participatory_space_gid_blank: Participatory space is required
-            instructions: Instructions (optional) - displayed before showing the space information
-            participatory_space: Choose the participatory space
-            select_component: Select a component...
-            select_space: Select a participatory space...
-            select_space_first: Select a participatory space first
+              component_id_blank: O componente é obrigatório
+              participatory_space_gid_blank: O espaço participativo é obrigatório
+            instructions: Instruções (opcional) - apresentadas antes de mostrar as informações do espaço
+            participatory_space: Escolha o espaço participativo
+            select_component: Selecione um componente...
+            select_space: Selecione um espaço participativo...
+            select_space_first: Selecione primeiro um espaço participativo
           toggle:
-            disabled: Chatbot has been disabled.
-            enabled: Chatbot has been enabled.
+            disabled: O chatbot foi desativado.
+            enabled: O chatbot foi ativado.
           update:
-            error: There was an error saving the settings.
-            success: Chatbot settings saved successfully.
+            error: Ocorreu um erro ao guardar as configurações.
+            success: As configurações do chatbot foram guardadas com sucesso.
       messages:
-        deactivated: The chatbot is currently deactivated. Please try again later.
-        generic_error: Sorry, something went wrong while processing your request. Please try again later.
-        reset_workflows: Thanks for participating! You can start again by sending any message.
-        stale_cleared: Your previous session was cleared due to inactivity. Starting fresh!
+        deactivated: O chatbot está atualmente desativado. Tente novamente mais tarde.
+        generic_error: Lamentamos, ocorreu um erro ao processar o seu pedido. Tente novamente mais tarde.
+        reset_workflows: Obrigado por participar! Pode recomeçar enviando qualquer mensagem.
+        stale_cleared: A sua sessão anterior foi limpa devido à inatividade. Vamos recomeçar!
       providers:
         whatsapp:
-          description: Enable to receive and respond to messages via WhatsApp Business API.
+          description: Ative para receber e responder a mensagens através da API do WhatsApp Business.
           name: WhatsApp
       workflows:
         base:
           buttons:
-            exit: Exit & go back
-            reset: End conversation
-          unprocessable_input: Sorry, I couldn't process that. Please try again with a different message or use "Exit & go back" or "End conversation" to start over.
+            exit: Sair e voltar
+            reset: Terminar conversa
+          unprocessable_input: Lamento, não consegui processar isso. Tente novamente com uma mensagem diferente ou use "Sair e voltar" ou "Terminar conversa" para recomeçar.
         comments:
           buttons:
-            exit: Cancel & go back
-            submit: Publish comment
-          comment_created: 'Your comment has been published successfully! You can view it here:'
-          comment_creation_failed: Unfortunately, your comment could not be published. Please try again or contact support.
-          comment_received: Here is your comment, if you want to change it just send a new message. If you're happy with it, click "Publish comment".
-          instructions: Thanks for your interest in commenting "%{title}"! Please write your comment below and send it to me. You will have the chance to review and edit your comment before submitting it.
-          resource_not_found: Unfortunately, the requested resource could not be found. Please choose another one or exit and restart.
+            exit: Cancelar e voltar
+            submit: Publicar comentário
+          comment_created: 'O seu comentário foi publicado com sucesso! Pode vê-lo aqui:'
+          comment_creation_failed: Infelizmente, o seu comentário não pôde ser publicado. Tente novamente ou contacte o suporte.
+          comment_received: Aqui está o seu comentário. Se quiser alterá-lo, basta enviar uma nova mensagem. Se estiver satisfeito, clique em "Publicar comentário".
+          instructions: Obrigado pelo seu interesse em comentar "%{title}"! Escreva o seu comentário abaixo e envie-mo. Terá a oportunidade de rever e editar o seu comentário antes de o submeter.
+          resource_not_found: Infelizmente, não foi possível encontrar o recurso solicitado. Escolha outro ou saia e recomece.
           signature: |2-
 
 
-            Sent via %{provider}
+            Enviado via %{provider}
         organization_welcome:
-          title: Organization Welcome
+          title: Boas-vindas da organização
         proposals:
           buttons:
-            comment: Comment proposal
-            more: View more
-            view_proposal: View proposal
-          comments_disabled: Commenting is disabled for this proposal.
-          no_more_proposals: There are no more proposals to show. Please choose one of the proposals above.
-          no_proposals: There are no proposals published yet. Please check back later.
-          remaining_proposals: There are %{count} more proposals. Click "View more" to see them.
+            comment: Comentar proposta
+            more: Ver mais
+            view_proposal: Ver proposta
+          comments_disabled: Os comentários estão desativados para esta proposta.
+          no_more_proposals: Não há mais propostas para mostrar. Escolha uma das propostas acima.
+          no_proposals: Ainda não existem propostas publicadas. Volte a tentar mais tarde.
+          remaining_proposals: Existem mais %{count} propostas. Clique em "Ver mais" para as ver.
         single_participatory_space:
           buttons:
-            more_info: More info
-            participate: Participate
-          no_spaces: There are no active participatory spaces at the moment. Please try again later.
-          not_ready_yet: This feature is not ready yet. Please try again later.
-          title: Single Participatory Space
+            more_info: Mais informação
+            participate: Participar
+          no_description: Não há descrição disponível para este espaço participativo.
+          no_spaces: Não existem espaços participativos ativos neste momento. Tente novamente mais tarde.
+          not_ready_yet: Esta funcionalidade ainda não está pronta. Tente novamente mais tarde.
+          title: Espaço participativo único
