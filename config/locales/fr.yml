@@ -1,0 +1,112 @@
+---
+fr:
+  decidim:
+    chatbot:
+      admin:
+        menu:
+          chatbot: Chatbot
+        settings:
+          edit:
+            title: Configuration du chatbot
+          form:
+            cancel: Annuler
+            configuration_for: Configuration pour %{workflow}
+            current_workflow: Flux actuel (%{provider})
+            enabled: Activé
+            loading: Chargement...
+            no_extra_settings: Aucune configuration supplémentaire n'est nécessaire
+              pour ce flux.
+            save: Enregistrer la configuration
+          index:
+            configure: Configurer
+            title: Paramètres du chatbot
+          organization_welcome_form:
+            custom_text: Message initial (par défaut, la description courte de l'organisation)
+            delegate_workflow: Choisissez le flux qui gérera le bouton "Participer"
+            errors:
+              invalid_delegate_workflow: Le flux sélectionné n'est pas valide ou n'est
+                pas configuré.
+            no_workflows_available: Aucun flux disponible
+          single_participatory_space_form:
+            component: Choisissez le composant
+            errors:
+              component_id_blank: Le composant est obligatoire
+              participatory_space_gid_blank: L'espace participatif est obligatoire
+            instructions: Instructions (facultatif) - affichées avant d'afficher les
+              informations de l'espace
+            participatory_space: Choisissez l'espace participatif
+            select_component: Sélectionnez un composant...
+            select_space: Sélectionnez un espace participatif...
+            select_space_first: Sélectionnez d'abord un espace participatif
+          toggle:
+            disabled: Le chatbot a été désactivé.
+            enabled: Le chatbot a été activé.
+          update:
+            error: Une erreur s'est produite lors de l'enregistrement de la configuration.
+            success: La configuration du chatbot a été enregistrée avec succès.
+      messages:
+        deactivated: Le chatbot est actuellement désactivé. Veuillez réessayer plus
+          tard.
+        generic_error: Désolé, une erreur s'est produite lors du traitement de votre
+          demande. Veuillez réessayer plus tard.
+        reset_workflows: Merci pour votre participation ! Vous pouvez recommencer
+          en envoyant n'importe quel message.
+        stale_cleared: Votre session précédente a été effacée en raison de l'inactivité.
+          Recommençons à zéro !
+      providers:
+        whatsapp:
+          description: Activez cette option pour recevoir et répondre aux messages
+            via l'API WhatsApp Business.
+          name: WhatsApp
+      workflows:
+        base:
+          buttons:
+            exit: Quitter et revenir
+            reset: Terminer la conversation
+          unprocessable_input: Désolé, je n'ai pas pu traiter cela. Veuillez réessayer
+            avec un autre message ou utilisez "Quitter et revenir" ou "Terminer la
+            conversation" pour recommencer.
+        comments:
+          buttons:
+            exit: Annuler et revenir
+            submit: Publier le commentaire
+          comment_created: 'Votre commentaire a été publié avec succès ! Vous pouvez
+            le voir ici :'
+          comment_creation_failed: Malheureusement, votre commentaire n'a pas pu être
+            publié. Veuillez réessayer ou contacter le support.
+          comment_received: Voici votre commentaire. Si vous souhaitez le modifier,
+            envoyez simplement un nouveau message. Si vous en êtes satisfait, cliquez
+            sur "Publier le commentaire".
+          instructions: Merci de votre intérêt pour commenter "%{title}" ! Veuillez
+            écrire votre commentaire ci-dessous et me l'envoyer. Vous aurez la possibilité
+            de relire et de modifier votre commentaire avant de l'envoyer.
+          resource_not_found: Malheureusement, la ressource demandée est introuvable.
+            Veuillez en choisir une autre ou quitter et recommencer.
+          signature: |2-
+
+
+            Envoyé via %{provider}
+        organization_welcome:
+          title: Accueil de l'organisation
+        proposals:
+          buttons:
+            comment: Commenter la proposition
+            more: Voir plus
+            view_proposal: Voir la proposition
+          comments_disabled: Les commentaires sont désactivés pour cette proposition.
+          no_more_proposals: Il n'y a plus de propositions à afficher. Veuillez choisir
+            l'une des propositions ci-dessus.
+          no_proposals: Aucune proposition n'a encore été publiée. Veuillez revenir
+            plus tard.
+          remaining_proposals: Il reste %{count} propositions. Cliquez sur "Voir plus"
+            pour les afficher.
+        single_participatory_space:
+          buttons:
+            more_info: Plus d'informations
+            participate: Participer
+          no_description: Aucune description disponible pour cet espace participatif.
+          no_spaces: Aucun espace participatif actif pour le moment. Veuillez réessayer
+            plus tard.
+          not_ready_yet: Cette fonctionnalité n'est pas encore prête. Veuillez réessayer
+            plus tard.
+          title: Espace participatif unique

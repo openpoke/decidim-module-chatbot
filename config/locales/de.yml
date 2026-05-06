@@ -1,0 +1,116 @@
+---
+de:
+  decidim:
+    chatbot:
+      admin:
+        menu:
+          chatbot: Chatbot
+        settings:
+          edit:
+            title: Chatbot-Konfiguration
+          form:
+            cancel: Abbrechen
+            configuration_for: Konfiguration für %{workflow}
+            current_workflow: Aktueller Workflow (%{provider})
+            enabled: Aktiviert
+            loading: Wird geladen...
+            no_extra_settings: Für diesen Workflow ist keine zusätzliche Konfiguration
+              erforderlich.
+            save: Einstellungen speichern
+          index:
+            configure: Konfigurieren
+            title: Chatbot-Einstellungen
+          organization_welcome_form:
+            custom_text: Anfangsnachricht (standardmäßig die Kurzbeschreibung der
+              Organisation)
+            delegate_workflow: Wählen Sie den Workflow aus, der die Schaltfläche "Mitmachen"
+              verarbeitet
+            errors:
+              invalid_delegate_workflow: Der ausgewählte Workflow ist ungültig oder
+                nicht konfiguriert.
+            no_workflows_available: Keine Workflows verfügbar
+          single_participatory_space_form:
+            component: Komponente auswählen
+            errors:
+              component_id_blank: Komponente ist erforderlich
+              participatory_space_gid_blank: Partizipativer Raum ist erforderlich
+            instructions: Anweisungen (optional) - werden vor den Informationen zum
+              Raum angezeigt
+            participatory_space: Partizipativen Raum auswählen
+            select_component: Eine Komponente auswählen...
+            select_space: Einen partizipativen Raum auswählen...
+            select_space_first: Wählen Sie zuerst einen partizipativen Raum aus
+          toggle:
+            disabled: Der Chatbot wurde deaktiviert.
+            enabled: Der Chatbot wurde aktiviert.
+          update:
+            error: Beim Speichern der Einstellungen ist ein Fehler aufgetreten.
+            success: Die Chatbot-Einstellungen wurden erfolgreich gespeichert.
+      messages:
+        deactivated: Der Chatbot ist derzeit deaktiviert. Bitte versuchen Sie es später
+          erneut.
+        generic_error: Entschuldigung, bei der Verarbeitung Ihrer Anfrage ist ein
+          Fehler aufgetreten. Bitte versuchen Sie es später erneut.
+        reset_workflows: Danke für Ihre Teilnahme! Sie können neu beginnen, indem
+          Sie eine beliebige Nachricht senden.
+        stale_cleared: Ihre vorherige Sitzung wurde aufgrund von Inaktivität gelöscht.
+          Wir starten neu!
+      providers:
+        whatsapp:
+          description: Aktivieren Sie diese Option, um Nachrichten über die WhatsApp
+            Business API zu empfangen und zu beantworten.
+          name: WhatsApp
+      workflows:
+        base:
+          buttons:
+            exit: Beenden und zurück
+            reset: Unterhaltung beenden
+          unprocessable_input: Entschuldigung, ich konnte das nicht verarbeiten. Bitte
+            versuchen Sie es mit einer anderen Nachricht oder verwenden Sie "Beenden
+            und zurück" oder "Unterhaltung beenden", um neu zu starten.
+        comments:
+          buttons:
+            exit: Abbrechen und zurück
+            submit: Kommentar veröffentlichen
+          comment_created: 'Ihr Kommentar wurde erfolgreich veröffentlicht! Sie können
+            ihn hier ansehen:'
+          comment_creation_failed: Leider konnte Ihr Kommentar nicht veröffentlicht
+            werden. Bitte versuchen Sie es erneut oder kontaktieren Sie den Support.
+          comment_received: Hier ist Ihr Kommentar. Wenn Sie ihn ändern möchten, senden
+            Sie einfach eine neue Nachricht. Wenn Sie zufrieden sind, klicken Sie
+            auf "Kommentar veröffentlichen".
+          instructions: Danke für Ihr Interesse, "%{title}" zu kommentieren! Bitte
+            schreiben Sie unten Ihren Kommentar und senden Sie ihn mir. Sie haben
+            die Möglichkeit, Ihren Kommentar vor dem Absenden zu überprüfen und zu
+            bearbeiten.
+          resource_not_found: Leider konnte die angeforderte Ressource nicht gefunden
+            werden. Bitte wählen Sie eine andere oder beenden Sie und starten Sie
+            neu.
+          signature: |2-
+
+
+            Gesendet über %{provider}
+        organization_welcome:
+          title: Begrüßung der Organisation
+        proposals:
+          buttons:
+            comment: Vorschlag kommentieren
+            more: Mehr anzeigen
+            view_proposal: Vorschlag ansehen
+          comments_disabled: Kommentare sind für diesen Vorschlag deaktiviert.
+          no_more_proposals: Es gibt keine weiteren Vorschläge zum Anzeigen. Bitte
+            wählen Sie einen der obenstehenden Vorschläge.
+          no_proposals: Es wurden noch keine Vorschläge veröffentlicht. Bitte schauen
+            Sie später noch einmal vorbei.
+          remaining_proposals: Es gibt noch %{count} weitere Vorschläge. Klicken Sie
+            auf "Mehr anzeigen", um sie zu sehen.
+        single_participatory_space:
+          buttons:
+            more_info: Mehr Informationen
+            participate: Mitmachen
+          no_description: Für diesen partizipativen Raum ist keine Beschreibung verfügbar.
+          no_spaces: Derzeit gibt es keine aktiven partizipativen Räume. Bitte versuchen
+            Sie es später erneut.
+          not_ready_yet: Diese Funktion ist noch nicht bereit. Bitte versuchen Sie
+            es später erneut.
+          title: Einzelner partizipativer Raum

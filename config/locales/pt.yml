@@ -1,0 +1,109 @@
+---
+pt:
+  decidim:
+    chatbot:
+      admin:
+        menu:
+          chatbot: Chatbot
+        settings:
+          edit:
+            title: Configuração do chatbot
+          form:
+            cancel: Cancelar
+            configuration_for: Configuração para %{workflow}
+            current_workflow: Fluxo atual (%{provider})
+            enabled: Ativado
+            loading: A carregar...
+            no_extra_settings: Não é necessária configuração adicional para este fluxo.
+            save: Guardar configurações
+          index:
+            configure: Configurar
+            title: Definições do chatbot
+          organization_welcome_form:
+            custom_text: Mensagem inicial (por predefinição, a descrição curta da organização)
+            delegate_workflow: Escolha o fluxo que irá tratar o botão "Participar"
+            errors:
+              invalid_delegate_workflow: O fluxo selecionado não é válido ou não está
+                configurado.
+            no_workflows_available: Não há fluxos disponíveis
+          single_participatory_space_form:
+            component: Escolha o componente
+            errors:
+              component_id_blank: O componente é obrigatório
+              participatory_space_gid_blank: O espaço participativo é obrigatório
+            instructions: Instruções (opcional) - apresentadas antes de mostrar as
+              informações do espaço
+            participatory_space: Escolha o espaço participativo
+            select_component: Selecione um componente...
+            select_space: Selecione um espaço participativo...
+            select_space_first: Selecione primeiro um espaço participativo
+          toggle:
+            disabled: O chatbot foi desativado.
+            enabled: O chatbot foi ativado.
+          update:
+            error: Ocorreu um erro ao guardar as configurações.
+            success: As configurações do chatbot foram guardadas com sucesso.
+      messages:
+        deactivated: O chatbot está atualmente desativado. Tente novamente mais tarde.
+        generic_error: Lamentamos, ocorreu um erro ao processar o seu pedido. Tente
+          novamente mais tarde.
+        reset_workflows: Obrigado por participar! Pode recomeçar enviando qualquer
+          mensagem.
+        stale_cleared: A sua sessão anterior foi limpa devido à inatividade. Vamos
+          recomeçar!
+      providers:
+        whatsapp:
+          description: Ative para receber e responder a mensagens através da API do
+            WhatsApp Business.
+          name: WhatsApp
+      workflows:
+        base:
+          buttons:
+            exit: Sair e voltar
+            reset: Terminar conversa
+          unprocessable_input: Lamento, não consegui processar isso. Tente novamente
+            com uma mensagem diferente ou use "Sair e voltar" ou "Terminar conversa"
+            para recomeçar.
+        comments:
+          buttons:
+            exit: Cancelar e voltar
+            submit: Publicar comentário
+          comment_created: "O seu comentário foi publicado com sucesso! Pode vê-lo
+            aqui:"
+          comment_creation_failed: Infelizmente, o seu comentário não pôde ser publicado.
+            Tente novamente ou contacte o suporte.
+          comment_received: Aqui está o seu comentário. Se quiser alterá-lo, basta enviar
+            uma nova mensagem. Se estiver satisfeito, clique em "Publicar comentário".
+          instructions: "Obrigado pelo seu interesse em comentar \"%{title}\"! Escreva
+            o seu comentário abaixo e envie-mo. Terá a oportunidade de rever e editar
+            o seu comentário antes de o submeter."
+          resource_not_found: Infelizmente, não foi possível encontrar o recurso solicitado.
+            Escolha outro ou saia e recomece.
+          signature: |2-
+
+
+            Enviado via %{provider}
+        organization_welcome:
+          title: Boas-vindas da organização
+        proposals:
+          buttons:
+            comment: Comentar proposta
+            more: Ver mais
+            view_proposal: Ver proposta
+          comments_disabled: Os comentários estão desativados para esta proposta.
+          no_more_proposals: Não há mais propostas para mostrar. Escolha uma das propostas
+            acima.
+          no_proposals: Ainda não existem propostas publicadas. Volte a tentar mais
+            tarde.
+          remaining_proposals: Existem mais %{count} propostas. Clique em "Ver mais"
+            para as ver.
+        single_participatory_space:
+          no_description: Não há descrição disponível para este espaço participativo.
+          buttons:
+            more_info: Mais informação
+            participate: Participar
+          no_spaces: Não existem espaços participativos ativos neste momento. Tente
+            novamente mais tarde.
+          not_ready_yet: Esta funcionalidade ainda não está pronta. Tente novamente
+            mais tarde.
+          title: Espaço participativo único

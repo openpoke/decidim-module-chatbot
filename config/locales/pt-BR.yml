@@ -78,6 +78,7 @@ pt-BR:
           no_proposals: Não há propostas publicadas ainda. Por favor, verifique novamente mais tarde.
           remaining_proposals: Há %{count} mais propostas. Clique em "Ver mais" para vê-las.
         single_participatory_space:
+          no_description: Não há descrição disponível para este espaço participativo.
           buttons:
             more_info: Mais informações
             participate: Participar

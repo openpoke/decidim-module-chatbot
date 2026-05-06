@@ -1,0 +1,110 @@
+---
+ca:
+  decidim:
+    chatbot:
+      admin:
+        menu:
+          chatbot: Xatbot
+        settings:
+          edit:
+            title: Configuració del xatbot
+          form:
+            cancel: Cancel·la
+            configuration_for: Configuració per a %{workflow}
+            current_workflow: Flux actual (%{provider})
+            enabled: Activat
+            loading: S'està carregant...
+            no_extra_settings: No cal cap configuració addicional per a aquest flux.
+            save: Desa la configuració
+          index:
+            configure: Configura
+            title: Configuració del xatbot
+          organization_welcome_form:
+            custom_text: Missatge inicial (per defecte, la descripció curta de l'organització)
+            delegate_workflow: Tria el flux que gestionarà el botó "Participa"
+            errors:
+              invalid_delegate_workflow: El flux seleccionat no és vàlid o no està
+                configurat.
+            no_workflows_available: No hi ha fluxos disponibles
+          single_participatory_space_form:
+            component: Tria el component
+            errors:
+              component_id_blank: El component és obligatori
+              participatory_space_gid_blank: L'espai participatiu és obligatori
+            instructions: Instruccions (opcional) - es mostren abans de mostrar la
+              informació de l'espai
+            participatory_space: Tria l'espai participatiu
+            select_component: Selecciona un component...
+            select_space: Selecciona un espai participatiu...
+            select_space_first: Primer selecciona un espai participatiu
+          toggle:
+            disabled: El xatbot s'ha desactivat.
+            enabled: El xatbot s'ha activat.
+          update:
+            error: Hi ha hagut un error en desar la configuració.
+            success: La configuració del xatbot s'ha desat correctament.
+      messages:
+        deactivated: El xatbot està desactivat actualment. Torna-ho a provar més tard.
+        generic_error: Ho sentim, hi ha hagut un error en processar la teva sol·licitud.
+          Torna-ho a provar més tard.
+        reset_workflows: Gràcies per participar! Pots començar de nou enviant qualsevol
+          missatge.
+        stale_cleared: La sessió anterior s'ha esborrat per inactivitat. Comencem
+          de nou!
+      providers:
+        whatsapp:
+          description: Activa-ho per rebre i respondre missatges mitjançant l'API
+            de WhatsApp Business.
+          name: WhatsApp
+      workflows:
+        base:
+          buttons:
+            exit: Surt i torna enrere
+            reset: Finalitza la conversa
+          unprocessable_input: Ho sento, no he pogut processar això. Torna-ho a provar
+            amb un missatge diferent o fes servir "Surt i torna enrere" o "Finalitza
+            la conversa" per començar de nou.
+        comments:
+          buttons:
+            exit: Cancel·la i torna enrere
+            submit: Publica el comentari
+          comment_created: 'El teu comentari s''ha publicat correctament! El pots
+            veure aquí:'
+          comment_creation_failed: Malauradament, el teu comentari no s'ha pogut publicar.
+            Torna-ho a provar o contacta amb suport.
+          comment_received: Aquí tens el teu comentari. Si el vols canviar, només
+            has d'enviar un missatge nou. Si hi estàs d'acord, fes clic a "Publica
+            el comentari".
+          instructions: Gràcies pel teu interès a comentar "%{title}"! Escriu el teu
+            comentari a continuació i envia-me'l. Tindràs l'oportunitat de revisar-lo
+            i editar-lo abans d'enviar-lo.
+          resource_not_found: Malauradament, no s'ha pogut trobar el recurs sol·licitat.
+            Tria'n un altre o surt i reinicia.
+          signature: |2-
+
+
+            Enviat via %{provider}
+        organization_welcome:
+          title: Benvinguda de l'organització
+        proposals:
+          buttons:
+            comment: Comenta la proposta
+            more: Veure'n més
+            view_proposal: Veure la proposta
+          comments_disabled: Els comentaris estan desactivats per a aquesta proposta.
+          no_more_proposals: No hi ha més propostes per mostrar. Tria una de les propostes
+            anteriors.
+          no_proposals: Encara no hi ha propostes publicades. Torna-ho a provar més
+            tard.
+          remaining_proposals: Queden %{count} propostes més. Fes clic a "Veure'n
+            més" per veure-les.
+        single_participatory_space:
+          buttons:
+            more_info: Més informació
+            participate: Participa
+          no_description: No hi ha descripció disponible per a aquest espai participatiu.
+          no_spaces: No hi ha espais participatius actius en aquest moment. Torna-ho
+            a provar més tard.
+          not_ready_yet: Aquesta funcionalitat encara no està llesta. Torna-ho a provar
+            més tard.
+          title: Espai participatiu únic
