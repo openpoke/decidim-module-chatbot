@@ -59,7 +59,7 @@ de:
         comments:
           buttons:
             exit: Abbrechen und zurück
-            submit: Kommentar veröffentlichen
+            submit: Veröffentlichen
           comment_created: 'Ihr Kommentar wurde erfolgreich veröffentlicht! Sie können ihn hier ansehen:'
           comment_creation_failed: Leider konnte Ihr Kommentar nicht veröffentlicht werden. Bitte versuchen Sie es erneut oder kontaktieren Sie den Support.
           comment_received: Hier ist Ihr Kommentar. Wenn Sie ihn ändern möchten, senden Sie einfach eine neue Nachricht. Wenn Sie zufrieden sind, klicken Sie auf "Kommentar veröffentlichen".
@@ -73,7 +73,7 @@ de:
           title: Begrüßung der Organisation
         proposals:
           buttons:
-            comment: Vorschlag kommentieren
+            comment: Kommentieren
             more: Mehr anzeigen
             view_proposal: Vorschlag ansehen
           comments_disabled: Kommentare sind für diesen Vorschlag deaktiviert.
