@@ -53,12 +53,12 @@ ca:
       workflows:
         base:
           buttons:
-            exit: Surt i torna enrere
-            reset: Finalitza la conversa
+            exit: Enrere
+            reset: Acabar
           unprocessable_input: Ho sento, no he pogut processar això. Torna-ho a provar amb un missatge diferent o fes servir "Surt i torna enrere" o "Finalitza la conversa" per començar de nou.
         comments:
           buttons:
-            exit: Cancel·la i torna enrere
+            exit: Enrere
             submit: Publica el comentari
           comment_created: 'El teu comentari s''ha publicat correctament! El pots veure aquí:'
           comment_creation_failed: Malauradament, el teu comentari no s'ha pogut publicar. Torna-ho a provar o contacta amb suport.
