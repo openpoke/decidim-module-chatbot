@@ -54,12 +54,12 @@ fr:
         base:
           buttons:
             exit: Quitter et revenir
-            reset: Terminer la conversation
+            reset: Terminer
           unprocessable_input: Désolé, je n'ai pas pu traiter cela. Veuillez réessayer avec un autre message ou utilisez "Quitter et revenir" ou "Terminer la conversation" pour recommencer.
         comments:
           buttons:
             exit: Annuler et revenir
-            submit: Publier le commentaire
+            submit: Publier
           comment_created: 'Votre commentaire a été publié avec succès ! Vous pouvez le voir ici :'
           comment_creation_failed: Malheureusement, votre commentaire n'a pas pu être publié. Veuillez réessayer ou contacter le support.
           comment_received: Voici votre commentaire. Si vous souhaitez le modifier, envoyez simplement un nouveau message. Si vous en êtes satisfait, cliquez sur "Publier le commentaire".
@@ -73,7 +73,7 @@ fr:
           title: Accueil de l'organisation
         proposals:
           buttons:
-            comment: Commenter la proposition
+            comment: Commenter
             more: Voir plus
             view_proposal: Voir la proposition
           comments_disabled: Les commentaires sont désactivés pour cette proposition.
