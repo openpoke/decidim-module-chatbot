@@ -84,6 +84,7 @@ ja:
           buttons:
             more_info: More info
             participate: Participate
+          no_description: No description available for this participatory space.
           no_spaces: There are no active participatory spaces at the moment. Please try again later.
           not_ready_yet: This feature is not ready yet. Please try again later.
           title: Single Participatory Space
